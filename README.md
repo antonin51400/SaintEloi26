@@ -6,6 +6,7 @@ Site GitHub Pages : https://antonin51400.github.io/SaintEloi26/
 
 - **Mode essai accessible par codes**, sans connexion Google et sans Firebase Authentication.
 - **Données fictives uniquement** : chaque onglet possède son propre état en mémoire. Fermer / actualiser la page efface les réservations saisies. Il n'existe **pas encore de synchronisation entre appareils**.
+- La configuration Web et l'adresse de **Realtime Database europe-west1** du projet `sainteloi26-371e3` sont désormais enregistrées dans `config.js`. La base est encore vide (`null` à la racine dans la console).
 - L'activation de la base partagée est volontairement bloquée (`enabled: false` dans `config.js`) pour éviter de publier des noms, numéros de téléphone et états de paiement dans une base ouverte.
 - Toutes les réservations démarrent à zéro ; aucun import de l'ancien Bal Savoyard.
 - Les 42 sections de tables et les styles visuels conservés du Bal Savoyard sont disponibles.
