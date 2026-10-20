@@ -1,0 +1,7 @@
+{
+  "name": "saint-eloi-2026",
+  "private": true,
+  "scripts": {"test": "node tests/app.test.cjs"},
+  "devDependencies": {"jsdom": "30.1.3"},
+  "engines": {"node": ">=22"}
+}
