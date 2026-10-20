@@ -4,6 +4,15 @@
 **Projet Firebase :** `sainteloi26-371e3` — Realtime Database `europe-west1`, forfait Spark gratuit.  
 **Base dédiée :** `events/saint-eloi-2026` (aucune donnée importée du Bal Savoyard).
 
+## Nouveau : approbation des appareils par e-mail
+
+Le formulaire peut désormais recueillir le **nom du demandeur et son code**, puis déposer une demande Firebase. Le rôle souhaité correspond au code choisi ; **seul le responsable peut accorder le rôle effectif**. Le système de notification gratuit (Google Apps Script, envoi par MailApp toutes les 5 minutes) et le lien **Autoriser / Refuser** sont préparés dans :
+
+- [Code du service e-mail et approbation](./access-approval/Code.gs)
+- [Instructions de configuration du service](./access-approval/README.md)
+
+**Ce service n'est pas encore déployé : aucun e-mail automatique n'est envoyé pour le moment.** Il faut installer les règles Realtime Database, renseigner les propriétés privées du script (notamment l'adresse e-mail de l'approbateur), déployer l'Apps Script, puis activer le mode réel dans `config.js`. Ne jamais mettre de clé privée dans GitHub ou dans une conversation.
+
 ## État de déploiement
 
 1. Configuration Web Firebase et adresse Realtime Database renseignées dans `config.js`.
