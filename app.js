@@ -103,6 +103,26 @@ const codeProfiles = window.SAINT_ELOI_ACCESS_CODES || {};
 $('loginMessage').textContent = config.enabled
   ? 'Identifiez-vous avec votre code. Une autorisation préalable de cet appareil est nécessaire pour les données réelles.'
   : 'Saisissez votre code. Le mode démonstration reste local et ne sauvegarde rien.';
+$('pairDeviceButton').onclick=async()=>{
+  if(loginBusy)return;
+  loginBusy=true;
+  $('pairDeviceButton').disabled=true;
+  try{
+    if(!window.firebase)throw Error('Bibliothèques Firebase indisponibles.');
+    if(!firebase.apps.length)firebase.initializeApp(config.firebase);
+    auth=firebase.auth();
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    const current=auth.currentUser||(await auth.signInAnonymously()).user;
+    if(!current?.uid)throw Error('Aucun identifiant obtenu.');
+    showDeviceUid(current.uid);
+    $('loginMessage').textContent='Appareil identifié. Copiez son UID, puis autorisez cet appareil dans les données de Firebase. Aucune réservation réelle n’est encore accessible.';
+  }catch(error){
+    $('loginMessage').textContent='Impossible d’identifier cet appareil : '+(error?.message||'réessayez.');
+  }finally{
+    loginBusy=false;
+    $('pairDeviceButton').disabled=false;
+  }
+};
 $('copyDeviceUid').onclick=async()=>{
   const text=$('deviceUid').textContent;
   if(!text)return;
