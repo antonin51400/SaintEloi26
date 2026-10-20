@@ -82,12 +82,12 @@ async function mutate(change) {
 }
 function showApp(){
   $('loginPanel').style.display='none';$('appWrapper').style.display='flex';
-  $('sessionBadge').textContent=operator;
-  $('sessionBadge').className='lane-badge';
+  $('sessionBadge').textContent=lane?(lane==='left'?'◀ File Gauche':'▶ File Droite'):operator;
+  $('sessionBadge').className='lane-badge'+(lane?' '+lane:'');
   $('newReservation').style.display=allowed('reserve')?'':'none';
   $('exportButton').style.display=allowed('export')?'':'none';
   $('sessionBadge').onclick=()=>{if(role==='entry')selectEntryLane();};
-  render();selectEntryLane();
+  render();if(role==='entry'&&!lane)selectEntryLane();
 }
 function stopListeners(){if(dataRef)dataRef.off();if(memberRef)memberRef.off();if(db)db.ref('.info/connected').off();dataRef=null;memberRef=null;ready=false;}
 function lock(message){stopListeners();state={reservations:{},tables:{}};selection=null;popupTable=null;document.getElementById('laneChoice')?.remove();document.querySelectorAll('dialog[open]').forEach(d=>d.close());closeTablePopup();$('appWrapper').style.display='none';$('loginPanel').style.display='flex';$('loginMessage').textContent=message;render();}
@@ -95,7 +95,7 @@ const config = window.SAINT_ELOI_CONFIG || {};
 const codeProfiles = window.SAINT_ELOI_ACCESS_CODES || {};
 $('loginMessage').textContent = 'Saisissez votre code. En attente de Firebase : les saisies sont actuellement une démonstration locale, non partagée.';
 function startSession(profile) {
-  role=profile.role;operator=profile.name;user={uid:'local-'+role};
+  role=profile.role;operator=profile.name;lane='';user={uid:'local-'+role};
   if (!config.enabled) {
     demo=true;ready=true;online=true;state={reservations:{},tables:{}};
     showApp();return;
@@ -122,7 +122,7 @@ $('accessForm').onsubmit=e=>{
   $('accessCode').value='';startSession(profile);
 };
 $('demoButton').onclick=()=>{
-  role='admin';operator='Démonstration';user={uid:'demo'};
+  role='admin';operator='Démonstration';lane='';user={uid:'demo'};
   demo=true;ready=true;online=true;state={reservations:{},tables:{}};showApp();
 };
 $('logoutButton').onclick=async()=>{
