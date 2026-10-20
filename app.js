@@ -61,25 +61,37 @@ function showApp(){ $('loginPanel').style.display='none';$('appWrapper').style.d
 function stopListeners(){if(dataRef)dataRef.off();if(memberRef)memberRef.off();if(db)db.ref('.info/connected').off();dataRef=null;memberRef=null;ready=false;}
 function lock(message){stopListeners();state={reservations:{},tables:{}};selection=null;popupTable=null;document.querySelectorAll('dialog[open]').forEach(d=>d.close());closeTablePopup();$('appWrapper').style.display='none';$('loginPanel').style.display='flex';$('loginMessage').textContent=message;render();}
 const config = window.SAINT_ELOI_CONFIG || {};
-if(config.enabled && window.firebase){
+if(config.enabled && config.accessEndpoint && window.firebase){
   try {
     firebase.initializeApp(config.firebase);db=firebase.database();auth=firebase.auth();eventRef=db.ref(config.eventPath);
-    auth.onAuthStateChanged(account=>{
-      lock('Vérification de votre accès…'); user=account;
-      if(!account){$('loginMessage').textContent='Connectez-vous avec votre compte autorisé.';return;}
-      memberRef=eventRef.child('members/'+account.uid);
-      memberRef.on('value',snap=>{
-        const member=snap.val();
-        if(!member || !['Antonin Blanckaert','Antonin Bassut'].includes(member.name)){lock('Ce compte n’est pas autorisé. Demandez à l’administrateur de configurer votre accès.');return;}
-        operator=member.name;
-        if(dataRef)dataRef.off();dataRef=eventRef.child('data');
-        dataRef.on('value',s=>{state=s.val()||{reservations:{},tables:{}};ready=true;showApp();},e=>lock('Lecture refusée. Vérifiez la configuration des accès.'));
+    auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+    auth.onAuthStateChanged(async account=>{
+      if(demo)return;
+      lock('Vérification de votre accès…');user=account;
+      if(!account){$('loginMessage').textContent='Saisissez votre code personnel à quatre chiffres.';return;}
+      try {
+        const {claims}=await account.getIdTokenResult();
+        if(claims.saintEloi2026!==true || !['Antonin Blanckaert','Antonin Bassut'].includes(claims.operator))throw Error('Accès refusé.');
+        operator=claims.operator;dataRef=eventRef.child('data');
+        dataRef.on('value',s=>{state=s.val()||{reservations:{},tables:{}};ready=true;showApp();},()=>lock('Lecture refusée. Vérifiez la configuration des accès.'));
         db.ref('.info/connected').on('value',s=>{online=s.val()===true;render();});
-      },()=>lock('Accès refusé : les comptes autorisés doivent être configurés.'));
+      }catch(e){lock('Accès refusé. Saisissez à nouveau votre code.');}
     });
   } catch(e){$('loginMessage').textContent='La connexion n’est pas encore configurée.';}
-} else {$('loginMessage').textContent='L’accès partagé doit encore être activé par l’organisateur. Vous pouvez essayer l’interface sans enregistrer de données.';$('loginButton').disabled=true;}
-$('loginButton').onclick=async()=>{try{await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());}catch(e){$('loginMessage').textContent='Connexion non terminée. Réessayez ou vérifiez les comptes et le domaine autorisés.';}};
+} else {$('loginMessage').textContent='L’accès partagé par code doit encore être activé par l’organisateur. La démonstration reste disponible sans sauvegarde.';}
+$('accessForm').onsubmit=async e=>{
+  e.preventDefault();const code=$('accessCode').value.trim();
+  if(!/^[0-9]{4}$/.test(code)){$('loginMessage').textContent='Saisissez les quatre chiffres de votre code.';return;}
+  if(!config.enabled || !auth || !config.accessEndpoint){$('loginMessage').textContent='L’accès partagé par code est préparé, mais le serveur doit encore être activé.';return;}
+  $('loginButton').disabled=true;
+  try {
+    const response=await fetch(config.accessEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});
+    if(!response.ok)throw Error(response.status===429?'Trop de tentatives. Réessayez dans quinze minutes.':response.status===401?'Code incorrect.':'Connexion indisponible. Réessayez.');
+    const result=await response.json();if(!result.token)throw Error('Connexion indisponible.');
+    $('accessCode').value='';await auth.signInWithCustomToken(result.token);
+  }catch(err){$('loginMessage').textContent=err.message;}
+  finally{$('loginButton').disabled=false;}
+};
 $('demoButton').onclick=()=>{stopListeners();demo=true;ready=true;online=true;user={uid:'demo'};operator='Démonstration';state={reservations:{},tables:{}};showApp();};
 $('logoutButton').onclick=async()=>{if(busy)return;if(demo&&!confirm('Quitter la démonstration ? Les données de cet onglet seront perdues.'))return;demo=false;user=null;lock('Vous êtes déconnecté.');if(auth)await auth.signOut();};
 function render(){
