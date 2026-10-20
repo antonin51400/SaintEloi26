@@ -7,12 +7,22 @@
         "members": {
           "$uid": {
             ".read": "auth != null && auth.uid === $uid",
-            ".write": false
+            ".write": false,
+            ".validate": "newData.hasChildren(['name','role']) && newData.child('name').isString() && (newData.child('role').val() === 'organizer' || newData.child('role').val() === 'admin' || newData.child('role').val() === 'placement' || newData.child('role').val() === 'entry' || newData.child('role').val() === 'view')",
+            "name": {
+              ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 120"
+            },
+            "role": {
+              ".validate": "newData.val() === 'organizer' || newData.val() === 'admin' || newData.val() === 'placement' || newData.val() === 'entry' || newData.val() === 'view'"
+            },
+            "$other": {
+              ".validate": false
+            }
           }
         },
         "data": {
-          ".read": "auth != null && root.child('events/saint-eloi-2026/members').child(auth.uid).child('name').val() != null",
-          ".write": "auth != null && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('name').val() === 'Antonin Blanckaert' || root.child('events/saint-eloi-2026/members').child(auth.uid).child('name').val() === 'Antonin Bassut')",
+          ".read": "auth != null && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'organizer' || root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'admin' || root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'placement' || root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'entry' || root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'view')",
+          ".write": "auth != null && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'organizer' || root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'admin')",
           "tables": {
             "$id": {
               ".validate": "newData.hasChildren(['capacity'])",
@@ -59,7 +69,7 @@
               },
               "participants": {
                 "$pid": {
-                  ".validate": "newData.hasChildren(['name','tableId','seat','arrived','paid'])",
+                  ".validate": "newData.hasChildren(['name','tableId','seat','arrived','paid']) && (!newData.child('arrived').val() || newData.child('paid').val() === true)",
                   "name": {
                     ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
                   },
@@ -89,7 +99,8 @@
                   },
                   "$other": {
                     ".validate": false
-                  }
+                  },
+                  ".write": "auth != null && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'entry') && root.child('events/saint-eloi-2026/data/reservations').child($id).child('status').val() === 'accepted' && data.exists() && newData.exists() && newData.child('name').val() === data.child('name').val() && newData.child('tableId').val() === data.child('tableId').val() && newData.child('seat').val() === data.child('seat').val() && newData.child('arrived').isBoolean() && newData.child('paid').isBoolean() && (!newData.child('arrived').val() || newData.child('paid').val() === true)"
                 }
               },
               "$other": {
