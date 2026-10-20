@@ -8,7 +8,7 @@ const statuses = {pending:'À valider',accepted:'Acceptée',cancelled:'Annulée'
 const tableElements = [...document.querySelectorAll('.table-block')];
 const tableNames = Object.fromEntries(tableElements.map(el => [el.id, el.dataset.table]));
 let state = {reservations:{},tables:{}};
-let user = null, operator = '', role = 'none', lane = '', demo = false, online = false, ready = false, busy = false;
+let user = null, operator = '', role = 'none', lane = '', demo = false, online = false, ready = false, busy = false, loginBusy = false;
 let db = null, auth = null, eventRef = null, dataRef = null, memberRef = null;
 let filter = 'all', editing = null, editVersion = 0, selection = null, popupTable = null;
 const permissions = {
@@ -65,6 +65,7 @@ function validateData(data) {
 function updated(r) { r.version=(r.version||0)+1; r.updatedBy=operator; r.updatedAt=new Date().toISOString(); }
 async function mutate(change) {
   if (busy) throw Error('Un enregistrement est déjà en cours.');
+  if (!demo && !['organizer','admin'].includes(role)) throw Error('Cette opération nécessite un accès d’écriture autorisé.');
   if (!ready || !user || (!demo&&!online)) throw Error('Connexion indisponible : aucune modification enregistrée.');
   busy=true; document.querySelectorAll('button[type="submit"]').forEach(b=>b.disabled=true);
   try {
@@ -93,42 +94,94 @@ function stopListeners(){if(dataRef)dataRef.off();if(memberRef)memberRef.off();i
 function lock(message){stopListeners();state={reservations:{},tables:{}};selection=null;popupTable=null;document.getElementById('laneChoice')?.remove();document.querySelectorAll('dialog[open]').forEach(d=>d.close());closeTablePopup();$('appWrapper').style.display='none';$('loginPanel').style.display='flex';$('loginMessage').textContent=message;render();}
 const config = window.SAINT_ELOI_CONFIG || {};
 const codeProfiles = window.SAINT_ELOI_ACCESS_CODES || {};
-$('loginMessage').textContent = 'Saisissez votre code. En attente de Firebase : les saisies sont actuellement une démonstration locale, non partagée.';
-function startSession(profile) {
-  role=profile.role;operator=profile.name;lane='';user={uid:'local-'+role};
-  if (!config.enabled) {
-    demo=true;ready=true;online=true;state={reservations:{},tables:{}};
-    showApp();return;
-  }
-  // Une connexion sans Auth Firebase n'est PAS une protection de base de données.
-  // Ne jamais activer tant que les règles serveur ne protègent pas les informations personnelles.
-  demo=false;ready=false;online=false;
+$('loginMessage').textContent = config.enabled
+  ? 'Identifiez-vous avec votre code. Une autorisation préalable de cet appareil est nécessaire pour les données réelles.'
+  : 'Saisissez votre code. Le mode démonstration reste local et ne sauvegarde rien.';
+$('copyDeviceUid').onclick=async()=>{
+  const text=$('deviceUid').textContent;
+  if(!text)return;
   try {
-    if (!window.firebase) throw Error('Bibliothèque Firebase indisponible.');
-    if (!firebase.apps.length)firebase.initializeApp(config.firebase);
-    db=firebase.database();eventRef=db.ref(config.eventPath);dataRef=eventRef.child('data');
-    db.ref('.info/connected').on('value',snapshot=>{online=snapshot.val()===true;render();});
-    dataRef.on('value',snapshot=>{state=snapshot.val()||{reservations:{},tables:{}};ready=true;showApp();},
-      ()=>lock('Accès Firebase refusé : la base est protégée. Aucune donnée partagée.'));
-  } catch(error){lock('Connexion Firebase indisponible. Revenir en démonstration.');}
+    await navigator.clipboard.writeText(text);
+    $('loginMessage').textContent='Identifiant de cet appareil copié. Vous pouvez le renseigner dans Firebase.';
+  }catch(error){
+    $('loginMessage').textContent='Sélectionnez et copiez l’identifiant affiché ci-dessus.';
+  }
+};
+function showDeviceUid(uid){
+  $('deviceUid').textContent=uid;
+  $('pairingPanel').hidden=false;
 }
-$('accessForm').onsubmit=e=>{
+async function startSession(profile){
+  if(loginBusy)return;
+  loginBusy=true;
+  $('loginButton').disabled=true;
+  document.getElementById('pairingPanel').hidden=true;
+  role='none';operator='';lane='';ready=false;demo=false;
+  try {
+    if(!config.enabled) {
+      role=profile.role;operator=profile.name;user={uid:'local-'+role};
+      demo=true;ready=true;online=true;state={reservations:{},tables:{}};
+      showApp();return;
+    }
+    if(!window.firebase)throw Error('Bibliothèques Firebase indisponibles.');
+    if(!config.firebase?.databaseURL)throw Error('Adresse de Realtime Database non renseignée.');
+    if(!firebase.apps.length)firebase.initializeApp(config.firebase);
+    db=firebase.database();auth=firebase.auth();eventRef=db.ref(config.eventPath);
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    const account=auth.currentUser||(await auth.signInAnonymously()).user;
+    if(!account?.uid)throw Error('Identification anonyme impossible.');
+    user=account;
+    showDeviceUid(account.uid);
+    const membershipRef=eventRef.child('members').child(account.uid);
+    // Seul le propriétaire du projet peut inscrire les UID autorisés depuis Firebase.
+    const member=(await membershipRef.once('value')).val();
+    if(!member){
+      $('loginMessage').textContent='Appareil identifié, mais pas encore autorisé. Ajoutez son UID dans Firebase > Realtime Database > Données > events/saint-eloi-2026/members.';
+      return;
+    }
+    // Les droits réels proviennent uniquement de la liste côté Firebase.
+    if(member.role!==profile.role||member.name!==profile.name){
+      $('loginMessage').textContent='Ce compte anonyme a un autre profil autorisé. Utilisez le code correspondant ou demandez une correction dans Firebase.';
+      return;
+    }
+    role=member.role;operator=member.name;
+    dataRef=eventRef.child('data');
+    dataRef.on('value',snapshot=>{
+      state=snapshot.val()||{reservations:{},tables:{}};
+      ready=true;showApp();
+    },error=>lock('Accès aux réservations refusé par les règles Firebase. Vérifiez le rôle autorisé.'));
+    db.ref('.info/connected').on('value',snapshot=>{online=snapshot.val()===true;render();});
+  }catch(error){
+    const message=(String(error?.code||'').includes('PERMISSION_DENIED')||String(error?.message||'').includes('PERMISSION_DENIED'))
+      ? 'Appareil Firebase identifié. Les règles de sécurité doivent encore être installées dans la console.'
+      : 'Identification Firebase indisponible : '+(error?.message||'réessayez.');
+    $('loginMessage').textContent=message;
+  }finally{
+    loginBusy=false;
+    $('loginButton').disabled=false;
+  }
+}
+$('accessForm').onsubmit=async e=>{
   e.preventDefault();
   const code=$('accessCode').value.trim();
   const profile=codeProfiles[code];
-  if(!profile || !permissions[profile.role]){
+  if(!profile||!permissions[profile.role]){
     $('loginMessage').textContent='Code non reconnu.';return;
   }
-  $('accessCode').value='';startSession(profile);
+  $('accessCode').value='';
+  await startSession(profile);
 };
 $('demoButton').onclick=()=>{
+  stopListeners();$('pairingPanel').hidden=true;
   role='admin';operator='Démonstration';lane='';user={uid:'demo'};
   demo=true;ready=true;online=true;state={reservations:{},tables:{}};showApp();
 };
 $('logoutButton').onclick=async()=>{
   if(busy)return;
   if(demo&&!confirm('Quitter la démonstration ? Les données de cet onglet seront perdues.'))return;
-  demo=false;user=null;role='none';lane='';lock('Vous êtes déconnecté.');
+  demo=false;user=null;role='none';lane='';$('pairingPanel').hidden=true;
+  // Conserver la session Firebase anonyme pour conserver le même UID d'appareil.
+  lock('Vous êtes déconnecté de l’interface. Votre identifiant d’appareil est conservé.');
 };
 function render(){
  const guests=accepted(), rs=Object.entries(state.reservations||{}), query=normal($('search').value);
