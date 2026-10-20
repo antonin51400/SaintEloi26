@@ -16,5 +16,15 @@ window.SAINT_ELOI_CONFIG = {
   // RESTER false jusqu'à mise en place d'une sécurité des données côté serveur.
   enabled: false,
   eventPath: 'events/saint-eloi-2026',
-  firebase: {apiKey:'', authDomain:'', databaseURL:'', projectId:'', appId:''}
+  firebase: {
+    // Paramètres PUBLICS de l'application Web Firebase (sans mot de passe privé).
+    apiKey: 'AIzaSyA8oH7LLeY-ZYU8nssatUN4m3QmtNxXTVQ',
+    authDomain: 'sainteloi26-371e3.firebaseapp.com',
+    // À compléter après la création de Realtime Database ; ne pas deviner la région.
+    databaseURL: '',
+    projectId: 'sainteloi26-371e3',
+    storageBucket: 'sainteloi26-371e3.firebasestorage.app',
+    messagingSenderId: '207016607185',
+    appId: '1:207016607185:web:f7c028b7550a1e32a8b4f0'
+  }
 };
