@@ -848,6 +848,12 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 }
 @media(max-width:420px){#loginPanel.code-modal{padding:18px 16px}#loginPanel .cover-meta{font-size:9px;letter-spacing:1px}#loginPanel .cover-team{gap:7px;font-size:12px}#loginPanel .cover-tools{font-size:9px;letter-spacing:1px}#loginPanel .code-box{padding:22px}}
 
+#loginPanel .pairing-panel[hidden]{display:none}
+#loginPanel .pairing-panel{border:1px solid rgba(245,192,116,.5);border-radius:12px;padding:15px;background:rgba(255,255,255,.07);margin:12px 0}
+#loginPanel .pairing-panel strong{font-size:13px;color:#f9dc9d}
+#loginPanel .pairing-panel p{font-size:12px;margin:8px 0;color:#ede1d7}
+#loginPanel .device-uid{display:block;overflow-wrap:anywhere;color:#fefefe;font-size:13px;padding:9px 4px;user-select:all}
+#loginPanel #copyDeviceUid{padding:8px;font-size:12px;width:100%;color:#fff;border-color:#b89160;background:rgba(255,255,255,.12)}
 </style>
 </head>
 <body>
@@ -885,6 +891,12 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
         <button class="primary" type="submit" id="loginButton">Accéder à mon espace <span aria-hidden="true">→</span></button>
       </form>
       <p id="loginMessage" role="status"></p>
+      <section id="pairingPanel" class="pairing-panel" hidden aria-label="Autorisation de cet appareil">
+        <strong>Appareil à autoriser dans Firebase</strong>
+        <p>Copiez cet identifiant, puis inscrivez-le dans la liste des appareils autorisés de Saint Éloi 2026.</p>
+        <code id="deviceUid" class="device-uid"></code>
+        <button class="secondary" type="button" id="copyDeviceUid">Copier l’identifiant de cet appareil</button>
+      </section>
       <button class="secondary" type="button" id="demoButton">Découvrir le mode démonstration</button>
       <p class="muted">Démonstration : les données ne sont pas sauvegardées ni partagées.</p>
     </div>
@@ -1284,6 +1296,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 </form></dialog>
 <dialog id="placementDialog"><form id="placementForm"><div class="dialog-heading"><h2>Placer les invités</h2><button type="button" class="secondary" data-close="placementDialog">Fermer</button></div><p id="placementNames"></p><label>Table<select id="placementTable"></select></label><label id="newCapacityLabel" hidden>Combien de places à cette table ?<input id="newCapacity" type="number" min="1" max="100" step="1" placeholder="Ex. 8"></label><label id="seatLabel">Place<select id="placementSeat"></select></label><p id="placementError" role="alert"></p><button class="primary" type="submit">Enregistrer le placement</button></form></dialog>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="config.js"></script><script src="app.js"></script>
 </body></html>
