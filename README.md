@@ -27,7 +27,7 @@ Le bouton « Essayer avec des données fictives » reste disponible pour les ess
 
 ## Fonctionnement
 
-1. Saisir le réservant contacté par SMS ainsi que ses invités ; enregistrer puis confirmer la réservation.
+1. Saisir le réservant, choisir **l'organisateur qu'il a contacté** (Antonin Blanckaert ou Antonin Bassut) et ajouter les invités. Ce contact est distinct de l'opérateur connecté qui effectue la saisie, reste associé à la réservation lors des modifications et figure dans la recherche ainsi que l'export CSV. Enregistrer puis confirmer la réservation.
 2. Les profils de placement peuvent attribuer un groupe à une table et choisir la capacité et les places ; les sièges déjà utilisés sont refusés.
 3. À l'accueil, choisir la file droite ou gauche, rechercher la personne et cliquer sur « Arrivée ».
 4. **Arrivée = payée** : une arrivée confirme automatiquement le paiement de cette personne. L'annulation de son arrivée ne révoque pas le paiement enregistré.
