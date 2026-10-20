@@ -8,9 +8,32 @@ const statuses = {pending:'À valider',accepted:'Acceptée',cancelled:'Annulée'
 const tableElements = [...document.querySelectorAll('.table-block')];
 const tableNames = Object.fromEntries(tableElements.map(el => [el.id, el.dataset.table]));
 let state = {reservations:{},tables:{}};
-let user = null, operator = '', demo = false, online = false, ready = false, busy = false;
+let user = null, operator = '', role = 'none', lane = '', demo = false, online = false, ready = false, busy = false;
 let db = null, auth = null, eventRef = null, dataRef = null, memberRef = null;
 let filter = 'all', editing = null, editVersion = 0, selection = null, popupTable = null;
+const permissions = {
+  organizer: ['reserve','place','arrival','payment','export'],
+  admin: ['reserve','place','arrival','payment','export'],
+  placement: ['reserve','place'],
+  entry: ['arrival','payment'],
+  view: []
+};
+const allowed = permission => !!permissions[role]?.includes(permission);
+function requireAccess(permission) { if (!allowed(permission)) throw Error('Ce code ne permet pas cette opération.'); }
+function selectEntryLane() {
+  document.getElementById('laneChoice')?.remove();
+  if (role !== 'entry') return;
+  const panel = document.createElement('section');
+  panel.id='laneChoice'; panel.className='lane-modal';
+  panel.innerHTML='<h2>Quel poste occupez-vous ?</h2><div class="lane-buttons"><button type="button" class="lane-btn left" data-lane="left"><span class="lane-icon">◀️</span>File Gauche<span class="lane-sub">Entrée côté gauche</span></button><button type="button" class="lane-btn right" data-lane="right"><span class="lane-icon">▶️</span>File Droite<span class="lane-sub">Entrée côté droit</span></button></div>';
+  panel.querySelectorAll('[data-lane]').forEach(btn => btn.onclick=()=>{
+    lane=btn.dataset.lane;
+    $('sessionBadge').textContent=lane==='left'?'◀ File Gauche':'▶ File Droite';
+    $('sessionBadge').className='lane-badge '+lane;
+    panel.remove();
+  });
+  document.body.appendChild(panel);
+}
 function notice(message) { $('notice').textContent = message; }
 function allGuests(data = state) {
   return Object.entries(data.reservations || {}).flatMap(([rid,r]) => Object.entries(r.participants || {}).map(([pid,p]) => ({...p,rid,pid,reservedBy:r.reservedBy,status:r.status})));
@@ -57,43 +80,56 @@ async function mutate(change) {
     notice(demo?'Modification effectuée en démonstration — non sauvegardée.':'Modification enregistrée et partagée.');
   } finally {busy=false;document.querySelectorAll('button[type="submit"]').forEach(b=>b.disabled=false);}
 }
-function showApp(){ $('loginPanel').style.display='none';$('appWrapper').style.display='flex';$('sessionBadge').textContent=operator;render(); }
+function showApp(){
+  $('loginPanel').style.display='none';$('appWrapper').style.display='flex';
+  $('sessionBadge').textContent=operator;
+  $('sessionBadge').className='lane-badge';
+  $('newReservation').style.display=allowed('reserve')?'':'none';
+  $('exportButton').style.display=allowed('export')?'':'none';
+  $('sessionBadge').onclick=()=>{if(role==='entry')selectEntryLane();};
+  render();selectEntryLane();
+}
 function stopListeners(){if(dataRef)dataRef.off();if(memberRef)memberRef.off();if(db)db.ref('.info/connected').off();dataRef=null;memberRef=null;ready=false;}
-function lock(message){stopListeners();state={reservations:{},tables:{}};selection=null;popupTable=null;document.querySelectorAll('dialog[open]').forEach(d=>d.close());closeTablePopup();$('appWrapper').style.display='none';$('loginPanel').style.display='flex';$('loginMessage').textContent=message;render();}
+function lock(message){stopListeners();state={reservations:{},tables:{}};selection=null;popupTable=null;document.getElementById('laneChoice')?.remove();document.querySelectorAll('dialog[open]').forEach(d=>d.close());closeTablePopup();$('appWrapper').style.display='none';$('loginPanel').style.display='flex';$('loginMessage').textContent=message;render();}
 const config = window.SAINT_ELOI_CONFIG || {};
-if(config.enabled && config.accessEndpoint && window.firebase){
+const codeProfiles = window.SAINT_ELOI_ACCESS_CODES || {};
+$('loginMessage').textContent = 'Saisissez votre code. En attente de Firebase : les saisies sont actuellement une démonstration locale, non partagée.';
+function startSession(profile) {
+  role=profile.role;operator=profile.name;user={uid:'local-'+role};
+  if (!config.enabled) {
+    demo=true;ready=true;online=true;state={reservations:{},tables:{}};
+    showApp();return;
+  }
+  // Une connexion sans Auth Firebase n'est PAS une protection de base de données.
+  // Ne jamais activer tant que les règles serveur ne protègent pas les informations personnelles.
+  demo=false;ready=false;online=false;
   try {
-    firebase.initializeApp(config.firebase);db=firebase.database();auth=firebase.auth();eventRef=db.ref(config.eventPath);
-    auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
-    auth.onAuthStateChanged(async account=>{
-      if(demo)return;
-      lock('Vérification de votre accès…');user=account;
-      if(!account){$('loginMessage').textContent='Saisissez votre code personnel à quatre chiffres.';return;}
-      try {
-        const {claims}=await account.getIdTokenResult();
-        if(claims.saintEloi2026!==true || !['Antonin Blanckaert','Antonin Bassut'].includes(claims.operator))throw Error('Accès refusé.');
-        operator=claims.operator;dataRef=eventRef.child('data');
-        dataRef.on('value',s=>{state=s.val()||{reservations:{},tables:{}};ready=true;showApp();},()=>lock('Lecture refusée. Vérifiez la configuration des accès.'));
-        db.ref('.info/connected').on('value',s=>{online=s.val()===true;render();});
-      }catch(e){lock('Accès refusé. Saisissez à nouveau votre code.');}
-    });
-  } catch(e){$('loginMessage').textContent='La connexion n’est pas encore configurée.';}
-} else {$('loginMessage').textContent='L’accès partagé par code doit encore être activé par l’organisateur. La démonstration reste disponible sans sauvegarde.';}
-$('accessForm').onsubmit=async e=>{
-  e.preventDefault();const code=$('accessCode').value.trim();
-  if(!/^[0-9]{4}$/.test(code)){$('loginMessage').textContent='Saisissez les quatre chiffres de votre code.';return;}
-  if(!config.enabled || !auth || !config.accessEndpoint){$('loginMessage').textContent='L’accès partagé par code est préparé, mais le serveur doit encore être activé.';return;}
-  $('loginButton').disabled=true;
-  try {
-    const response=await fetch(config.accessEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});
-    if(!response.ok)throw Error(response.status===429?'Trop de tentatives. Réessayez dans quinze minutes.':response.status===401?'Code incorrect.':'Connexion indisponible. Réessayez.');
-    const result=await response.json();if(!result.token)throw Error('Connexion indisponible.');
-    $('accessCode').value='';await auth.signInWithCustomToken(result.token);
-  }catch(err){$('loginMessage').textContent=err.message;}
-  finally{$('loginButton').disabled=false;}
+    if (!window.firebase) throw Error('Bibliothèque Firebase indisponible.');
+    if (!firebase.apps.length)firebase.initializeApp(config.firebase);
+    db=firebase.database();eventRef=db.ref(config.eventPath);dataRef=eventRef.child('data');
+    db.ref('.info/connected').on('value',snapshot=>{online=snapshot.val()===true;render();});
+    dataRef.on('value',snapshot=>{state=snapshot.val()||{reservations:{},tables:{}};ready=true;showApp();},
+      ()=>lock('Accès Firebase refusé : la base est protégée. Aucune donnée partagée.'));
+  } catch(error){lock('Connexion Firebase indisponible. Revenir en démonstration.');}
+}
+$('accessForm').onsubmit=e=>{
+  e.preventDefault();
+  const code=$('accessCode').value.trim();
+  const profile=codeProfiles[code];
+  if(!profile || !permissions[profile.role]){
+    $('loginMessage').textContent='Code non reconnu.';return;
+  }
+  $('accessCode').value='';startSession(profile);
 };
-$('demoButton').onclick=()=>{stopListeners();demo=true;ready=true;online=true;user={uid:'demo'};operator='Démonstration';state={reservations:{},tables:{}};showApp();};
-$('logoutButton').onclick=async()=>{if(busy)return;if(demo&&!confirm('Quitter la démonstration ? Les données de cet onglet seront perdues.'))return;demo=false;user=null;lock('Vous êtes déconnecté.');if(auth)await auth.signOut();};
+$('demoButton').onclick=()=>{
+  role='admin';operator='Démonstration';user={uid:'demo'};
+  demo=true;ready=true;online=true;state={reservations:{},tables:{}};showApp();
+};
+$('logoutButton').onclick=async()=>{
+  if(busy)return;
+  if(demo&&!confirm('Quitter la démonstration ? Les données de cet onglet seront perdues.'))return;
+  demo=false;user=null;role='none';lane='';lock('Vous êtes déconnecté.');
+};
 function render(){
  const guests=accepted(), rs=Object.entries(state.reservations||{}), query=normal($('search').value);
  const arrived=guests.filter(p=>p.arrived).length;
@@ -111,7 +147,7 @@ function render(){
   });if(!matching.length)return '';
   return `<section><div class="group-header"><strong>${esc(r.reservedBy)}</strong> · ${parts.length} personne${parts.length>1?'s':''} · ${statuses[r.status]||'À vérifier'}
    <div class="group-note">${esc(r.phone||'')} ${r.phone?' · ':''}Saisie : ${esc(r.createdBy||'')}${r.notes?'\n'+esc(r.notes):''}</div>
-   <div class="reservation-actions"><button class="secondary" data-action="edit" data-rid="${rid}">Modifier</button>${r.status==='pending'?`<button class="primary" data-action="accept" data-rid="${rid}">Accepter</button>`:''}${r.status==='accepted'?`<button class="secondary" draggable="true" data-action="select" data-rid="${rid}">Placer le groupe →</button>`:''}${r.status!=='cancelled'?`<button class="secondary" data-action="cancel" data-rid="${rid}">Annuler</button>`:''}</div></div>
+   <div class="reservation-actions">${allowed('reserve')?`<button class="secondary" data-action="edit" data-rid="${rid}">Modifier</button>`:''}${allowed('reserve')&&r.status==='pending'?`<button class="primary" data-action="accept" data-rid="${rid}">Accepter</button>`:''}${allowed('place')&&r.status==='accepted'?`<button class="secondary" draggable="true" data-action="select" data-rid="${rid}">Placer le groupe →</button>`:''}${allowed('reserve')&&r.status!=='cancelled'?`<button class="secondary" data-action="cancel" data-rid="${rid}">Annuler</button>`:''}</div></div>
    ${matching.map(([pid,p])=>guestCard(rid,pid,p,r)).join('')}</section>`;
  }).join('');
  $('guestList').innerHTML=html||'<div class="empty-state">Aucune réservation pour le moment.<br>Utilisez « + Réservation SMS » pour ajouter un réservant et ses invités.</div>';
@@ -125,16 +161,27 @@ function render(){
  if(!selection){$('guestBanner').classList.remove('visible');$('mapHint').textContent='Sélectionnez une personne ou un groupe, puis cliquez sur sa table';}
  if(popupTable)drawTable();
 }
-function guestCard(rid,pid,p,r){const active=r.status==='accepted';return `<div class="guest-card" ${active?'draggable="true"':''} data-rid="${rid}" data-pid="${pid}"><div class="guest-info"><div class="guest-name">${esc(p.name)}</div><div class="guest-meta">${p.tableId?esc(tableNames[p.tableId])+' · Place '+p.seat:'À placer'}</div></div>${active?`<button class="place" data-action="select" data-rid="${rid}" data-pid="${pid}">Placer →</button><button class="${p.arrived?'on':''}" aria-pressed="${!!p.arrived}" data-action="arrived" data-rid="${rid}" data-pid="${pid}">${p.arrived?'✓ Arrivé':'Arrivée'}</button><button class="money ${p.paid?'on':''}" aria-pressed="${!!p.paid}" data-action="paid" data-rid="${rid}" data-pid="${pid}">${p.paid?'✓ Payé':'Paiement'}</button>`:''}</div>`;}
+function guestCard(rid,pid,p,r){
+  const active=r.status==='accepted';
+  const place=active&&allowed('place');
+  const check=active&&allowed('arrival');
+  const pay=active&&allowed('payment');
+  return `<div class="guest-card ${p.arrived?'arrived':''}" ${place?'draggable="true"':''} data-rid="${rid}" data-pid="${pid}">
+    <div class="guest-info"><div class="guest-name">${esc(p.name)}</div><div class="guest-meta">${p.tableId?esc(tableNames[p.tableId])+' · Place '+p.seat:'À placer'} · ${p.arrived?'✓ Arrivé':'Non arrivé'} · ${p.paid?'✓ Payé':'Non payé'}</div></div>
+    ${place?`<button class="place" data-action="select" data-rid="${rid}" data-pid="${pid}">Placer →</button>`:''}
+    ${check?`<button class="${p.arrived?'on':''}" aria-pressed="${!!p.arrived}" data-action="arrived" data-rid="${rid}" data-pid="${pid}">${p.arrived?'✓ Arrivé':'Arrivée'}</button>`:''}
+    ${pay?`<button class="money ${p.paid?'on':''}" aria-pressed="${!!p.paid}" data-action="paid" data-rid="${rid}" data-pid="${pid}" ${p.arrived?'disabled title="Une personne arrivée reste payée"':''}>${p.paid?'✓ Payé':'Paiement'}</button>`:''}
+  </div>`;
+}
 $('search').oninput=render;
 document.querySelectorAll('.filter-btn').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;document.querySelectorAll('.filter-btn').forEach(x=>x.classList.toggle('active',x===b));render();});
 function addParticipant(p={}){const row=document.createElement('div');row.className='participant-row';row.dataset.pid=p.pid||uid();const input=document.createElement('input');input.required=true;input.maxLength=120;input.placeholder='Nom et prénom de l’invité';input.setAttribute('aria-label','Nom du participant');input.value=p.name||'';const remove=document.createElement('button');remove.type='button';remove.className='secondary';remove.textContent='Retirer';remove.onclick=()=>row.remove();row.append(input,remove);$('participantRows').append(row);return input;}
-function editReservation(rid=null){editing=rid;const r=state.reservations?.[rid];editVersion=r?.version||0;$('reservationForm').reset();$('participantRows').replaceChildren();$('formError').textContent='';$('reservationTitle').textContent=rid?'Modifier la réservation':'Nouvelle réservation SMS';$('reservedBy').value=r?.reservedBy||'';$('phone').value=r?.phone||'';$('reservationNotes').value=r?.notes||'';$('reservationStatus').value=r?.status||'pending';if(r)Object.entries(r.participants||{}).forEach(([pid,p])=>addParticipant({...p,pid}));else addParticipant();$('reservationDialog').showModal();$('reservedBy').focus();}
-$('newReservation').onclick=()=>editReservation();$('addParticipant').onclick=()=>addParticipant().focus();
+function editReservation(rid=null){requireAccess('reserve');editing=rid;const r=state.reservations?.[rid];editVersion=r?.version||0;$('reservationForm').reset();$('participantRows').replaceChildren();$('formError').textContent='';$('reservationTitle').textContent=rid?'Modifier la réservation':'Nouvelle réservation SMS';$('reservedBy').value=r?.reservedBy||'';$('phone').value=r?.phone||'';$('reservationNotes').value=r?.notes||'';$('reservationStatus').value=r?.status||'pending';if(r)Object.entries(r.participants||{}).forEach(([pid,p])=>addParticipant({...p,pid}));else addParticipant();$('reservationDialog').showModal();$('reservedBy').focus();}
+$('newReservation').onclick=()=>{requireAccess('reserve');editReservation();};$('addParticipant').onclick=()=>addParticipant().focus();
 $('reservedBy').addEventListener('change',()=>{const rows=$('participantRows').children;if(!editing&&rows.length===1&&!rows[0].querySelector('input').value)rows[0].querySelector('input').value=$('reservedBy').value.trim();});
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{if(!busy)$(b.dataset.close).close();});
 $('reservationForm').onsubmit=async e=>{
- e.preventDefault();const rid=editing||uid(), rows=[...$('participantRows').children].map(row=>({pid:row.dataset.pid,name:row.querySelector('input').value.trim()}));
+ e.preventDefault();requireAccess('reserve');const rid=editing||uid(), rows=[...$('participantRows').children].map(row=>({pid:row.dataset.pid,name:row.querySelector('input').value.trim()}));
  const by=$('reservedBy').value.trim(), phone=$('phone').value.trim(), notes=$('reservationNotes').value.trim(), status=$('reservationStatus').value;
  try {
   if(!by||!rows.length||rows.some(p=>!p.name))throw Error('Renseignez le réservant et au moins un participant.');
@@ -148,23 +195,41 @@ $('reservationForm').onsubmit=async e=>{
   });$('reservationDialog').close();
  }catch(err){$('formError').textContent=err.message;}
 };
-async function setStatus(rid,status){if(status==='cancelled'&&!confirm('Annuler cette réservation et libérer ses places ? Les informations de paiement seront conservées.'))return;await mutate(data=>{const r=data.reservations[rid];if(!r)throw Error('Réservation introuvable.');r.status=status;if(status!=='accepted')Object.values(r.participants||{}).forEach(p=>{p.tableId='';p.seat=0;p.arrived=false;});updated(r);});}
-async function setFlag(rid,pid,flag){const expected=!!state.reservations[rid]?.participants?.[pid]?.[flag];await mutate(data=>{const r=data.reservations[rid],p=r?.participants?.[pid];if(!p||r.status!=='accepted')throw Error('Cet invité ne fait pas partie d’une réservation acceptée.');if(!!p[flag]!==expected)throw Error('Ce statut a été modifié par l’autre organisateur. Vérifiez la liste actualisée.');p[flag]=!expected;p[flag+'At']=!expected?new Date().toISOString():'';p[flag+'By']=operator;updated(r);});}
-function choose(sel){membersFor(sel);closeTablePopup();selection=sel;render();document.querySelector('.panel-right').scrollIntoView({behavior:'smooth',block:'start'});}
+async function setStatus(rid,status){requireAccess('reserve');if(status==='cancelled'&&!confirm('Annuler cette réservation et libérer ses places ? Les informations de paiement seront conservées.'))return;await mutate(data=>{const r=data.reservations[rid];if(!r)throw Error('Réservation introuvable.');r.status=status;if(status!=='accepted')Object.values(r.participants||{}).forEach(p=>{p.tableId='';p.seat=0;p.arrived=false;});updated(r);});}
+async function setFlag(rid,pid,flag){
+  requireAccess(flag==='arrived'?'arrival':'payment');
+  const expected=!!state.reservations[rid]?.participants?.[pid]?.[flag];
+  await mutate(data=>{
+    const r=data.reservations[rid],p=r?.participants?.[pid];
+    if(!p||r.status!=='accepted')throw Error('Cet invité ne fait pas partie d’une réservation acceptée.');
+    if(!!p[flag]!==expected)throw Error('Ce statut a déjà été modifié sur un autre appareil.');
+    if(flag==='paid'&&p.arrived&&p.paid)throw Error('Une personne arrivée reste payée. Annulez d’abord son arrivée pour corriger.');
+    const now=new Date().toISOString();
+    p[flag]=!expected;p[flag+'At']=!expected?now:'';p[flag+'By']=operator+(lane?' · File '+(lane==='left'?'Gauche':'Droite'):'');
+    if(flag==='arrived'&&!expected){
+      // L'arrivée confirme le paiement ; une personne peut déjà être payée avant son entrée.
+      p.paid=true;
+      if(!p.paidAt)p.paidAt=now;
+      if(!p.paidBy)p.paidBy=operator+' · validation à l’entrée';
+    }
+    updated(r);
+  });
+}
+function choose(sel){requireAccess('place');membersFor(sel);closeTablePopup();selection=sel;render();document.querySelector('.panel-right').scrollIntoView({behavior:'smooth',block:'start'});}
 function clearSelection(){selection=null;render();}
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-action]');if(!b)return;try{const {action,rid,pid}=b.dataset;if(action==='edit')editReservation(rid);else if(action==='accept')await setStatus(rid,'accepted');else if(action==='cancel')await setStatus(rid,'cancelled');else if(action==='select')choose({rid,pid});else if(action==='arrived'||action==='paid')await setFlag(rid,pid,action);}catch(err){notice(err.message);}});
-document.addEventListener('dragstart',e=>{const el=e.target.closest('[draggable="true"]');if(!el)return;try{selection={rid:el.dataset.rid,pid:el.dataset.pid};membersFor(selection);e.dataTransfer.setData('text/plain',JSON.stringify(selection));e.dataTransfer.effectAllowed='move';$('mapHint').textContent='Déposez sur la table souhaitée';}catch(err){e.preventDefault();notice(err.message);}});
+document.addEventListener('dragstart',e=>{if(!allowed('place'))return;const el=e.target.closest('[draggable="true"]');if(!el)return;try{selection={rid:el.dataset.rid,pid:el.dataset.pid};membersFor(selection);e.dataTransfer.setData('text/plain',JSON.stringify(selection));e.dataTransfer.effectAllowed='move';$('mapHint').textContent='Déposez sur la table souhaitée';}catch(err){e.preventDefault();notice(err.message);}});
 tableElements.forEach(el=>{el.setAttribute('role','button');el.tabIndex=0;el.setAttribute('aria-label',el.dataset.table);el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openTablePopup(el.id);}};el.ondragover=e=>{if(selection){e.preventDefault();e.dataTransfer.dropEffect='move';}};el.ondrop=e=>{e.preventDefault();if(selection)showPlacement(el.id);};});
-function openTablePopup(id){if(selection){showPlacement(id);return;}popupTable=id;drawTable();$('tablePopupOverlay').classList.add('visible');}
+function openTablePopup(id){if(selection){requireAccess('place');showPlacement(id);return;}popupTable=id;drawTable();$('tablePopupOverlay').classList.add('visible');}
 function closeTablePopup(e){if(e&&e.target!==$('tablePopupOverlay'))return;popupTable=null;$('tablePopupOverlay').classList.remove('visible');}
 function drawTable(){const id=popupTable,cap=capacity(id),people=accepted().filter(p=>p.tableId===id);$('popupTitle').textContent=tableNames[id];$('popupSubtitle').textContent=cap?`${people.length} places occupées · ${cap-people.length} places libres`:'Définissez le nombre de places pour cette table';$('popupProgressFill').style.width=(cap?people.length/cap*100:0)+'%';$('popupProgressLabel').textContent=`${people.length} / ${cap||'—'} places`;
  $('popupGuestList').innerHTML=`<form class="capacity-control" id="capacityForm"><label for="tableCapacity">Nombre de places</label><input id="tableCapacity" type="number" min="1" max="100" step="1" value="${cap||''}" required><button type="submit" class="secondary">Enregistrer</button></form><div class="seat-grid">${Array.from({length:cap},(_,i)=>{const p=people.find(p=>p.seat===i+1);return `<div class="seat ${p?'occupied':''}"><strong>Place ${i+1}</strong>${p?esc(p.name)+'<br><small>'+esc(p.reservedBy)+'</small><br>'+`<button class="secondary" data-action="select" data-rid="${p.rid}" data-pid="${p.pid}">Déplacer</button>`:'Libre'}</div>`;}).join('')}</div>`;
- $('capacityForm').onsubmit=async e=>{e.preventDefault();const n=Number($('tableCapacity').value);try{if(!Number.isInteger(n)||n<1||n>100)throw Error('Choisissez entre 1 et 100 places.');await mutate(data=>{if(accepted(data).some(p=>p.tableId===id&&p.seat>n))throw Error('Déplacez d’abord les invités des places qui seraient supprimées.');data.tables[id]={capacity:n};});}catch(err){notice(err.message);}};
+ $('capacityForm').onsubmit=async e=>{e.preventDefault();requireAccess('place');const n=Number($('tableCapacity').value);try{if(!Number.isInteger(n)||n<1||n>100)throw Error('Choisissez entre 1 et 100 places.');await mutate(data=>{if(accepted(data).some(p=>p.tableId===id&&p.seat>n))throw Error('Déplacez d’abord les invités des places qui seraient supprimées.');data.tables[id]={capacity:n};});}catch(err){notice(err.message);}};
 }
-function showPlacement(tableId){try{const people=membersFor(selection);closeTablePopup();$('placementNames').textContent=people.map(p=>p.name).join(', ');$('placementTable').innerHTML='<option value="">Retirer du plan (à placer)</option>'+tableElements.map(el=>`<option value="${el.id}">${esc(tableNames[el.id])} — ${capacity(el.id)?freeSeats(el.id,selection).length+' places disponibles':'capacité à définir'}</option>`).join('');$('placementTable').value=tableId;$('newCapacity').value='';$('placementError').textContent='';updateSeatOptions();$('placementDialog').showModal();}catch(err){notice(err.message);}}
+function showPlacement(tableId){try{requireAccess('place');const people=membersFor(selection);closeTablePopup();$('placementNames').textContent=people.map(p=>p.name).join(', ');$('placementTable').innerHTML='<option value="">Retirer du plan (à placer)</option>'+tableElements.map(el=>`<option value="${el.id}">${esc(tableNames[el.id])} — ${capacity(el.id)?freeSeats(el.id,selection).length+' places disponibles':'capacité à définir'}</option>`).join('');$('placementTable').value=tableId;$('newCapacity').value='';$('placementError').textContent='';updateSeatOptions();$('placementDialog').showModal();}catch(err){notice(err.message);}}
 function updateSeatOptions(){try{const tableId=$('placementTable').value,people=membersFor(selection);$('newCapacityLabel').hidden=!tableId||!!capacity(tableId);const draft=clone(state);if(tableId&&!capacity(tableId)){draft.tables ||= {};draft.tables[tableId]={capacity:Math.min(100,Math.max(0,Math.floor(Number($('newCapacity').value)||0))) };}$('seatLabel').style.display=people.length===1&&tableId?'block':'none';$('placementSeat').innerHTML=tableId?freeSeats(tableId,selection,draft).map(n=>`<option value="${n}">Place ${n}</option>`).join(''):'';const free=tableId?freeSeats(tableId,selection,draft).length:0;$('placementError').textContent=tableId&&!capacity(tableId,draft)?'Indiquez le nombre de places : la table sera configurée en même temps que le placement.':tableId&&free<people.length?`Pas assez de places : ${free} libres pour ${people.length} personnes. Choisissez une autre table ou placez les invités individuellement.`:people.length>1&&tableId?'Le groupe sera affecté aux premières places libres de cette table.':'';}catch(err){$('placementError').textContent=err.message;}}
 $('placementTable').onchange=()=>{$('newCapacity').value='';updateSeatOptions();};$('newCapacity').oninput=updateSeatOptions;
-$('placementForm').onsubmit=async e=>{e.preventDefault();const sel={...selection},tableId=$('placementTable').value,seat=Number($('placementSeat').value),newCap=Number($('newCapacity').value);try{await mutate(data=>{const people=membersFor(sel,data),r=data.reservations[sel.rid];if(tableId){if(!capacity(tableId,data)){if(!Number.isInteger(newCap)||newCap<1||newCap>100)throw Error('Indiquez une capacité entre 1 et 100 places.');data.tables[tableId]={capacity:newCap};}const free=freeSeats(tableId,sel,data);if(free.length<people.length)throw Error('La table ne dispose plus d’assez de places.');const seats=people.length===1?[seat]:free;if(people.length===1&&!free.includes(seat))throw Error('Cette place n’est plus disponible.');people.forEach((p,i)=>{r.participants[p.pid].tableId=tableId;r.participants[p.pid].seat=seats[i];});}else people.forEach(p=>{r.participants[p.pid].tableId='';r.participants[p.pid].seat=0;});updated(r);});selection=null;$('placementDialog').close();render();if(tableId)openTablePopup(tableId);}catch(err){$('placementError').textContent=err.message;}};
-$('exportButton').onclick=()=>{const cell=v=>'"'+String(v??'').replace(/^[=+@\-\t\r]/,"'$&").replaceAll('"','""')+'"';const rows=[['Réservant','Téléphone','Invité','Statut','Table','Place','Arrivé','Payé','Saisi par'],...allGuests().map(p=>[p.reservedBy,state.reservations[p.rid].phone,p.name,statuses[p.status],tableNames[p.tableId]||'',p.seat||'',p.arrived?'Oui':'Non',p.paid?'Oui':'Non',state.reservations[p.rid].createdBy])];const url=URL.createObjectURL(new Blob(['\uFEFF'+rows.map(r=>r.map(cell).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='Saint-Eloi-2026-reservations.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+$('placementForm').onsubmit=async e=>{e.preventDefault();requireAccess('place');const sel={...selection},tableId=$('placementTable').value,seat=Number($('placementSeat').value),newCap=Number($('newCapacity').value);try{await mutate(data=>{const people=membersFor(sel,data),r=data.reservations[sel.rid];if(tableId){if(!capacity(tableId,data)){if(!Number.isInteger(newCap)||newCap<1||newCap>100)throw Error('Indiquez une capacité entre 1 et 100 places.');data.tables[tableId]={capacity:newCap};}const free=freeSeats(tableId,sel,data);if(free.length<people.length)throw Error('La table ne dispose plus d’assez de places.');const seats=people.length===1?[seat]:free;if(people.length===1&&!free.includes(seat))throw Error('Cette place n’est plus disponible.');people.forEach((p,i)=>{r.participants[p.pid].tableId=tableId;r.participants[p.pid].seat=seats[i];});}else people.forEach(p=>{r.participants[p.pid].tableId='';r.participants[p.pid].seat=0;});updated(r);});selection=null;$('placementDialog').close();render();if(tableId)openTablePopup(tableId);}catch(err){$('placementError').textContent=err.message;}};
+$('exportButton').onclick=()=>{requireAccess('export');const cell=v=>'"'+String(v??'').replace(/^[=+@\-\t\r]/,"'$&").replaceAll('"','""')+'"';const rows=[['Réservant','Téléphone','Invité','Statut','Table','Place','Arrivé','Payé','Saisi par'],...allGuests().map(p=>[p.reservedBy,state.reservations[p.rid].phone,p.name,statuses[p.status],tableNames[p.tableId]||'',p.seat||'',p.arrived?'Oui':'Non',p.paid?'Oui':'Non',state.reservations[p.rid].createdBy])];const url=URL.createObjectURL(new Blob(['\uFEFF'+rows.map(r=>r.map(cell).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='Saint-Eloi-2026-reservations.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeTablePopup();}});
 render();
