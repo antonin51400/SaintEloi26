@@ -799,22 +799,97 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 
 .code-box{color:#f4efe4}.code-box .muted{color:#cbc4b7}.panel-left,.panel-right{min-width:0}.group-header{letter-spacing:0;text-transform:none;font-size:14px}.wrapper{height:auto;min-height:100vh;overflow:visible}.main{overflow:visible}.panel-right{flex:1}.guest-list{max-height:75vh}.table-popup-overlay{z-index:250}#newCapacityLabel[hidden]{display:none}header>div:last-child{flex-wrap:wrap;gap:16px!important}.header-stats{flex-wrap:wrap}.panel-left{min-width:0}.room-wrapper{max-height:80vh}.toolbar{position:sticky;top:0;z-index:10}.guest-list section{flex-shrink:0}
 @media(max-width:600px){.stat{padding:8px}.stat-number{font-size:25px}.stat-label{font-size:10px}.code-box{padding:28px 20px}.seat-grid{grid-template-columns:1fr}.main{min-width:0}.room-wrapper{width:100%;max-width:100vw}.toolbar{position:static}.table-popup{width:94vw;padding:20px}.guest-card{gap:8px}}
+
+/* Page de garde — Saint Éloi 2026, JA Suippes × JA Givry/Menou × Com’Sono */
+#loginPanel.code-modal {
+  background: radial-gradient(circle at 5% 4%, rgba(219,153,84,.15), transparent 34%),
+              radial-gradient(circle at 94% 95%, rgba(214,74,64,.18), transparent 42%),
+              linear-gradient(137deg,#261a22 0%,#4b222d 52%,#241921 100%);
+  min-height:100vh; overflow-y:auto; padding:24px; align-items:center; justify-content:center;
+  color:#fff; overscroll-behavior:contain;
+}
+#loginPanel .saint-cover {width:min(1120px,100%);display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);align-items:center;gap:clamp(28px,5vw,78px);margin:auto}
+#loginPanel .cover-hero{position:relative;padding:25px 0}
+#loginPanel .cover-meta{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:26px;font-size:11px;font-weight:800;letter-spacing:2.3px;color:#f0e1d4}
+#loginPanel .cover-tag{border:1px solid rgba(251,214,156,.6);border-radius:50px;padding:8px 13px;color:#f4d297}
+#loginPanel .cover-date{color:#f3e4d5}
+#loginPanel .cover-logo{display:flex;align-items:center;justify-content:center;background:#fcf9f5;border:1px solid #fff;width:clamp(175px,32vw,246px);padding:17px 22px;border-radius:16px;box-shadow:0 18px 45px rgba(0,0,0,.24);margin:0 0 30px}
+#loginPanel .cover-logo img{display:block;width:100%;height:auto;object-fit:contain}
+#loginPanel .cover-kicker{font-size:11px;font-weight:800;letter-spacing:3px;color:#eac7a1;margin-bottom:12px}
+#loginPanel .cover-title{font-family:'Playfair Display',serif;line-height:1.02;font-size:clamp(48px,6vw,84px);font-weight:900;letter-spacing:-2px;color:white;margin:0}
+#loginPanel .cover-title em{font-style:normal;color:#e9bb77}
+#loginPanel .cover-title span{display:block;font-size:.63em;letter-spacing:7px;color:#f0e6de;padding-top:5px}
+#loginPanel .cover-subtitle{font-size:15px;max-width:450px;line-height:1.75;color:#e9d9d2;margin:22px 0 26px}
+#loginPanel .cover-team-label{font-size:10px;color:#e6bfa2;letter-spacing:2.3px;font-weight:800;margin-bottom:12px}
+#loginPanel .cover-team{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;font-size:clamp(13px,1.5vw,17px);line-height:1.4;color:#fff}
+#loginPanel .cover-team strong{font-weight:800}
+#loginPanel .cover-team b{font-size:20px;color:#f1bd79}
+#loginPanel .cover-sono{font-weight:800}
+#loginPanel .cover-tools{margin-top:32px;font-size:10px;letter-spacing:1.6px;font-weight:800;color:#d4c1bb}
+#loginPanel .cover-tools span{color:#e9bb77;margin:0 6px}
+#loginPanel .code-box{width:100%;max-width:430px;text-align:left;margin:0;padding:clamp(25px,4vw,37px);background:rgba(255,255,255,.075);border:1px solid rgba(242,199,151,.3);box-shadow:0 30px 68px rgba(0,0,0,.2)}
+#loginPanel .code-box h2{font-size:clamp(24px,3vw,29px)}
+#loginPanel .code-box p{margin:12px 0 20px;color:#e7d7ce;font-size:13px;line-height:1.65}
+#loginPanel .access-label{font-weight:650}
+#loginPanel #loginButton{padding:14px 16px;border-radius:11px;background:linear-gradient(135deg,#be302c,#922520);border:1px solid #db5750}
+#loginPanel #demoButton{width:100%;border:1px solid rgba(255,255,255,.35);color:#fff;background:rgba(255,255,255,.09);margin-top:0;padding:12px}
+#loginPanel #demoButton:hover{background:rgba(255,255,255,.17)}
+#loginPanel #loginMessage{font-size:12px;line-height:1.5;min-height:30px;margin:12px 0 16px}
+#loginPanel .code-box .muted{font-size:11px;text-align:center;color:#c6ada9;margin:14px 0 0}
+@media(max-width:820px){
+ #loginPanel .saint-cover{grid-template-columns:minmax(0,1fr);gap:22px;max-width:580px}
+ #loginPanel .cover-hero{padding:4px 0 0}
+ #loginPanel .cover-logo{width:160px;padding:13px 17px;margin:0 0 18px}
+ #loginPanel .cover-meta{margin-bottom:16px}
+ #loginPanel .cover-title{font-size:clamp(43px,10vw,66px)}
+ #loginPanel .cover-subtitle{margin:14px 0 19px}
+ #loginPanel .cover-tools{margin-top:19px}
+ #loginPanel .code-box{max-width:none}
+}
+@media(max-width:420px){#loginPanel.code-modal{padding:18px 16px}#loginPanel .cover-meta{font-size:9px;letter-spacing:1px}#loginPanel .cover-team{gap:7px;font-size:12px}#loginPanel .cover-tools{font-size:9px;letter-spacing:1px}#loginPanel .code-box{padding:22px}}
+
 </style>
 </head>
 <body>
 
-<section class="code-modal" id="loginPanel"><div class="code-box">
-<div class="eyebrow-code">Saint Eloi 2026</div><h2>Réservations & accueil</h2>
-<p>Réservations par SMS, placement des tables et accueil des invités. Choisissez votre code d'accès pour ouvrir votre espace.</p>
-<form id="accessForm" class="access-form">
-  <label for="accessCode" class="access-label">Code d’accès à quatre chiffres</label>
-  <input id="accessCode" class="access-input" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" placeholder="••••" required>
-  <button class="primary" type="submit" id="loginButton">Se connecter</button>
-</form>
-<p id="loginMessage" role="status"></p>
-<button class="secondary" type="button" id="demoButton">Essayer avec des données fictives</button>
-<p class="muted">Mode essai : vos saisies ne sont ni sauvegardées ni partagées entre les appareils.</p>
-</div></section>
+<section class="code-modal" id="loginPanel" aria-label="Accueil Saint Éloi 2026">
+  <div class="saint-cover">
+    <div class="cover-hero">
+      <div class="cover-meta">
+        <span class="cover-tag">ÉDITION 2026</span>
+        <span class="cover-date">SAMEDI 5 DÉCEMBRE</span>
+      </div>
+      <div class="cover-logo" aria-label="Jeunes Agriculteurs">
+        <img src="https://www.jeunes-agriculteurs.fr/wp-content/uploads/2019/03/logo-ja-fond-transparent-fonce-1.png" alt="Logo officiel des Jeunes Agriculteurs" width="250" height="187" loading="eager" referrerpolicy="no-referrer">
+      </div>
+      <div class="cover-kicker">LES JEUNES AGRICULTEURS PRÉSENTENT</div>
+      <h1 class="cover-title">La Saint <em>Éloi</em><span>2026</span></h1>
+      <p class="cover-subtitle">Réservations, plan de table et accueil des invités — un espace pour préparer ensemble la soirée.</p>
+      <div class="cover-team-label">UNE ORGANISATION SIGNÉE</div>
+      <div class="cover-team" aria-label="Organisateurs et partenaires">
+        <span>JA <strong>Suippes</strong></span>
+        <b aria-hidden="true">×</b>
+        <span>JA <strong>Givry / Menou</strong></span>
+        <b aria-hidden="true">×</b>
+        <span class="cover-sono">Com’Sono</span>
+      </div>
+      <div class="cover-tools">RÉSERVATIONS <span>·</span> PLAN DE TABLE <span>·</span> ENTRÉES</div>
+    </div>
+    <div class="code-box">
+      <div class="eyebrow-code">ESPACE ORGANISATION</div>
+      <h2>Accéder à la gestion</h2>
+      <p>Connectez-vous avec votre code à quatre chiffres pour retrouver votre espace de travail.</p>
+      <form id="accessForm" class="access-form">
+        <label for="accessCode" class="access-label">Code d’accès</label>
+        <input id="accessCode" class="access-input" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" placeholder="••••" required>
+        <button class="primary" type="submit" id="loginButton">Accéder à mon espace <span aria-hidden="true">→</span></button>
+      </form>
+      <p id="loginMessage" role="status"></p>
+      <button class="secondary" type="button" id="demoButton">Découvrir le mode démonstration</button>
+      <p class="muted">Démonstration : les données ne sont pas sauvegardées ni partagées.</p>
+    </div>
+  </div>
+</section>
 <div class="wrapper" id="appWrapper" style="display:none">
 
 <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
