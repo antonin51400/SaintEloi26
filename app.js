@@ -9,7 +9,7 @@ const tableElements = [...document.querySelectorAll('.table-block')];
 const tableNames = Object.fromEntries(tableElements.map(el => [el.id, el.dataset.table]));
 let state = {reservations:{},tables:{}};
 let user = null, operator = '', role = 'none', lane = '', demo = false, online = false, ready = false, busy = false, loginBusy = false;
-let db = null, auth = null, eventRef = null, dataRef = null, memberRef = null;
+let db = null, auth = null, eventRef = null, dataRef = null, memberRef = null, pendingRequestRef = null;
 let filter = 'all', editing = null, editVersion = 0, selection = null, popupTable = null;
 const permissions = {
   organizer: ['reserve','place','arrival','payment','export'],
@@ -96,7 +96,7 @@ function showApp(){
   $('sessionBadge').onclick=()=>{if(role==='entry')selectEntryLane();};
   render();if(role==='entry'&&!lane)selectEntryLane();
 }
-function stopListeners(){if(dataRef)dataRef.off();if(memberRef)memberRef.off();if(db)db.ref('.info/connected').off();dataRef=null;memberRef=null;ready=false;}
+function stopListeners(){if(dataRef)dataRef.off();if(memberRef)memberRef.off();if(pendingRequestRef)pendingRequestRef.off();if(db)db.ref('.info/connected').off();dataRef=null;memberRef=null;pendingRequestRef=null;ready=false;}
 function lock(message){stopListeners();state={reservations:{},tables:{}};selection=null;popupTable=null;document.getElementById('laneChoice')?.remove();document.querySelectorAll('dialog[open]').forEach(d=>d.close());closeTablePopup();$('appWrapper').style.display='none';$('loginPanel').style.display='flex';$('loginMessage').textContent=message;render();}
 const config = window.SAINT_ELOI_CONFIG || {};
 const codeProfiles = window.SAINT_ELOI_ACCESS_CODES || {};
@@ -184,6 +184,10 @@ async function startSession(profile, applicantName){
     const approved=(await membershipRef.once('value')).val();
     if(approved){
       connectAuthorized(approved);
+      memberRef=membershipRef;
+      memberRef.on('value',snapshot=>{
+        if(!snapshot.val()&&dataRef)lock('Votre autorisation a été retirée. Accès interrompu.');
+      });
       return;
     }
 
@@ -217,8 +221,10 @@ async function startSession(profile, applicantName){
     memberRef.on('value',snapshot=>{
       const member=snapshot.val();
       if(member)connectAuthorized(member);
+      else if(dataRef)lock('Votre autorisation a été retirée. Accès interrompu.');
     },()=>{$('loginMessage').textContent='Impossible de vérifier votre autorisation Firebase.';});
-    requestRef.on('value',snapshot=>{
+    pendingRequestRef=requestRef;
+    pendingRequestRef.on('value',snapshot=>{
       const req=snapshot.val();
       if(!req||dataRef)return;
       if(req.status==='rejected'){
