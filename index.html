@@ -854,6 +854,8 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 #loginPanel .pairing-panel p{font-size:12px;margin:8px 0;color:#ede1d7}
 #loginPanel .device-uid{display:block;overflow-wrap:anywhere;color:#fefefe;font-size:13px;padding:9px 4px;user-select:all}
 #loginPanel #copyDeviceUid{padding:8px;font-size:12px;width:100%;color:#fff;border-color:#b89160;background:rgba(255,255,255,.12)}
+#loginPanel .access-input.name-input{font-size:15px;letter-spacing:normal;text-align:left;padding:12px 14px}
+#loginPanel .access-input.name-input::placeholder{color:rgba(255,255,255,.55)}
 </style>
 </head>
 <body>
@@ -886,14 +888,16 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
       <h2>Accéder à la gestion</h2>
       <p>Connectez-vous avec votre code à quatre chiffres pour retrouver votre espace de travail.</p>
       <form id="accessForm" class="access-form">
+        <label for="requestName" class="access-label">Votre nom (pour la demande d’accès)</label>
+        <input id="requestName" class="access-input name-input" type="text" maxlength="100" autocomplete="name" placeholder="Prénom et nom" required>
         <label for="accessCode" class="access-label">Code d’accès</label>
         <input id="accessCode" class="access-input" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" placeholder="••••" required>
         <button class="primary" type="submit" id="loginButton">Accéder à mon espace <span aria-hidden="true">→</span></button>
       </form>
       <p id="loginMessage" role="status"></p>
       <section id="pairingPanel" class="pairing-panel" hidden aria-label="Autorisation de cet appareil">
-        <strong>Appareil à autoriser dans Firebase</strong>
-        <p>Copiez cet identifiant, puis inscrivez-le dans la liste des appareils autorisés de Saint Éloi 2026.</p>
+        <strong>Demande d’accès à valider</strong>
+        <p id="accessRequestStatus">Un organisateur doit approuver cet appareil avant que vous puissiez consulter les réservations.</p>
         <code id="deviceUid" class="device-uid"></code>
         <button class="secondary" type="button" id="copyDeviceUid">Copier l’identifiant de cet appareil</button>
       </section>
