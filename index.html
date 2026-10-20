@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saint Eloi 2026 — Accueil</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --snow: #f5f3ef;
+    --cream: #ede8df;
+    --pine: #c0392b;
+    --pine-light: #a93226;
+    --gold: #c9a84c;
+    --gold-light: #e8c96a;
+    --red: #a63228;
+    --text: #1a1a1a;
+    --muted: #7a7269;
+    --arrived: #2d5442;
+    --arrived-bg: #e8f2ec;
+    --highlight: #e8c96a;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: linear-gradient(135deg, var(--snow) 0%, #faf7f3 100%);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23c9a84c' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--pine) 0%, var(--pine-light) 100%);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow-lg);
+    flex-shrink: 0;
+  }
+
+  .header-title .eyebrow {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold-light);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .header-title h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    color: white;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .header-stats { display: flex; gap: 32px; align-items: center; }
+
+  .stat {
+    text-align: center;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    transition: var(--transition);
+  }
+
+  .stat:hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-2px); }
+
+  .stat-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--gold-light);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(245, 243, 239, 0.7);
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  .progress-bar { height: 4px; background: rgba(237, 232, 223, 0.5); flex-shrink: 0; overflow: hidden; }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--gold-light) 100%);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 20px rgba(201, 168, 76, 0.3);
+  }
+
+  .main { display: flex; flex: 1; overflow: hidden; gap: 0; }
+
+  .panel-left {
+    width: 50vw;
+    min-width: 400px;
+    max-width: 600px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    border-right: 2px solid var(--cream);
+    background: white;
+    box-shadow: 2px 0 20px rgba(0, 0, 0, 0.05);
+  }
+
+  .search-section { padding: 20px; border-bottom: 1px solid var(--cream); }
+
+  .search-wrapper { position: relative; }
+
+  .search-wrapper svg {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    opacity: 0.6;
+  }
+
+  #search {
+    width: 100%;
+    padding: 14px 16px 14px 48px;
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    border: 2px solid var(--cream);
+    border-radius: 12px;
+    background: var(--snow);
+    outline: none;
+    transition: var(--transition);
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  #search:focus { border-color: var(--gold); box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.15); background: white; }
+  #search::placeholder { color: var(--muted); opacity: 0.6; }
+
+  .filters {
+    padding: 12px 20px;
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--cream);
+  }
+
+  .filters::-webkit-scrollbar { height: 4px; }
+  .filters::-webkit-scrollbar-thumb { background: var(--cream); border-radius: 2px; }
+
+  .filter-btn {
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 2px solid var(--cream);
+    background: white;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: var(--transition);
+    color: var(--muted);
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .filter-btn:hover { border-color: var(--gold); color: var(--pine); background: var(--snow); transform: translateY(-2px); }
+  .filter-btn.active { background: linear-gradient(135deg, var(--pine), var(--pine-light)); color: white; border-color: var(--pine); box-shadow: var(--shadow-md); }
+
+  .guest-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 12px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .guest-list::-webkit-scrollbar { width: 6px; }
+  .guest-list::-webkit-scrollbar-track { background: transparent; }
+  .guest-list::-webkit-scrollbar-thumb { background: var(--cream); border-radius: 3px; }
+  .guest-list::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+  .group-header {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 12px 8px 6px;
+    border-bottom: 2px solid var(--cream);
+    margin-top: 8px;
+    font-weight: 700;
+  }
+
+  .guest-card {
+    background: white;
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border: 2px solid var(--cream);
+    transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+    overflow: visible;
+    min-height: 64px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .guest-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 5px;
+    background: var(--cream);
+    transition: background 0.3s;
+    border-radius: 12px 0 0 12px;
+  }
+
+  .guest-card:hover { border-color: var(--gold); box-shadow: 0 4px 16px rgba(201, 168, 76, 0.2); transform: translateX(4px); }
+  .guest-card:hover::before { background: var(--gold); }
+  .guest-card.arrived { background: var(--arrived-bg); border-color: #a8d1b9; }
+  .guest-card.arrived::before { background: var(--arrived); }
+  .guest-card.selected { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.25); background: linear-gradient(135deg, white 0%, rgba(232, 201, 106, 0.05) 100%); }
+
+  .arrive-toggle {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 2.5px solid var(--cream);
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: var(--transition);
+    z-index: 1;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .arrive-toggle:hover { border-color: var(--pine); background: var(--cream); transform: scale(1.1); }
+  .guest-card.arrived .arrive-toggle { background: var(--arrived); border-color: var(--arrived); box-shadow: 0 4px 12px rgba(45, 84, 66, 0.2); }
+  .arrive-toggle svg { display: none; }
+  .guest-card.arrived .arrive-toggle svg { display: block; }
+
+  .guest-info { flex: 1; min-width: 0; }
+
+  .guest-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .guest-card.arrived .guest-name { color: var(--arrived); }
+
+  .guest-meta { display: flex; gap: 12px; flex-wrap: nowrap; margin-top: 4px; overflow: hidden; }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .table-badge {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--pine), var(--pine-light));
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .table-badge.no-table { background: var(--cream); color: var(--muted); }
+
+  .time-badge { font-size: 11px; color: var(--gold); font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); font-family: 'Playfair Display', serif; font-size: 20px; }
+
+  .panel-right { flex: 1; display: flex; flex-direction: column; background: var(--snow); overflow: hidden; }
+
+  .map-header {
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid var(--cream);
+    flex-shrink: 0;
+    background: white;
+  }
+
+  .map-header h2 { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--pine); font-weight: 700; }
+  .map-hint { font-size: 13px; color: var(--muted); font-weight: 500; }
+
+  .guest-banner {
+    margin: 12px 20px 0;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, var(--pine), var(--pine-light));
+    border-radius: 12px;
+    display: none;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-md);
+  }
+
+  .guest-banner.visible { display: flex; }
+
+  .guest-info-banner { flex: 1; }
+
+  .banner-name { font-family: 'Playfair Display', serif; font-size: 18px; color: white; font-weight: 700; }
+  .banner-detail { font-size: 12px; color: rgba(245, 243, 239, 0.8); margin-top: 4px; }
+
+  .banner-table {
+    padding: 8px 14px;
+    background: var(--gold-light);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--pine);
+    white-space: nowrap;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .banner-close {
+    cursor: pointer;
+    color: rgba(245, 243, 239, 0.7);
+    font-size: 20px;
+    line-height: 1;
+    transition: var(--transition);
+    width: 32px; height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .banner-close:hover { color: white; background: rgba(255, 255, 255, 0.2); }
+
+  .room-wrapper { flex: 1; overflow: auto; padding: 20px; }
+  .room-wrapper::-webkit-scrollbar { width: 8px; }
+  .room-wrapper::-webkit-scrollbar-track { background: transparent; }
+  .room-wrapper::-webkit-scrollbar-thumb { background: var(--cream); border-radius: 4px; }
+
+  .room {
+    background: white;
+    border-radius: 16px;
+    border: 2px solid var(--cream);
+    padding: 28px;
+    min-width: 700px;
+    position: relative;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .scene {
+    background: linear-gradient(135deg, var(--pine), var(--pine-light));
+    color: white;
+    text-align: center;
+    padding: 16px 24px;
+    border-radius: 12px;
+    margin: 0 auto 32px;
+    width: 70%;
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 700;
+    box-shadow: var(--shadow-md);
+  }
+
+  .table-rows { display: flex; flex-direction: column; gap: 20px; }
+
+  .table-row { display: flex; gap: 16px; align-items: center; justify-content: center; }
+
+  .table-group { display: flex; gap: 10px; }
+
+  .table-block {
+    background: white;
+    border-radius: 12px;
+    padding: 14px 16px;
+    min-width: 110px;
+    text-align: center;
+    border: 2px solid var(--cream);
+    transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .table-block:hover { border-color: var(--muted); box-shadow: var(--shadow-md); transform: translateY(-4px); }
+
+  .table-block.status-partial { background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-color: #e67e22; }
+  .table-block.status-partial .t-name { color: #b45309; }
+  .table-block.status-partial .t-number { color: #d97706; }
+
+  .table-block.status-full { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-color: #27ae60; box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.15), var(--shadow-md); }
+  .table-block.status-full .t-name { color: #1a6b3a; }
+  .table-block.status-full .t-number { color: #27ae60; }
+
+  .table-popup-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+
+  .table-popup-overlay.visible { display: flex; }
+
+  .table-popup {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .popup-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+
+  .popup-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--pine); }
+  .popup-subtitle { font-size: 13px; color: var(--muted); margin-top: 4px; font-weight: 500; }
+
+  .popup-close {
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 24px;
+    line-height: 1;
+    padding: 6px 10px;
+    transition: var(--transition);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .popup-close:hover { color: var(--text); background: var(--snow); }
+
+  .popup-progress-wrap {
+    height: 18px;
+    background: #e0f0e8;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  .popup-progress-fill { height: 100%; background: linear-gradient(90deg, #27ae60, #2ecc71); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 8px; }
+  .popup-progress-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #1a6b3a; }
+
+  .popup-guest-list { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+  .popup-guest-list::-webkit-scrollbar { width: 6px; }
+  .popup-guest-list::-webkit-scrollbar-thumb { background: var(--cream); border-radius: 3px; }
+
+  .popup-guest-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--snow);
+    border: 2px solid var(--cream);
+    transition: var(--transition);
+  }
+
+  .popup-guest-row:hover { border-color: var(--gold); background: white; }
+  .popup-guest-row.arrived-row { background: var(--arrived-bg); border-color: #a8d1b9; }
+
+  .popup-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; border: 2.5px solid var(--cream); }
+  .popup-dot.green { background: var(--arrived); border-color: var(--arrived); }
+  .popup-dot.grey { background: var(--cream); border-color: #bbb; }
+
+  .popup-guest-name { flex: 1; font-size: 14px; font-weight: 600; color: var(--text); }
+  .popup-guest-row.arrived-row .popup-guest-name { color: var(--arrived); }
+
+  .popup-arrived-time { font-size: 12px; color: var(--gold); font-weight: 700; }
+
+  /* === NOUVEAUX BOUTONS POPUP ADMIN === */
+  .popup-arrive-btn {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 2px solid var(--cream);
+    background: white;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .popup-arrive-btn:hover { border-color: var(--arrived); color: var(--arrived); background: var(--arrived-bg); transform: scale(1.12); }
+
+  .popup-arrive-btn.active { background: var(--arrived); border-color: var(--arrived); color: white; box-shadow: 0 2px 8px rgba(45, 84, 66, 0.3); }
+
+  .popup-paid-btn {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 2px solid var(--cream);
+    background: white;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .popup-paid-btn:hover { border-color: var(--gold); color: var(--gold); background: #fff8e7; transform: scale(1.12); }
+
+  .popup-paid-btn.active { background: linear-gradient(135deg, var(--gold), var(--gold-light)); border-color: var(--gold); color: white; box-shadow: 0 2px 8px rgba(201, 168, 76, 0.3); }
+
+  .popup-admin-hint {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    padding: 8px 0 4px;
+    font-style: italic;
+    letter-spacing: 0.3px;
+  }
+
+  .table-block .t-number { font-size: 11px; color: var(--muted); font-weight: 700; letter-spacing: 0.5px; }
+  .table-block .t-name { font-family: 'Playfair Display', serif; font-size: 14px; color: var(--pine); font-weight: 700; margin: 4px 0 6px; }
+  .table-block .t-group { font-size: 11px; color: var(--muted); }
+  .table-block .t-guests { font-size: 11px; color: var(--pine-light); font-weight: 700; margin-top: 4px; min-height: 14px; }
+
+  .t-progress-wrap { margin-top: 8px; height: 16px; background: #e0f0e8; border-radius: 6px; overflow: hidden; position: relative; }
+  .t-progress-fill { height: 100%; background: linear-gradient(90deg, #27ae60, #2ecc71); border-radius: 6px; width: 0%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+  .t-progress-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #1a6b3a; letter-spacing: 0.3px; pointer-events: none; white-space: nowrap; }
+
+  .table-block.highlighted { background: linear-gradient(135deg, var(--gold-light), #f0d993); border-color: var(--gold); box-shadow: 0 0 0 5px rgba(201, 168, 76, 0.3), var(--shadow-md); transform: scale(1.08); }
+  .table-block.highlighted .t-name { color: var(--pine); }
+
+  .room-divider { width: 3px; background: var(--cream); border-radius: 1.5px; align-self: stretch; flex-shrink: 0; margin: 0 8px; }
+
+  .legend { display: flex; gap: 24px; margin-top: 24px; justify-content: center; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); font-weight: 500; }
+  .legend-dot { width: 14px; height: 14px; border-radius: 4px; }
+  .legend-dot.free { background: var(--cream); }
+  .legend-dot.highlighted { background: var(--gold-light); border: 2px solid var(--gold); }
+
+  .no-table-notice {
+    margin: 12px 20px 0;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #fff8e7 0%, #fffbe6 100%);
+    border: 2px solid var(--gold);
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--pine);
+    display: none;
+    flex-shrink: 0;
+    font-weight: 500;
+  }
+
+  .no-table-notice.visible { display: block; }
+
+  .lane-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: linear-gradient(135deg, var(--pine) 0%, var(--pine-light) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .lane-modal h2 { font-family: 'Playfair Display', serif; font-size: 32px; color: white; text-align: center; font-weight: 700; }
+  .lane-modal .eyebrow-modal { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold-light); text-align: center; font-weight: 700; }
+
+  .lane-buttons { display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; }
+
+  .lane-btn {
+    padding: 32px 56px;
+    border-radius: 16px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 700;
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .lane-btn.left { background: linear-gradient(135deg, #2980b9, #1f618d); color: white; }
+  .lane-btn.right { background: linear-gradient(135deg, #8e44ad, #6c3483); color: white; }
+  .lane-btn:hover { transform: scale(1.08); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3); }
+  .lane-btn:active { transform: scale(0.98); }
+  .lane-btn .lane-icon { font-size: 48px; }
+  .lane-btn .lane-sub { font-family: 'DM Sans', sans-serif; font-size: 14px; opacity: 0.9; font-weight: 500; }
+
+  .lane-badge {
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: var(--transition);
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .lane-badge:hover { opacity: 0.9; transform: translateY(-2px); }
+  .lane-badge.left { background: linear-gradient(135deg, #2980b9, #1f618d); color: white; }
+  .lane-badge.right { background: linear-gradient(135deg, #8e44ad, #6c3483); color: white; }
+
+  /* Payment status */
+  .paid-toggle {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--cream);
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: var(--transition);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    z-index: 1;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .paid-toggle:hover { border-color: var(--gold); background: #fff8e7; transform: scale(1.1); }
+  .paid-toggle.is-paid { background: linear-gradient(135deg, var(--gold), var(--gold-light)); border-color: var(--gold); color: white; box-shadow: 0 2px 8px rgba(201, 168, 76, 0.3); }
+
+  .paid-badge { font-size: 10px; padding: 2px 7px; border-radius: 999px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+  .paid-badge.yes { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; }
+  .paid-badge.no { background: #fef2f2; color: #dc2626; }
+
+  body.view-only .arrive-toggle,
+  body.view-only .paid-toggle { display: none !important; }
+  body.view-only .guest-card { cursor: default; }
+
+  .popup-paid-badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+  .popup-paid-badge.yes { background: #fef3c7; color: #92400e; }
+  .popup-paid-badge.no { background: #fef2f2; color: #dc2626; }
+
+  /* Code entry modal */
+  .code-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  .code-modal.hidden { display: none; }
+
+  .code-box {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(201, 168, 76, 0.3);
+    border-radius: 24px;
+    padding: 48px 40px;
+    text-align: center;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .code-box .eyebrow-code { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold-light); font-weight: 700; margin-bottom: 8px; }
+  .code-box h2 { font-family: 'Playfair Display', serif; font-size: 28px; color: white; font-weight: 700; margin-bottom: 8px; }
+  .code-box .code-subtitle { font-size: 14px; color: rgba(255, 255, 255, 0.5); margin-bottom: 32px; font-family: 'DM Sans', sans-serif; }
+
+  .code-input-wrapper { display: flex; gap: 12px; justify-content: center; margin-bottom: 28px; }
+
+  .code-digit {
+    width: 56px; height: 64px;
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--gold-light);
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(201, 168, 76, 0.2);
+    border-radius: 12px;
+    outline: none;
+    transition: var(--transition);
+    caret-color: var(--gold-light);
+  }
+
+  .code-digit:focus { border-color: var(--gold); box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.2); background: rgba(255, 255, 255, 0.12); }
+  .code-digit::placeholder { color: rgba(255, 255, 255, 0.15); }
+
+  .code-submit {
+    padding: 14px 48px;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--pine);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: var(--shadow-md);
+    letter-spacing: 0.5px;
+  }
+
+  .code-submit:hover { transform: scale(1.05); box-shadow: 0 8px 24px rgba(201, 168, 76, 0.4); }
+  .code-submit:active { transform: scale(0.98); }
+
+  .code-error { color: #e74c3c; font-size: 13px; font-weight: 600; margin-top: 16px; min-height: 20px; transition: var(--transition); }
+
+  .code-error.shake { animation: codeShake 0.5s ease-in-out; }
+
+  @keyframes codeShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+  }
+
+  @media (max-width: 1200px) {
+    .main { flex-direction: column; }
+    .panel-left { width: 100%; max-width: none; border-right: none; border-bottom: 2px solid var(--cream); max-height: 40vh; }
+    .room { min-width: auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Code entry modal -->
+<div class="code-modal" id="codeModal">
+  <div class="code-box">
+    <div class="eyebrow-code">Saint Eloi 2026</div>
+    <h2>Code d&#39;acces</h2>
+    <div class="code-subtitle">Entrez le code pour acceder a la plateforme</div>
+    <div class="code-input-wrapper">
+      <input type="text" class="code-digit" id="digit1" maxlength="1" inputmode="numeric" pattern="[0-9]" autofocus>
+      <input type="text" class="code-digit" id="digit2" maxlength="1" inputmode="numeric" pattern="[0-9]">
+      <input type="text" class="code-digit" id="digit3" maxlength="1" inputmode="numeric" pattern="[0-9]">
+      <input type="text" class="code-digit" id="digit4" maxlength="1" inputmode="numeric" pattern="[0-9]">
+    </div>
+    <button class="code-submit" onclick="validateAccessCode()">Entrer</button>
+    <div class="code-error" id="codeError"></div>
+  </div>
+</div>
+
+<!-- Lane selector modal -->
+<div class="lane-modal" id="laneModal">
+  <div class="eyebrow-modal">Saint Eloi 2026</div>
+  <h2>Quel poste es-tu ?</h2>
+  <div class="lane-buttons">
+    <button class="lane-btn left" onclick="selectLane('left')">
+      <span class="lane-icon">◀️</span>
+      File Gauche
+      <span class="lane-sub">Entrée côté gauche</span>
+    </button>
+    <button class="lane-btn right" onclick="selectLane('right')">
+      <span class="lane-icon">▶️</span>
+      File Droite
+      <span class="lane-sub">Entrée côté droit</span>
+    </button>
+  </div>
+</div>
+
+<div class="wrapper" id="appWrapper" style="display:none">
+
+<div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+<header>
+  <div class="header-title">
+    <span class="eyebrow">Saint Eloi 2026</span>
+    <h1>Gestion des Arrivées</h1>
+  </div>
+  <div style="display:flex; align-items:center; gap:24px;">
+    <button class="lane-badge" id="laneBadge" onclick="resetLane()">—</button>
+    <div class="header-stats">
+      <div class="stat"><div class="stat-number" id="statTotal">0</div><div class="stat-label">Invités</div></div>
+      <div class="stat"><div class="stat-number" id="statArrived">0</div><div class="stat-label">Arrivés</div></div>
+      <div class="stat"><div class="stat-number" id="statRemaining">0</div><div class="stat-label">Restants</div></div>
+      <div class="stat"><div class="stat-number" id="statPaid">0</div><div class="stat-label">Payés</div></div>
+    </div>
+  </div>
+</header>
+
+<div class="main">
+
+  <div class="panel-left">
+    <div class="search-section">
+      <div class="search-wrapper">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="search" placeholder="Rechercher un nom, réservant, table…" autocomplete="off">
+      </div>
+    </div>
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">Tous</button>
+      <button class="filter-btn" data-filter="pending">En attente</button>
+      <button class="filter-btn" data-filter="arrived">Arrivés</button>
+      <button class="filter-btn" data-filter="paid">Payés</button>
+      <button class="filter-btn" data-filter="unpaid">Non payés</button>
+    </div>
+    <div class="guest-list" id="guestList"></div>
+  </div>
+
+  <div class="panel-right">
+    <div class="map-header">
+      <h2>🏔️ Plan de salle</h2>
+      <span class="map-hint" id="mapHint">Cliquez sur un invité pour localiser sa table</span>
+    </div>
+
+    <div class="guest-banner" id="guestBanner">
+      <div class="guest-info-banner">
+        <div class="banner-name" id="bannerName">—</div>
+        <div class="banner-detail" id="bannerDetail">—</div>
+      </div>
+      <div class="banner-table" id="bannerTable">—</div>
+      <div class="banner-close" onclick="clearSelection()">✕</div>
+    </div>
+
+    <div class="no-table-notice" id="noTableNotice">
+      ⚠️ Table non encore assignée pour ce groupe — rapprochez-vous de l'organisateur (Antonin Blanckaert).
+    </div>
+
+    <div class="room-wrapper">
+      <div class="room">
+        <div class="scene">🎵 Scène 🎵</div>
+
+        <div class="table-rows">
+
+          <!-- Row 1: Tables 1 & 2 -->
+          <div class="table-row">
+            <div class="table-group">
+              <div class="table-block" id="t1-1" data-table="Table 1-1" onclick="openTablePopup('t1-1')">
+                <div class="t-number">Table 1-1</div><div class="t-name">Les Saisies</div>
+                <div class="t-guests" id="occ-t1-1"></div>
+                <div class="t-progress-wrap" id="prog-t1-1"><div class="t-progress-fill" id="progfill-t1-1"></div><div class="t-progress-label" id="proglabel-t1-1"></div></div>
+              </div>
+              <div class="table-block" id="t1-2" data-table="Table 1-2" onclick="openTablePopup('t1-2')">
+                <div class="t-number">Table 1-2</div><div class="t-name">Les Saisies</div>
+                <div class="t-guests" id="occ-t1-2"></div>
+                <div class="t-progress-wrap" id="prog-t1-2"><div class="t-progress-fill" id="progfill-t1-2"></div><div class="t-progress-label" id="proglabel-t1-2"></div></div>
+              </div>
+            </div>
+            <div class="room-divider"></div>
+            <div class="table-group">
+              <div class="table-block" id="t2-1" data-table="Table 2-1" onclick="openTablePopup('t2-1')">
+                <div class="t-number">Table 2-1</div><div class="t-name">Tignes</div>
+                <div class="t-guests" id="occ-t2-1"></div>
+                <div class="t-progress-wrap" id="prog-t2-1"><div class="t-progress-fill" id="progfill-t2-1"></div><div class="t-progress-label" id="proglabel-t2-1"></div></div>
+              </div>
+              <div class="table-block" id="t2-2" data-table="Table 2-2" onclick="openTablePopup('t2-2')">
+                <div class="t-number">Table 2-2</div><div class="t-name">Tignes</div>
+                <div class="t-guests" id="occ-t2-2"></div>
+                <div class="t-progress-wrap" id="prog-t2-2"><div class="t-progress-fill" id="progfill-t2-2"></div><div class="t-progress-label" id="proglabel-t2-2"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 2: Tables 3 & 4 -->
+          <div class="table-row">
+            <div class="table-group">
+              <div class="table-block" id="t3-1" data-table="Table 3-1" onclick="openTablePopup('t3-1')">
+                <div class="t-number">Table 3-1</div><div class="t-name">Val d'Isère</div>
+                <div class="t-guests" id="occ-t3-1"></div>
+                <div class="t-progress-wrap" id="prog-t3-1"><div class="t-progress-fill" id="progfill-t3-1"></div><div class="t-progress-label" id="proglabel-t3-1"></div></div>
+              </div>
+              <div class="table-block" id="t3-2" data-table="Table 3-2" onclick="openTablePopup('t3-2')">
+                <div class="t-number">Table 3-2</div><div class="t-name">Val d'Isère</div>
+                <div class="t-guests" id="occ-t3-2"></div>
+                <div class="t-progress-wrap" id="prog-t3-2"><div class="t-progress-fill" id="progfill-t3-2"></div><div class="t-progress-label" id="proglabel-t3-2"></div></div>
+              </div>
+            </div>
+            <div class="room-divider"></div>
+            <div class="table-group">
+              <div class="table-block" id="t4-1" data-table="Table 4-1" onclick="openTablePopup('t4-1')">
+                <div class="t-number">Table 4-1</div><div class="t-name">Courchevel</div>
+                <div class="t-guests" id="occ-t4-1"></div>
+                <div class="t-progress-wrap" id="prog-t4-1"><div class="t-progress-fill" id="progfill-t4-1"></div><div class="t-progress-label" id="proglabel-t4-1"></div></div>
+              </div>
+              <div class="table-block" id="t4-2" data-table="Table 4-2" onclick="openTablePopup('t4-2')">
+                <div class="t-number">Table 4-2</div><div class="t-name">Courchevel</div>
+                <div class="t-guests" id="occ-t4-2"></div>
+                <div class="t-progress-wrap" id="prog-t4-2"><div class="t-progress-fill" id="progfill-t4-2"></div><div class="t-progress-label" id="proglabel-t4-2"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 3: Tables 5 & 6 -->
+          <div class="table-row">
+            <div class="table-group">
+              <div class="table-block" id="t5-1" data-table="Table 5-1" onclick="openTablePopup('t5-1')">
+                <div class="t-number">Table 5-1</div><div class="t-name">Méribel</div>
+                <div class="t-guests" id="occ-t5-1"></div>
+                <div class="t-progress-wrap" id="prog-t5-1"><div class="t-progress-fill" id="progfill-t5-1"></div><div class="t-progress-label" id="proglabel-t5-1"></div></div>
+              </div>
+              <div class="table-block" id="t5-2" data-table="Table 5-2" onclick="openTablePopup('t5-2')">
+                <div class="t-number">Table 5-2</div><div class="t-name">Méribel</div>
+                <div class="t-guests" id="occ-t5-2"></div>
+                <div class="t-progress-wrap" id="prog-t5-2"><div class="t-progress-fill" id="progfill-t5-2"></div><div class="t-progress-label" id="proglabel-t5-2"></div></div>
+              </div>
+            </div>
+            <div class="room-divider"></div>
+            <div class="table-group">
+              <div class="table-block" id="t6-1" data-table="Table 6-1" onclick="openTablePopup('t6-1')">
+                <div class="t-number">Table 6-1</div><div class="t-name">Les Arcs</div>
+                <div class="t-guests" id="occ-t6-1"></div>
+                <div class="t-progress-wrap" id="prog-t6-1"><div class="t-progress-fill" id="progfill-t6-1"></div><div class="t-progress-label" id="proglabel-t6-1"></div></div>
+              </div>
+              <div class="table-block" id="t6-2" data-table="Table 6-2" onclick="openTablePopup('t6-2')">
+                <div class="t-number">Table 6-2</div><div class="t-name">Les Arcs</div>
+                <div class="t-guests" id="occ-t6-2"></div>
+                <div class="t-progress-wrap" id="prog-t6-2"><div class="t-progress-fill" id="progfill-t6-2"></div><div class="t-progress-label" id="proglabel-t6-2"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 4: Tables 7 & 8 -->
+          <div class="table-row">
+            <div class="table-group">
+              <div class="table-block" id="t7-1" data-table="Table 7-1" onclick="openTablePopup('t7-1')">
+                <div class="t-number">Table 7-1</div><div class="t-name">Chamonix</div>
+                <div class="t-guests" id="occ-t7-1"></div>
+                <div class="t-progress-wrap" id="prog-t7-1"><div class="t-progress-fill" id="progfill-t7-1"></div><div class="t-progress-label" id="proglabel-t7-1"></div></div>
+              </div>
+              <div class="table-block" id="t7-2" data-table="Table 7-2" onclick="openTablePopup('t7-2')">
+                <div class="t-number">Table 7-2</div><div class="t-name">Chamonix</div>
+                <div class="t-guests" id="occ-t7-2"></div>
+                <div class="t-progress-wrap" id="prog-t7-2"><div class="t-progress-fill" id="progfill-t7-2"></div><div class="t-progress-label" id="proglabel-t7-2"></div></div>
+              </div>
+              <div class="table-block" id="t7-3" data-table="Table 7-3" onclick="openTablePopup('t7-3')">
+                <div class="t-number">Table 7-3</div><div class="t-name">Chamonix</div>
+                <div class="t-guests" id="occ-t7-3"></div>
+                <div class="t-progress-wrap" id="prog-t7-3"><div class="t-progress-fill" id="progfill-t7-3"></div><div class="t-progress-label" id="proglabel-t7-3"></div></div>
+              </div>
+            </div>
+            <div class="room-divider"></div>
+            <div class="table-group">
+              <div class="table-block" id="t8-1" data-table="Table 8-1" onclick="openTablePopup('t8-1')">
+                <div class="t-number">Table 8-1</div><div class="t-name">Megève</div>
+                <div class="t-guests" id="occ-t8-1"></div>
+                <div class="t-progress-wrap" id="prog-t8-1"><div class="t-progress-fill" id="progfill-t8-1"></div><div class="t-progress-label" id="proglabel-t8-1"></div></div>
+              </div>
+              <div class="table-block" id="t8-2" data-table="Table 8-2" onclick="openTablePopup('t8-2')">
+                <div class="t-number">Table 8-2</div><div class="t-name">Megève</div>
+                <div class="t-guests" id="occ-t8-2"></div>
+                <div class="t-progress-wrap" id="prog-t8-2"><div class="t-progress-fill" id="progfill-t8-2"></div><div class="t-progress-label" id="proglabel-t8-2"></div></div>
+              </div>
+              <div class="table-block" id="t8-3" data-table="Table 8-3" onclick="openTablePopup('t8-3')">
+                <div class="t-number">Table 8-3</div><div class="t-name">Megève</div>
+                <div class="t-guests" id="occ-t8-3"></div>
+                <div class="t-progress-wrap" id="prog-t8-3"><div class="t-progress-fill" id="progfill-t8-3"></div><div class="t-progress-label" id="proglabel-t8-3"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 5: Tables 9 & 10 -->
+          <div class="table-row">
+            <div class="table-group">
+              <div class="table-block" id="t9-1" data-table="Table 9-1" onclick="openTablePopup('t9-1')">
+                <div class="t-number">Table 9-1</div><div class="t-name">La Plagne</div>
+                <div class="t-guests" id="occ-t9-1"></div>
+                <div class="t-progress-wrap" id="prog-t9-1"><div class="t-progress-fill" id="progfill-t9-1"></div><div class="t-progress-label" id="proglabel-t9-1"></div></div>
+              </div>
+              <div class="table-block" id="t9-2" data-table="Table 9-2" onclick="openTablePopup('t9-2')">
+                <div class="t-number">Table 9-2</div><div class="t-name">La Plagne</div>
+                <div class="t-guests" id="occ-t9-2"></div>
+                <div class="t-progress-wrap" id="prog-t9-2"><div class="t-progress-fill" id="progfill-t9-2"></div><div class="t-progress-label" id="proglabel-t9-2"></div></div>
+              </div>
+              <div class="table-block" id="t9-3" data-table="Table 9-3" onclick="openTablePopup('t9-3')">
+                <div class="t-number">Table 9-3</div><div class="t-name">La Plagne</div>
+                <div class="t-guests" id="occ-t9-3"></div>
+                <div class="t-progress-wrap" id="prog-t9-3"><div class="t-progress-fill" id="progfill-t9-3"></div><div class="t-progress-label" id="proglabel-t9-3"></div></div>
+              </div>
+            </div>
+            <div class="room-divider"></div>
+            <div class="table-group">
+              <div class="table-block" id="t10-1" data-table="Table 10-1" onclick="openTablePopup('t10-1')">
+                <div class="t-number">Table 10-1</div><div class="t-name">Les Menuires</div>
+                <div class="t-guests" id="occ-t10-1"></div>
+                <div class="t-progress-wrap" id="prog-t10-1"><div class="t-progress-fill" id="progfill-t10-1"></div><div class="t-progress-label" id="proglabel-t10-1"></div></div>
+              </div>
+              <div class="table-block" id="t10-2" data-table="Table 10-2" onclick="openTablePopup('t10-2')">
+                <div class="t-number">Table 10-2</div><div class="t-name">Les Menuires</div>
+                <div class="t-guests" id="occ-t10-2"></div>
+                <div class="t-progress-wrap" id="prog-t10-2"><div class="t-progress-fill" id="progfill-t10-2"></div><div class="t-progress-label" id="proglabel-t10-2"></div></div>
+              </div>
+              <div class="table-block" id="t10-3" data-table="Table 10-3" onclick="openTablePopup('t10-3')">
+                <div class="t-number">Table 10-3</div><div class="t-name">Les Menuires</div>
+                <div class="t-guests" id="occ-t10-3"></div>
+                <div class="t-progress-wrap" id="prog-t10-3"><div class="t-progress-fill" id="progfill-t10-3"></div><div class="t-progress-label" id="proglabel-t10-3"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 6: Tables 11 & 12 -->
+          <div class="table-row">
+            <div class="table-group">
+              <div class="table-block" id="t11-1" data-table="Table 11-1" onclick="openTablePopup('t11-1')">
+                <div class="t-number">Table 11-1</div><div class="t-name">Val Thorens</div>
+                <div class="t-guests" id="occ-t11-1"></div>
+                <div class="t-progress-wrap" id="prog-t11-1"><div class="t-progress-fill" id="progfill-t11-1"></div><div class="t-progress-label" id="proglabel-t11-1"></div></div>
+              </div>
+              <div class="table-block" id="t11-2" data-table="Table 11-2" onclick="openTablePopup('t11-2')">
+                <div class="t-number">Table 11-2</div><div class="t-name">Val Thorens</div>
+                <div class="t-guests" id="occ-t11-2"></div>
+                <div class="t-progress-wrap" id="prog-t11-2"><div class="t-progress-fill" id="progfill-t11-2"></div><div class="t-progress-label" id="proglabel-t11-2"></div></div>
+              </div>
+              <div class="table-block" id="t11-3" data-table="Table 11-3" onclick="openTablePopup('t11-3')">
+                <div class="t-number">Table 11-3</div><div class="t-name">Val Thorens</div>
+                <div class="t-guests" id="occ-t11-3"></div>
+                <div class="t-progress-wrap" id="prog-t11-3"><div class="t-progress-fill" id="progfill-t11-3"></div><div class="t-progress-label" id="proglabel-t11-3"></div></div>
+              </div>
+            </div>
+            <div class="room-divider"></div>
+            <div class="table-group">
+              <div class="table-block" id="t12-1" data-table="Table 12-1" onclick="openTablePopup('t12-1')">
+                <div class="t-number">Table 12-1</div><div class="t-name">Avoriaz</div>
+                <div class="t-guests" id="occ-t12-1"></div>
+                <div class="t-progress-wrap" id="prog-t12-1"><div class="t-progress-fill" id="progfill-t12-1"></div><div class="t-progress-label" id="proglabel-t12-1"></div></div>
+              </div>
+              <div class="table-block" id="t12-2" data-table="Table 12-2" onclick="openTablePopup('t12-2')">
+                <div class="t-number">Table 12-2</div><div class="t-name">Avoriaz</div>
+                <div class="t-guests" id="occ-t12-2"></div>
+                <div class="t-progress-wrap" id="prog-t12-2"><div class="t-progress-fill" id="progfill-t12-2"></div><div class="t-progress-label" id="proglabel-t12-2"></div></div>
+              </div>
+              <div class="table-block" id="t12-3" data-table="Table 12-3" onclick="openTablePopup('t12-3')">
+                <div class="t-number">Table 12-3</div><div class="t-name">Avoriaz</div>
+                <div class="t-guests" id="occ-t12-3"></div>
+                <div class="t-progress-wrap" id="prog-t12-3"><div class="t-progress-fill" id="progfill-t12-3"></div><div class="t-progress-label" id="proglabel-t12-3"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 7: Tables 13 & 14 -->
+          <div class="table-row">
+            <div class="table-group">
+              <div class="table-block" id="t13-1" data-table="Table 13-1" onclick="openTablePopup('t13-1')">
+                <div class="t-number">Table 13-1</div><div class="t-name">Morzine</div>
+                <div class="t-guests" id="occ-t13-1"></div>
+                <div class="t-progress-wrap" id="prog-t13-1"><div class="t-progress-fill" id="progfill-t13-1"></div><div class="t-progress-label" id="proglabel-t13-1"></div></div>
+              </div>
+              <div class="table-block" id="t13-2" data-table="Table 13-2" onclick="openTablePopup('t13-2')">
+                <div class="t-number">Table 13-2</div><div class="t-name">Morzine</div>
+                <div class="t-guests" id="occ-t13-2"></div>
+                <div class="t-progress-wrap" id="prog-t13-2"><div class="t-progress-fill" id="progfill-t13-2"></div><div class="t-progress-label" id="proglabel-t13-2"></div></div>
+              </div>
+              <div class="table-block" id="t13-3" data-table="Table 13-3" onclick="openTablePopup('t13-3')">
+                <div class="t-number">Table 13-3</div><div class="t-name">Morzine</div>
+                <div class="t-guests" id="occ-t13-3"></div>
+                <div class="t-progress-wrap" id="prog-t13-3"><div class="t-progress-fill" id="progfill-t13-3"></div><div class="t-progress-label" id="proglabel-t13-3"></div></div>
+              </div>
+            </div>
+            <div class="room-divider"></div>
+            <div class="table-group">
+              <div class="table-block" id="t14-1" data-table="Table 14-1" onclick="openTablePopup('t14-1')">
+                <div class="t-number">Table 14-1</div><div class="t-name">Flaine</div>
+                <div class="t-guests" id="occ-t14-1"></div>
+                <div class="t-progress-wrap" id="prog-t14-1"><div class="t-progress-fill" id="progfill-t14-1"></div><div class="t-progress-label" id="proglabel-t14-1"></div></div>
+              </div>
+              <div class="table-block" id="t14-2" data-table="Table 14-2" onclick="openTablePopup('t14-2')">
+                <div class="t-number">Table 14-2</div><div class="t-name">Flaine</div>
+                <div class="t-guests" id="occ-t14-2"></div>
+                <div class="t-progress-wrap" id="prog-t14-2"><div class="t-progress-fill" id="progfill-t14-2"></div><div class="t-progress-label" id="proglabel-t14-2"></div></div>
+              </div>
+              <div class="table-block" id="t14-3" data-table="Table 14-3" onclick="openTablePopup('t14-3')">
+                <div class="t-number">Table 14-3</div><div class="t-name">Flaine</div>
+                <div class="t-guests" id="occ-t14-3"></div>
+                <div class="t-progress-wrap" id="prog-t14-3"><div class="t-progress-fill" id="progfill-t14-3"></div><div class="t-progress-label" id="proglabel-t14-3"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 8: Tables 15 & 16 -->
+          <div class="table-row">
+            <div class="table-group">
+              <div class="table-block" id="t15-1" data-table="Table 15-1" onclick="openTablePopup('t15-1')">
+                <div class="t-number">Table 15-1</div><div class="t-name">Châtel</div>
+                <div class="t-guests" id="occ-t15-1"></div>
+                <div class="t-progress-wrap" id="prog-t15-1"><div class="t-progress-fill" id="progfill-t15-1"></div><div class="t-progress-label" id="proglabel-t15-1"></div></div>
+              </div>
+              <div class="table-block" id="t15-2" data-table="Table 15-2" onclick="openTablePopup('t15-2')">
+                <div class="t-number">Table 15-2</div><div class="t-name">Châtel</div>
+                <div class="t-guests" id="occ-t15-2"></div>
+                <div class="t-progress-wrap" id="prog-t15-2"><div class="t-progress-fill" id="progfill-t15-2"></div><div class="t-progress-label" id="proglabel-t15-2"></div></div>
+              </div>
+              <div class="table-block" id="t15-3" data-table="Table 15-3" onclick="openTablePopup('t15-3')">
+                <div class="t-number">Table 15-3</div><div class="t-name">Châtel</div>
+                <div class="t-guests" id="occ-t15-3"></div>
+                <div class="t-progress-wrap" id="prog-t15-3"><div class="t-progress-fill" id="progfill-t15-3"></div><div class="t-progress-label" id="proglabel-t15-3"></div></div>
+              </div>
+            </div>
+            <div class="room-divider"></div>
+            <div class="table-group">
+              <div class="table-block" id="t16-1" data-table="Table 16-1" onclick="openTablePopup('t16-1')">
+                <div class="t-number">Table 16-1</div><div class="t-name">Les Gets</div>
+                <div class="t-guests" id="occ-t16-1"></div>
+                <div class="t-progress-wrap" id="prog-t16-1"><div class="t-progress-fill" id="progfill-t16-1"></div><div class="t-progress-label" id="proglabel-t16-1"></div></div>
+              </div>
+              <div class="table-block" id="t16-2" data-table="Table 16-2" onclick="openTablePopup('t16-2')">
+                <div class="t-number">Table 16-2</div><div class="t-name">Les Gets</div>
+                <div class="t-guests" id="occ-t16-2"></div>
+                <div class="t-progress-wrap" id="prog-t16-2"><div class="t-progress-fill" id="progfill-t16-2"></div><div class="t-progress-label" id="proglabel-t16-2"></div></div>
+              </div>
+              <div class="table-block" id="t16-3" data-table="Table 16-3" onclick="openTablePopup('t16-3')">
+                <div class="t-number">Table 16-3</div><div class="t-name">Les Gets</div>
+                <div class="t-guests" id="occ-t16-3"></div>
+                <div class="t-progress-wrap" id="prog-t16-3"><div class="t-progress-fill" id="progfill-t16-3"></div><div class="t-progress-label" id="proglabel-t16-3"></div></div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /table-rows -->
+
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot free"></div>Table libre</div>
+          <div class="legend-item"><div class="legend-dot highlighted"></div>Table sélectionnée</div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /panel-right -->
+
+</div><!-- /main -->
+
+<!-- Table popup -->
+<div class="table-popup-overlay" id="tablePopupOverlay" onclick="closeTablePopup(event)">
+  <div class="table-popup" id="tablePopup">
+    <div class="popup-header">
+      <div>
+        <div class="popup-title" id="popupTitle">—</div>
+        <div class="popup-subtitle" id="popupSubtitle">—</div>
+      </div>
+      <div class="popup-close" onclick="closeTablePopup()">✕</div>
+    </div>
+    <div class="popup-progress-wrap">
+      <div class="popup-progress-fill" id="popupProgressFill" style="width:0%"></div>
+      <div class="popup-progress-label" id="popupProgressLabel"></div>
+    </div>
+    <div class="popup-guest-list" id="popupGuestList"></div>
+  </div>
+</div>
+
+</div><!-- /appWrapper -->
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCIIVzlSLXVxYvvpaFHeYrvx42YlkpRr6A",
+  authDomain: "balsavoyard.firebaseapp.com",
+  databaseURL: "https://balsavoyard-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "balsavoyard",
+  storageBucket: "balsavoyard.firebasestorage.app",
+  messagingSenderId: "70649291557",
+  appId: "1:70649291557:web:510552a38e5a58f60fb0cc"
+};
+
+let db;
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+} catch(e) { console.warn('Firebase init error:', e); }
+
+const arrivedRef = db ? db.ref('arrived') : null;
+const paidRef = db ? db.ref('paid') : null;
+const paid = {};
+const paidTimes = {};
+
+if (arrivedRef) {
+  arrivedRef.on('value', (snapshot) => {
+    const data = snapshot.val() || {};
+    Object.keys(arrived).forEach(k => delete arrived[k]);
+    Object.keys(arrivedTimes).forEach(k => delete arrivedTimes[k]);
+    Object.keys(arrivedLanes).forEach(k => delete arrivedLanes[k]);
+    Object.entries(data).forEach(([id, val]) => {
+      arrived[id] = true;
+      arrivedTimes[id] = val.time || '';
+      arrivedLanes[id] = val.lane || '';
+    });
+    updateStats();
+    updateTableProgressBars();
+    // Refresh popup if open
+    refreshPopupIfOpen();
+    render();
+  });
+}
+
+if (paidRef) {
+  paidRef.on('value', (snapshot) => {
+    const data = snapshot.val() || {};
+    Object.keys(paid).forEach(k => delete paid[k]);
+    Object.keys(paidTimes).forEach(k => delete paidTimes[k]);
+    Object.entries(data).forEach(([id, val]) => {
+      paid[id] = true;
+      paidTimes[id] = val.time || '';
+    });
+    updateStats();
+    // Refresh popup if open
+    refreshPopupIfOpen();
+    render();
+  });
+}
+
+if (!arrivedRef) {
+  updateStats();
+  updateTableProgressBars();
+  render();
+}
+
+// Helper: refresh popup if currently open
+function refreshPopupIfOpen() {
+  const overlay = document.getElementById('tablePopupOverlay');
+  if (overlay && overlay.classList.contains('visible')) {
+    const title = document.getElementById('popupTitle').textContent;
+    const block = [...document.querySelectorAll('.table-block')].find(b => b.dataset.table === title);
+    if (block) openTablePopup(block.id);
+  }
+}
+
+// Access code validation
+const VIEW_CODE = '2026';
+const ADMIN_CODE = '6930';
+let isViewOnly = false;
+
+function validateAccessCode() {
+  const d1 = document.getElementById('digit1').value;
+  const d2 = document.getElementById('digit2').value;
+  const d3 = document.getElementById('digit3').value;
+  const d4 = document.getElementById('digit4').value;
+  const entered = d1 + d2 + d3 + d4;
+
+  if (entered.length < 4) {
+    document.getElementById('codeError').textContent = 'Veuillez entrer les 4 chiffres.';
+    return;
+  }
+
+  if (entered === ADMIN_CODE) {
+    isViewOnly = false;
+    document.getElementById('codeModal').classList.add('hidden');
+  } else if (entered === VIEW_CODE) {
+    isViewOnly = true;
+    document.body.classList.add('view-only');
+    document.getElementById('codeModal').classList.add('hidden');
+    document.getElementById('laneModal').style.display = 'none';
+    document.getElementById('appWrapper').style.display = 'flex';
+    const badge = document.getElementById('laneBadge');
+    badge.textContent = '\u{1F441} Consultation';
+    badge.className = 'lane-badge';
+    badge.style.cssText = 'background:rgba(255,255,255,0.15);color:#e8c96a;border:1px solid rgba(201,168,76,0.3);cursor:default;padding:8px 16px;border-radius:999px;font-size:13px;font-weight:700;';
+    badge.onclick = null;
+  } else {
+    const err = document.getElementById('codeError');
+    err.textContent = 'Code incorrect, reessayez.';
+    err.classList.remove('shake');
+    void err.offsetWidth;
+    err.classList.add('shake');
+    document.querySelectorAll('.code-digit').forEach(d => d.value = '');
+    document.getElementById('digit1').focus();
+  }
+}
+
+document.querySelectorAll('.code-digit').forEach((input, idx, arr) => {
+  input.addEventListener('input', (e) => {
+    const val = e.target.value;
+    if (val.length > 1) e.target.value = val.charAt(val.length - 1);
+    if (e.target.value && idx < arr.length - 1) arr[idx + 1].focus();
+    if (e.target.value && idx === arr.length - 1) setTimeout(() => validateAccessCode(), 100);
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Backspace' && !e.target.value && idx > 0) arr[idx - 1].focus();
+    if (e.key === 'Enter') validateAccessCode();
+  });
+  input.addEventListener('keypress', (e) => {
+    if (!/[0-9]/.test(e.key) && e.key !== 'Enter') e.preventDefault();
+  });
+});
+
+let currentLane = null;
+
+function selectLane(lane) {
+  currentLane = lane;
+  document.getElementById('laneModal').style.display = 'none';
+  document.getElementById('appWrapper').style.display = 'flex';
+  const badge = document.getElementById('laneBadge');
+  badge.textContent = lane === 'left' ? '◀ File Gauche' : '▶ File Droite';
+  badge.className = 'lane-badge ' + lane;
+}
+
+function resetLane() {
+  if (!confirm('Changer de file ?')) return;
+  document.getElementById('laneModal').style.display = 'flex';
+  document.getElementById('appWrapper').style.display = 'none';
+}
+
+const tableNames = {
+  '1': 'Les Saisies', '2': 'Tignes', '3': "Val d'Isère", '4': 'Courchevel',
+  '5': 'Méribel', '6': 'Les Arcs', '7': 'Chamonix', '8': 'Megève',
+  '9': 'La Plagne', '10': 'Les Menuires', '11': 'Val Thorens', '12': 'Avoriaz',
+  '13': 'Morzine', '14': 'Flaine', '15': 'Châtel', '16': 'Les Gets',
+};
+
+function getTableDisplayName(tableStr) {
+  if (!tableStr) return '';
+  const m = tableStr.match(/(\d+)/);
+  if (!m) return tableStr;
+  const name = tableNames[m[1]];
+  return name ? `${tableStr} · ${name}` : tableStr;
+}
+
+function openTablePopup(blockId) {
+  const block = document.getElementById(blockId);
+  if (!block) return;
+  const tableId = block.dataset.table;
+  const m = (tableId || '').match(/(\d+)/);
+  const baseName = m ? tableNames[m[1]] : '';
+
+  document.getElementById('popupTitle').textContent = tableId || '—';
+  document.getElementById('popupSubtitle').textContent = baseName ? `"${baseName}"` : 'Table non nommée';
+
+  const blockGuests = guests.filter(g => {
+    if (!g.table) return false;
+    return getTableIds(g.table).includes(blockId);
+  });
+
+  const total = blockGuests.length;
+  const arrivedCount = blockGuests.filter(g => arrived[g.id]).length;
+  const pct = total > 0 ? Math.round(arrivedCount / total * 100) : 0;
+
+  const fill = document.getElementById('popupProgressFill');
+  const label = document.getElementById('popupProgressLabel');
+  fill.style.width = pct + '%';
+  if (total === 0) {
+    label.textContent = 'Aucun invité assigné';
+    label.style.color = '#999';
+  } else {
+    label.textContent = `${arrivedCount} / ${total} arrivé${arrivedCount > 1 ? 's' : ''} · ${pct}%`;
+    label.style.color = pct >= 50 ? 'white' : '#1a6b3a';
+  }
+
+  const listEl = document.getElementById('popupGuestList');
+  if (total === 0) {
+    listEl.innerHTML = '<div style="text-align:center;color:#999;padding:20px;font-size:13px;">Aucun invité assigné à cette table</div>';
+  } else {
+    // Admin hint line
+    const adminHint = !isViewOnly
+      ? '<div class="popup-admin-hint">✏️ Mode admin — cliquez ✓ pour arrivée, € pour paiement</div>'
+      : '';
+
+    listEl.innerHTML = adminHint + blockGuests.map(g => {
+      const isArrived = !!arrived[g.id];
+      const isPaid = !!paid[g.id];
+      const time = arrivedTimes[g.id] ? ` · ${arrivedTimes[g.id]}` : '';
+      const lane = arrivedLanes[g.id] ? ` · ${arrivedLanes[g.id]}` : '';
+      const adminButtons = !isViewOnly ? `
+        <button class="popup-arrive-btn${isArrived ? ' active' : ''}" onclick="popupToggleArrived(event,${g.id})" title="${isArrived ? 'Marquer absent' : 'Marquer arrivé'}">
+          ${isArrived ? '✓' : '○'}
+        </button>
+        <button class="popup-paid-btn${isPaid ? ' active' : ''}" onclick="popupTogglePaid(event,${g.id})" title="${isPaid ? 'Annuler paiement' : 'Marquer payé'}">
+          €
+        </button>` : '';
+      return `<div class="popup-guest-row${isArrived ? ' arrived-row' : ''}" id="popup-row-${g.id}">
+        <div class="popup-dot ${isArrived ? 'green' : 'grey'}"></div>
+        <div class="popup-guest-name">${g.name}</div>
+        <div class="popup-paid-badge ${isPaid ? 'yes' : 'no'}">${isPaid ? 'Payé' : 'Non payé'}</div>
+        <div class="popup-arrived-time">${isArrived ? '✓ Arrivé' + time + lane : 'En attente'}</div>
+        ${adminButtons}
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('tablePopupOverlay').classList.add('visible');
+}
+
+function closeTablePopup(e) {
+  if (e && e.target !== document.getElementById('tablePopupOverlay')) return;
+  document.getElementById('tablePopupOverlay').classList.remove('visible');
+}
+
+const guests = [
+  {id:1, name:'Enolan Mangeard', reservedBy:'Alban Foy', group:19, table:'Table 10-1'},
+  {id:2, name:'Alban Foy', reservedBy:'Alban Foy', group:19, table:'Table 10-1'},
+  {id:3, name:'Mayeul Girardot', reservedBy:'Alban Foy', group:19, table:'Table 10-1'},
+  {id:4, name:'Lucas Champenois', reservedBy:'Alban Foy', group:19, table:'Table 10-1'},
+  {id:5, name:'Dorian Mages', reservedBy:'Alban Foy', group:19, table:'Table 10-1'},
+  {id:6, name:'Pierre Chevalier', reservedBy:'Alban Foy', group:19, table:'Table 10-1'},
+  {id:7, name:'Gaetan Pérard', reservedBy:'Alban Foy', group:19, table:'Table 10-2'},
+  {id:8, name:'Baptistine Foy', reservedBy:'Alban Foy', group:19, table:'Table 10-2'},
+  {id:9, name:'Cyprien Michel', reservedBy:'Alban Foy', group:19, table:'Table 10-2'},
+  {id:10, name:'Elea Jaquinet', reservedBy:'Alban Foy', group:19, table:'Table 10-2'},
+  {id:11, name:'Julie Arrouart', reservedBy:'Alban Foy', group:19, table:'Table 10-2'},
+  {id:12, name:'Lucas Jean-Louis', reservedBy:'Alban Foy', group:19, table:'Table 10-2'},
+  {id:13, name:'Cesar Charuel', reservedBy:'Alban Foy', group:19, table:'Table 10-3'},
+  {id:14, name:'Faustine Mathieu', reservedBy:'Alban Foy', group:19, table:'Table 10-3'},
+  {id:15, name:'Azale L\'évêque', reservedBy:'Alban Foy', group:19, table:'Table 10-3'},
+  {id:16, name:'Gwenaël Michelin Muler', reservedBy:'Alban Foy', group:19, table:'Table 10-3'},
+  {id:17, name:'Malo Bontemps', reservedBy:'Alban Foy', group:19, table:'Table 10-3'},
+  {id:18, name:'Romain Collard', reservedBy:'Alban Foy', group:19, table:'Table 10-3'},
+  {id:50, name:'Noah Maigret', reservedBy:'Alban Foy', group:19, table:'Table 10-3'},
+  {id:19, name:'Alexis Noizet', reservedBy:'Alexis Noizet', group:10, table:'Table 9-1'},
+  {id:20, name:'Eugenie Robert', reservedBy:'Alexis Noizet', group:10, table:'Table 9-1'},
+  {id:21, name:'Cécile Gobillard', reservedBy:'Alexis Noizet', group:10, table:'Table 9-1'},
+  {id:22, name:'Hubert Grasset', reservedBy:'Alexis Noizet', group:10, table:'Table 9-1'},
+  {id:23, name:'Jane Morant', reservedBy:'Alexis Noizet', group:10, table:'Table 9-1'},
+  {id:24, name:'Grégoire Boude', reservedBy:'Alexis Noizet', group:10, table:'Table 9-1'},
+  {id:25, name:'Lucas Nuyttens', reservedBy:'Alexis Noizet', group:10, table:'Table 9-2'},
+  {id:26, name:'Clément Patoir', reservedBy:'Alexis Noizet', group:10, table:'Table 9-2'},
+  {id:27, name:'Edouart Godard', reservedBy:'Louis Duhal', group:22, table:'Table 2-2'},
+  {id:28, name:'Corentin Lochon', reservedBy:'Alexis Noizet', group:10, table:'Table 9-2'},
+  {id:29, name:'Arthur Viliere', reservedBy:'Alexis Noizet', group:10, table:'Table 9-2'},
+  {id:30, name:'Arthur Conte', reservedBy:'Antonin Bassut', group:13, table:'Table 15-1'},
+  {id:31, name:'Hélise Poncelet', reservedBy:'Antonin Bassut', group:13, table:'Table 15-1'},
+  {id:32, name:'Adrien Lheureux', reservedBy:'Antonin Bassut', group:13, table:'Table 15-1'},
+  {id:33, name:'Benjamin MAITTE', reservedBy:'Antonin Bassut', group:13, table:'Table 15-1'},
+  {id:34, name:'Jérémy Herbay', reservedBy:'Antonin Bassut', group:13, table:'Table 15-1'},
+  {id:35, name:'Damien Bassut', reservedBy:'Antonin Bassut', group:13, table:'Table 15-1'},
+  {id:36, name:'Maryline Bassut', reservedBy:'Antonin Bassut', group:13, table:'Table 15-2'},
+  {id:37, name:'Christel Tolite', reservedBy:'Antonin Bassut', group:13, table:'Table 15-2'},
+  {id:38, name:'Stéphane Borderieux', reservedBy:'Antonin Bassut', group:13, table:'Table 15-2'},
+  {id:39, name:'Mael Diouy', reservedBy:'Antonin Bassut', group:13, table:'Table 15-2'},
+  {id:40, name:'Félix OUDART', reservedBy:'Antonin Bassut', group:13, table:'Table 15-2'},
+  {id:41, name:'Hugo BASSUT', reservedBy:'Antonin Bassut', group:13, table:'Table 15-2'},
+  {id:42, name:'Léo Callonego', reservedBy:'Antonin Bassut', group:13, table:'Table 15-3'},
+  {id:43, name:'Daniel Buache', reservedBy:'Benjamin Buache', group:5, table:'Table 15-3'},
+  {id:44, name:'Ghislaine Buache', reservedBy:'Benjamin Buache', group:5, table:'Table 15-3'},
+  {id:45, name:'Catherine Buache', reservedBy:'Benjamin Buache', group:5, table:'Table 15-3'},
+  {id:46, name:'Nico DRO', reservedBy:'Benjamin Buache', group:5, table:'Table 15-3'},
+  {id:47, name:'Carole DRO', reservedBy:'Benjamin Buache', group:5, table:'Table 15-3'},
+  {id:48, name:'Camille Perdriset', reservedBy:'Camille Perdriset', group:16, table:'Table 12-1'},
+  {id:49, name:'Clement Marechal', reservedBy:'Camille Perdriset', group:16, table:'Table 12-1'},
+  {id:52, name:'Caroline Raulin', reservedBy:'Camille Perdriset', group:16, table:'Table 12-1'},
+  {id:53, name:'Clement Raulin', reservedBy:'Camille Perdriset', group:16, table:'Table 12-1'},
+  {id:54, name:'Christopher Leyser', reservedBy:'Camille Perdriset', group:16, table:'Table 12-2'},
+  {id:55, name:'Manddy Clarenne', reservedBy:'Camille Perdriset', group:16, table:'Table 12-2'},
+  {id:56, name:'Romain Daufend', reservedBy:'Camille Perdriset', group:16, table:'Table 12-2'},
+  {id:57, name:'Louise Vaquero', reservedBy:'Camille Perdriset', group:16, table:'Table 12-2'},
+  {id:58, name:'Lucie Fourreau', reservedBy:'Camille Perdriset', group:16, table:'Table 12-2'},
+  {id:59, name:'Christelle Destrey', reservedBy:'Camille Perdriset', group:16, table:'Table 12-2'},
+  {id:60, name:'Antoine Krebs', reservedBy:'Camille Perdriset', group:16, table:'Table 12-3'},
+  {id:61, name:'Chloe Pietrement', reservedBy:'Camille Perdriset', group:16, table:'Table 12-3'},
+  {id:62, name:'Juliette Lavaire', reservedBy:'Camille Perdriset', group:16, table:'Table 12-3'},
+  {id:63, name:'Romain Lavaire', reservedBy:'Camille Perdriset', group:16, table:'Table 12-3'},
+  {id:64, name:'Amanda Klein', reservedBy:'Camille Perdriset', group:16, table:'Table 12-3'},
+  {id:65, name:'Reinald Fouricquet', reservedBy:'Camille Perdriset', group:16, table:'Table 12-3'},
+  {id:66, name:'Margot Geretti', reservedBy:'Caroline Estienne', group:19, table:'Table 7-1'},
+  {id:67, name:'Constant De Guizelin', reservedBy:'Caroline Estienne', group:19, table:'Table 7-1'},
+  {id:68, name:'Grégoire Michel', reservedBy:'Caroline Estienne', group:19, table:'Table 7-1'},
+  {id:69, name:'Chloé Perrin', reservedBy:'Caroline Estienne', group:19, table:'Table 7-1'},
+  {id:70, name:'Lisa Caqué', reservedBy:'Caroline Estienne', group:19, table:'Table 7-1'},
+  {id:71, name:'Théo Bastien', reservedBy:'Caroline Estienne', group:19, table:'Table 7-1'},
+  {id:72, name:'Emeric Bastien', reservedBy:'Caroline Estienne', group:19, table:'Table 7-2'},
+  {id:73, name:'Florian Royer', reservedBy:'Caroline Estienne', group:19, table:'Table 7-2'},
+  {id:74, name:'Gaël Bostoën', reservedBy:'Caroline Estienne', group:19, table:'Table 7-2'},
+  {id:75, name:'Véronique Cuif', reservedBy:'Caroline Estienne', group:19, table:'Table 7-2'},
+  {id:76, name:'Gauthier Cuif', reservedBy:'Caroline Estienne', group:19, table:'Table 7-2'},
+  {id:77, name:'Caroline Estienne', reservedBy:'Caroline Estienne', group:19, table:'Table 7-2'},
+  {id:78, name:'Manu Cuif', reservedBy:'Caroline Estienne', group:19, table:'Table 7-3'},
+  {id:79, name:'Florence Cuif', reservedBy:'Caroline Estienne', group:19, table:'Table 7-3'},
+  {id:80, name:'Nathalie Estienne', reservedBy:'Caroline Estienne', group:19, table:'Table 7-3'},
+  {id:81, name:'Marcel Estienne', reservedBy:'Caroline Estienne', group:19, table:'Table 7-3'},
+  {id:82, name:'Ghislaine Guillaume', reservedBy:'Caroline Estienne', group:19, table:'Table 7-3'},
+  {id:83, name:'Mathias Geretti', reservedBy:'Caroline Estienne', group:19, table:'Table 7-3'},
+  {id:84, name:'Lou Kapet', reservedBy:'Caroline Estienne', group:19, table:'Table 7-3'},
+  {id:841, name:'Gabriel Cuif', reservedBy:'Caroline Estienne', group:19, table:'Table 7-1'},
+  {id:85, name:'Christophe BONTEMPS', reservedBy:'Chloé BONTEMPS', group:7, table:'Table 16-3'},
+  {id:86, name:'Anne PIERSON', reservedBy:'Chloé BONTEMPS', group:7, table:'Table 16-3'},
+  {id:87, name:'Damien BONTEMPS', reservedBy:'Chloé BONTEMPS', group:7, table:'Table 16-3'},
+  {id:88, name:'Chantal RICHARD', reservedBy:'Chloé BONTEMPS', group:7, table:'Table 16-2'},
+  {id:89, name:'Sylvain GODART', reservedBy:'Chloé BONTEMPS', group:7, table:'Table 16-2'},
+  {id:90, name:'Mathilde GODART', reservedBy:'Chloé BONTEMPS', group:7, table:'Table 16-2'},
+  {id:91, name:'Benoit DEFONTAINE', reservedBy:'Chloé BONTEMPS', group:7, table:'Table 16-2'},
+  {id:92, name:'Christophe BARTHE', reservedBy:'Christophe BARTHE', group:10, table:'Table 1-1'},
+  {id:93, name:'Samuel PARIS', reservedBy:'Christophe BARTHE', group:10, table:'Table 1-1'},
+  {id:94, name:'Salomé JOURDAN', reservedBy:'Christophe BARTHE', group:10, table:'Table 1-1'},
+  {id:95, name:'Emilien CUIF', reservedBy:'Christophe BARTHE', group:10, table:'Table 1-1'},
+  {id:96, name:'Julie ROCHE', reservedBy:'Christophe BARTHE', group:10, table:'Table 1-2'},
+  {id:97, name:'Julie HENIN', reservedBy:'Christophe BARTHE', group:10, table:'Table 1-2'},
+  {id:98, name:'Nicolas VAROQUIER', reservedBy:'Christophe BARTHE', group:10, table:'Table 1-2'},
+  {id:99, name:'Cyril FERRY', reservedBy:'Christophe BARTHE', group:10, table:'Table 1-2'},
+  {id:100, name:'Marc COTTON-HALLER', reservedBy:'Christophe BARTHE', group:10, table:'Table 1-2'},
+  {id:101, name:'Priscilla HUSSON', reservedBy:'Christophe BARTHE', group:10, table:'Table 1-2'},
+  {id:102, name:'Clément Rollot', reservedBy:'Clément Rollot', group:1, table:'Table 13-3'},
+  {id:103, name:'Victor Lebonvallet', reservedBy:'Clotilde Mance', group:35, table:'Table 11-1'},
+  {id:104, name:'Anatole Anseeuw', reservedBy:'Clotilde Mance', group:35, table:'Table 11-1'},
+  {id:105, name:'Juliette Alips', reservedBy:'Clotilde Mance', group:35, table:'Table 11-1'},
+  {id:106, name:'Olivier Duval', reservedBy:'Clotilde Mance', group:35, table:'Table 11-1'},
+  {id:107, name:'Aurélia Boyot', reservedBy:'Clotilde Mance', group:35, table:'Table 11-1'},
+  {id:108, name:'Clément Guesquin', reservedBy:'Clotilde Mance', group:35, table:'Table 11-1'},
+  {id:109, name:'Juliette Conte', reservedBy:'Clotilde Mance', group:35, table:'Table 11-2'},
+  {id:110, name:'Jordan Lecrivain', reservedBy:'Clotilde Mance', group:35, table:'Table 11-2'},
+  {id:111, name:'Coline Blion', reservedBy:'Clotilde Mance', group:35, table:'Table 11-2'},
+  {id:112, name:'Hugo Lorrain', reservedBy:'Clotilde Mance', group:35, table:'Table 11-2'},
+  {id:113, name:'Arthur Moindrot', reservedBy:'Clotilde Mance', group:35, table:'Table 11-2'},
+  {id:114, name:'Lise Szumowicz', reservedBy:'Clotilde Mance', group:35, table:'Table 11-2'},
+  {id:115, name:'Perrine Galicher', reservedBy:'Clotilde Mance', group:35, table:'Table 11-3'},
+  {id:116, name:'Caroline Moncuy', reservedBy:'Clotilde Mance', group:35, table:'Table 11-3'},
+  {id:117, name:'Clémentine PERE', reservedBy:'Clotilde Mance', group:35, table:'Table 11-3'},
+  {id:118, name:'Jade Collard', reservedBy:'Clotilde Mance', group:35, table:'Table 11-3'},
+  {id:119, name:'Malvina Valero', reservedBy:'Clotilde Mance', group:35, table:'Table 11-3'},
+  {id:120, name:'Clotilde Mance', reservedBy:'Clotilde Mance', group:35, table:'Table 11-3'},
+  {id:121, name:'Élea Vluggens', reservedBy:'Clotilde Mance', group:35, table:'Table 13-1'},
+  {id:122, name:'Maxime Jolly', reservedBy:'Clotilde Mance', group:35, table:'Table 13-1'},
+  {id:123, name:'Manon Blancho', reservedBy:'Clotilde Mance', group:35, table:'Table 13-1'},
+  {id:124, name:'Yann Rivier', reservedBy:'Clotilde Mance', group:35, table:'Table 13-1'},
+  {id:125, name:'Alexandre Leloup', reservedBy:'Clotilde Mance', group:35, table:'Table 13-1'},
+  {id:126, name:'Clara Robert', reservedBy:'Clotilde Mance', group:35, table:'Table 13-1'},
+  {id:127, name:'Clara Gallois Barras', reservedBy:'Clotilde Mance', group:35, table:'Table 13-2'},
+  {id:128, name:'Quentin Raccat', reservedBy:'Clotilde Mance', group:35, table:'Table 13-2'},
+  {id:129, name:'Maxence Noiret', reservedBy:'Clotilde Mance', group:35, table:'Table 13-2'},
+  {id:130, name:'Célestine Varnier', reservedBy:'Clotilde Mance', group:35, table:'Table 13-2'},
+  {id:131, name:'Corentin Mance', reservedBy:'Clotilde Mance', group:35, table:'Table 13-2'},
+  {id:132, name:'Pierre Biez', reservedBy:'Clotilde Mance', group:35, table:'Table 13-2'},
+  {id:133, name:'Thibaut Nicaise', reservedBy:'Clotilde Mance', group:35, table:'Table 13-3'},
+  {id:134, name:'Romain Coquard', reservedBy:'Clotilde Mance', group:35, table:'Table 13-3'},
+  {id:135, name:'Clément Bonbled', reservedBy:'Clotilde Mance', group:35, table:'Table 13-3'},
+  {id:136, name:'Germain Collard', reservedBy:'Clotilde Mance', group:35, table:'Table 13-3'},
+  {id:137, name:'Vincent Perardel', reservedBy:'Clotilde Mance', group:35, table:'Table 13-3'},
+  {id:138, name:'Julien PIERRE', reservedBy:'Dorine PRUDHOMME', group:7, table:'Table 9-2'},
+  {id:139, name:'Marceau DE PAUW', reservedBy:'Dorine PRUDHOMME', group:7, table:'Table 9-3'},
+  {id:140, name:'Zakarya IMAALLATEN', reservedBy:'Dorine PRUDHOMME', group:7, table:'Table 9-3'},
+  {id:141, name:'Marius MINET', reservedBy:'Dorine PRUDHOMME', group:7, table:'Table 9-3'},
+  {id:142, name:'Marine ALBAUD', reservedBy:'Dorine PRUDHOMME', group:7, table:'Table 9-3'},
+  {id:143, name:'Lilas Despoulains', reservedBy:'Dorine PRUDHOMME', group:7, table:'Table 9-3'},
+  {id:144, name:'Dorine PRUDHOMME', reservedBy:'Dorine PRUDHOMME', group:7, table:'Table 9-3'},
+  {id:145, name:'Juste Leblanc', reservedBy:'Geoffrey Leblanc', group:1, table:'Table 13-3'},
+  {id:146, name:'Gildas APPERT', reservedBy:'Gildas APPERT', group:12, table:'Table 6-1'},
+  {id:147, name:'Loïc MARCHAND', reservedBy:'Gildas APPERT', group:12, table:'Table 6-1'},
+  {id:148, name:'Jeanne BATY', reservedBy:'Gildas APPERT', group:12, table:'Table 6-1'},
+  {id:149, name:'Julian Baty', reservedBy:'Gildas APPERT', group:12, table:'Table 6-1'},
+  {id:150, name:'Morgane MARCHAND', reservedBy:'Gildas APPERT', group:12, table:'Table 6-1'},
+  {id:151, name:'Mathieu DEPONT', reservedBy:'Gildas APPERT', group:12, table:'Table 6-1'},
+  {id:152, name:'Yohann', reservedBy:'Gildas APPERT', group:12, table:'Table 6-2'},
+  {id:153, name:'Lohan', reservedBy:'Gildas APPERT', group:12, table:'Table 6-2'},
+  {id:154, name:'Eloise DEART', reservedBy:'Gildas APPERT', group:12, table:'Table 6-2'},
+  {id:155, name:'Adrien LEMOINE', reservedBy:'Gildas APPERT', group:12, table:'Table 6-2'},
+  {id:156, name:'Axel BONTEMPS', reservedBy:'Gildas APPERT', group:12, table:'Table 6-2'},
+  {id:157, name:'Aurelien Poncelet', reservedBy:'Gildas APPERT', group:12, table:'Table 6-2'},
+  {id:158, name:'Loïc Guillaume', reservedBy:'Guillaume Estienne', group:11, table:'Table 5-1'},
+  {id:159, name:'Lalie Guinot', reservedBy:'Guillaume Estienne', group:11, table:'Table 5-1'},
+  {id:160, name:'Romane Fabry', reservedBy:'Guillaume Estienne', group:11, table:'Table 5-1'},
+  {id:161, name:'Jade Lorrain', reservedBy:'Guillaume Estienne', group:11, table:'Table 5-1'},
+  {id:162, name:'Numa Fabry', reservedBy:'Guillaume Estienne', group:11, table:'Table 5-1'},
+  {id:163, name:'Léo Keller', reservedBy:'Guillaume Estienne', group:11, table:'Table 5-1'},
+  {id:164, name:'Alyson Keller', reservedBy:'Guillaume Estienne', group:11, table:'Table 5-2'},
+  {id:165, name:'Baptiste Robin', reservedBy:'Guillaume Estienne', group:11, table:'Table 5-2'},
+  {id:166, name:'Guillaume Estienne', reservedBy:'Guillaume Estienne', group:11, table:'Table 5-2'},
+  {id:167, name:'Éléa Harlaut', reservedBy:'Guillaume Estienne', group:11, table:'Table 5-2'},
+  {id:168, name:'Tom Harlaut', reservedBy:'Guillaume Estienne', group:11, table:'Table 5-2'},
+  {id:169, name:'Julien Huteau', reservedBy:'Julien Huteau (CD)', group:2, table:'Table 1-1'},
+  {id:170, name:'Evan DUROCHER', reservedBy:'Julien Huteau', group:2, table:'Table 1-1'},
+  {id:171, name:'Thierry ALIPS', reservedBy:'Laeticia DUHAL', group:22, table:'Table 14-1'},
+  {id:172, name:'Laurence Dausseur', reservedBy:'Laeticia DUHAL', group:22, table:'Table 14-1'},
+  {id:173, name:'Damien DUHAL', reservedBy:'Laeticia DUHAL', group:22, table:'Table 14-1'},
+  {id:174, name:'Jean Sebastien GALICHET', reservedBy:'Laeticia DUHAL', group:22, table:'Table 14-1'},
+  {id:175, name:'Gilles FOURNEL', reservedBy:'Laeticia DUHAL', group:22, table:'Table 14-1'},
+  {id:176, name:'Romain THOMAS GERARD', reservedBy:'Laeticia DUHAL', group:22, table:'Table 14-1'},
+  {id:177, name:'ANSEEUW', reservedBy:'Laeticia DUHAL', group:22, table:'Table 14-2'},
+  {id:178, name:'OULER', reservedBy:'Laeticia DUHAL', group:22, table:'Table 14-2'},
+  {id:179, name:'Robert BAYEN', reservedBy:'Laeticia DUHAL', group:22, table:'Table 14-2'},
+  {id:180, name:'Fabrice Renaud', reservedBy:'Laeticia DUHAL', group:22, table:'Table 14-2'},
+  {id:1801, name:'Fabrice Renaud + 1', reservedBy:'Laeticia DUHAL', group:22, table:'Table 14-2'},
+  {id:181, name:'Thierry ALIPS', reservedBy:'Laeticia DUHAL', group:22, table:'Table 14-2'},
+  {id:182, name:'Alice Varnier 1', reservedBy:'Laeticia DUHAL', group:22, table:'Table 14-3'},
+  {id:183, name:'Alice Varnier 2', reservedBy:'Laeticia DUHAL', group:22, table:'Table 14-3'},
+  {id:184, name:'Magali Richiert', reservedBy:'Laeticia DUHAL', group:22, table:'Table 14-3'},
+  {id:185, name:'Romain THOMAS GERARD', reservedBy:'Laeticia DUHAL', group:22, table:'Table 14-3'},
+  {id:186, name:'Laetitia Duhal', reservedBy:'Laeticia DUHAL', group:22, table:'Table 14-3'},
+  {id:187, name:'Jean Sebastien GALICHET', reservedBy:'Laeticia DUHAL', group:22, table:'Table 14-3'},
+  {id:188, name:'ANSEEUW', reservedBy:'Laeticia DUHAL', group:22, table:'Table 16-3'},
+  {id:189, name:'OULER', reservedBy:'Laeticia DUHAL', group:22, table:'Table 16-3'},
+  {id:190, name:'Gilles FOURNEL', reservedBy:'Laeticia DUHAL', group:22, table:'Table 16-3'},
+  {id:191, name:'Lolita', reservedBy:'Laure DAY', group:10, table:'Table 8-3'},
+  {id:192, name:'Bertille', reservedBy:'Laure DAY', group:10, table:'Table 8-3'},
+  {id:193, name:'Jean Baptiste', reservedBy:'Laure DAY', group:10, table:'Table 8-3'},
+  {id:194, name:'Léonie COSSUS', reservedBy:'Laure DAY', group:10, table:'Table 8-3'},
+  {id:195, name:'Philomène GAILLOT', reservedBy:'Laure DAY', group:10, table:'Table 8-3'},
+  {id:196, name:'Frederic MORLET', reservedBy:'Laure DAY', group:10, table:'Table 8-3'},
+  {id:197, name:'Maxime Letaudin', reservedBy:'Laure DAY', group:10, table:'Table 8-2'},
+  {id:198, name:'Romuald Bourelle', reservedBy:'Laure DAY', group:10, table:'Table 8-2'},
+  {id:199, name:'Geoffrey MORLET', reservedBy:'Laure DAY', group:10, table:'Table 8-2'},
+  {id:200, name:'Céline CAQUOT', reservedBy:'Laure DAY', group:10, table:'Table 8-2'},
+  {id:201, name:'Louis BLOT', reservedBy:'Louis BLOT', group:6, table:'Table 8-1'},
+  {id:202, name:'Corentin GOUESBIER', reservedBy:'Louis BLOT', group:6, table:'Table 8-1'},
+  {id:203, name:'Maximilien MELIN', reservedBy:'Louis BLOT', group:6, table:'Table 8-1'},
+  {id:204, name:'Enzo WIEREPANT', reservedBy:'Louis BLOT', group:6, table:'Table 8-1'},
+  {id:205, name:'Alexandre GOBERT', reservedBy:'Louis BLOT', group:6, table:'Table 8-1'},
+  {id:206, name:'Théo DELECROIX', reservedBy:'Louis BLOT', group:6, table:'Table 8-1'},
+  {id:207, name:'Constant Galichet', reservedBy:'Louis Duhal', group:22, table:'Table 4-2'},
+  {id:208, name:'Gregoire Hermand', reservedBy:'Louis Duhal', group:22, table:'Table 4-2'},
+  {id:209, name:'Leony Antoine', reservedBy:'Louis Duhal', group:22, table:'Table 4-2'},
+  {id:210, name:'Alexis Bontemps', reservedBy:'Louis Duhal', group:22, table:'Table 2-1'},
+  {id:211, name:'Lea Barrois', reservedBy:'Louis Duhal', group:22, table:'Table 2-1'},
+  {id:212, name:'Thomas Bontemps', reservedBy:'Louis Duhal', group:22, table:'Table 2-1'},
+  {id:213, name:'Mathieu Dagas', reservedBy:'Louis Duhal', group:22, table:'Table 2-1'},
+  {id:214, name:'Fanny Durup', reservedBy:'Louis Duhal', group:22, table:'Table 2-1'},
+  {id:215, name:'Gaétan Godard', reservedBy:'Louis Duhal', group:22, table:'Table 2-1'},
+  {id:216, name:'Claire Genty', reservedBy:'Louis Duhal', group:22, table:'Table 2-1'},
+  {id:217, name:'Paul Gomes', reservedBy:'Louis Duhal', group:22, table:'Table 2-1'},
+  {id:218, name:'Marius Saborido', reservedBy:'Louis Duhal', group:22, table:'Table 2-1'},
+  {id:219, name:'Lison Godart', reservedBy:'Louis Duhal', group:22, table:'Table 4-1'},
+  {id:220, name:'Ylysse Francart', reservedBy:'Louis Duhal', group:22, table:'Table 4-1'},
+  {id:221, name:'Paul Philippe', reservedBy:'Louis Duhal', group:22, table:'Table 4-1'},
+  {id:222, name:'Camille Lenglet', reservedBy:'Louis Duhal', group:22, table:'Table 4-1'},
+  {id:223, name:'Leo Alips', reservedBy:'Louis Duhal', group:22, table:'Table 4-1'},
+  {id:224, name:'Abel Lemoine', reservedBy:'Louis Duhal', group:22, table:'Table 4-1'},
+  {id:225, name:'Emma Pasps', reservedBy:'Louis Duhal', group:22, table:'Table 4-2'},
+  {id:226, name:'Bertille Bonnet', reservedBy:'Louis Duhal', group:22, table:'Table 4-2'},
+  {id:227, name:'Jules Gomard', reservedBy:'Louis Duhal', group:22, table:'Table 4-2'},
+  {id:228, name:'Catherine Maret', reservedBy:'MARET Robin', group:9, table:'Table 16-2'},
+  {id:229, name:'Michel Maret', reservedBy:'MARET Robin', group:9, table:'Table 16-2'},
+  {id:230, name:'Laurence Trisson', reservedBy:'MARET Robin', group:9, table:'Table 16-1'},
+  {id:231, name:'Henri Thouvenin', reservedBy:'MARET Robin', group:9, table:'Table 16-1'},
+  {id:232, name:'Marie Thouvenin', reservedBy:'MARET Robin', group:9, table:'Table 16-1'},
+  {id:233, name:'Jaïna Maret', reservedBy:'MARET Robin', group:9, table:'Table 16-1'},
+  {id:2331, name:'Romaric Maret', reservedBy:'MARET Robin', group:9, table:'Table 16-1'},
+  {id:234, name:'Leslie Maret', reservedBy:'MARET Robin', group:9, table:'Table 16-1'},
+  {id:235, name:'Laetitia Delandhuy', reservedBy:'MARET Robin', group:9, table:'Table 16-1'},
+  {id:236, name:'Amestine Ponsart', reservedBy:'Ponsart Antoine', group:2, table:'Table 8-2'},
+  {id:237, name:'Louis Danguillaume', reservedBy:'Ponsart Antoine', group:2, table:'Table 8-2'},
+  {id:238, name:'Quentin Arrouart', reservedBy:'Quentin Arrouart', group:6, table:'Table 3-1'},
+  {id:239, name:'François Matelier', reservedBy:'Quentin Arrouart', group:6, table:'Table 3-1'},
+  {id:240, name:'Valentin Lemoine', reservedBy:'Quentin Arrouart', group:6, table:'Table 3-1'},
+  {id:241, name:'Nicolas Lancelot', reservedBy:'Quentin Arrouart', group:6, table:'Table 3-1'},
+  {id:242, name:'Maxence Remy', reservedBy:'Quentin Arrouart', group:6, table:'Table 3-1'},
+  {id:243, name:'Marie CARON', reservedBy:'Quentin Arrouart', group:6, table:'Table 3-1'},
+  {id:244, name:'Théo GALICHET', reservedBy:'Théo GALICHET', group:6, table:'Table 3-2'},
+  {id:245, name:'Mathieu GILOOTS', reservedBy:'Théo GALICHET', group:6, table:'Table 3-2'},
+  {id:246, name:'Jordan DUHAL', reservedBy:'Théo GALICHET', group:6, table:'Table 3-2'},
+  {id:247, name:'Theotime Laloua', reservedBy:'Théo GALICHET', group:6, table:'Table 3-2'},
+  {id:248, name:'Emeline Giloots', reservedBy:'Théo GALICHET', group:6, table:'Table 3-2'},
+  {id:249, name:'Theo Galichet Invité 3', reservedBy:'Théo GALICHET', group:6, table:'Table 3-2'},
+  {id:250, name:'Thomas Blanckaert', reservedBy:'Thomas Blanckaert', group:3, table:'Table 2-2'},
+  {id:251, name:'Justin', reservedBy:'Thomas Blanckaert', group:3, table:'Table 2-2'},
+  {id:252, name:'Timéo', reservedBy:'Thomas Blanckaert', group:3, table:'Table 2-2'},
+];
+
+// State
+const arrived = {};
+const arrivedTimes = {};
+const arrivedLanes = {};
+let filter = 'all';
+let selectedId = null;
+
+function getTableIds(tableStr) {
+  if (!tableStr) return [];
+  const results = [];
+  const nums = tableStr.match(/(\d+)-?(\d+)?/g);
+  if (!nums) return [];
+  nums.forEach(n => {
+    if (n.includes('-')) {
+      results.push('t' + n);
+    } else {
+      const base = parseInt(n);
+      [1,2,3].forEach(sub => {
+        const id = `t${base}-${sub}`;
+        if (document.getElementById(id)) results.push(id);
+      });
+    }
+  });
+  return [...new Set(results)].filter(id => document.getElementById(id));
+}
+
+function normalize(s) { return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+
+function selectGuest(id) {
+  selectedId = selectedId === id ? null : id;
+  render();
+  updateMap();
+}
+
+function toggleArrived(e, id) {
+  e.stopPropagation();
+  if (isViewOnly) return;
+
+  const now = new Date();
+  const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  const lane = currentLane === 'left' ? 'File Gauche' : 'File Droite';
+
+  if (arrived[id]) {
+    // On retire seulement l'arrivée
+    if (db) {
+      db.ref('arrived/' + id).remove();
+    } else {
+      delete arrived[id];
+      delete arrivedTimes[id];
+      delete arrivedLanes[id];
+      updateStats();
+      updateTableProgressBars();
+      render();
+    }
+  } else {
+    // On coche arrivé
+    if (db) {
+      db.ref('arrived/' + id).set({ time, lane });
+
+      // Si pas encore payé, on coche aussi payé automatiquement
+      if (!paid[id]) {
+        db.ref('paid/' + id).set({ time });
+      }
+    } else {
+      arrived[id] = true;
+      arrivedTimes[id] = time;
+      arrivedLanes[id] = lane;
+
+      // Paiement auto si arrivée
+      if (!paid[id]) {
+        paid[id] = true;
+        paidTimes[id] = time;
+      }
+
+      updateStats();
+      updateTableProgressBars();
+      render();
+    }
+  }
+}
+
+function togglePaid(e, id) {
+  e.stopPropagation();
+  if (isViewOnly) return;
+  const now = new Date();
+  const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  if (paid[id]) {
+    if (db) {
+      db.ref('paid/' + id).remove();
+    } else {
+      delete paid[id];
+      delete paidTimes[id];
+      updateStats(); render();
+    }
+  } else {
+    if (db) {
+      db.ref('paid/' + id).set({ time });
+    } else {
+      paid[id] = true;
+      paidTimes[id] = time;
+      updateStats(); render();
+    }
+  }
+}
+
+// === POPUP TOGGLE HELPERS ===
+// Refresh popup after Firebase write with short delay
+function popupToggleArrived(e, id) {
+  e.stopPropagation();
+  toggleArrived(e, id);
+  // If no Firebase, refresh immediately via local state
+  if (!db) {
+    setTimeout(refreshPopupIfOpen, 50);
+  }
+  // With Firebase, the arrivedRef listener will call refreshPopupIfOpen automatically
+}
+
+function popupTogglePaid(e, id) {
+  e.stopPropagation();
+  togglePaid(e, id);
+  if (!db) {
+    setTimeout(refreshPopupIfOpen, 50);
+  }
+}
+
+function updateTableProgressBars() {
+  document.querySelectorAll('.table-block').forEach(block => {
+    const tableId = block.dataset.table;
+    if (!tableId) return;
+
+    const tableGuests = guests.filter(g => {
+      if (!g.table) return false;
+      return getTableIds(g.table).includes(block.id);
+    });
+
+    const total = tableGuests.length;
+    const arrivedCount = tableGuests.filter(g => arrived[g.id]).length;
+    const pct = total > 0 ? Math.round(arrivedCount / total * 100) : 0;
+
+    // === PATCH 1: Show guest count on the table card ===
+    const guestsEl = block.querySelector('.t-guests');
+    if (guestsEl) {
+      if (total === 0) {
+        guestsEl.textContent = '';
+      } else {
+        guestsEl.textContent = arrivedCount + ' / ' + total + ' pers.';
+      }
+    }
+
+    block.classList.remove('status-partial', 'status-full');
+    if (total > 0 && arrivedCount > 0) {
+      if (arrivedCount === total) block.classList.add('status-full');
+      else block.classList.add('status-partial');
+    }
+
+    const fill = document.getElementById('progfill-' + block.id.replace('t',''));
+    const label = document.getElementById('proglabel-' + block.id.replace('t',''));
+    const wrap = document.getElementById('prog-' + block.id.replace('t',''));
+
+    if (fill && label && wrap) {
+      if (total === 0) {
+        wrap.style.display = 'none';
+      } else {
+        wrap.style.display = 'block';
+        if (arrivedCount === total) {
+          fill.style.background = 'linear-gradient(90deg, #27ae60, #2ecc71)';
+        } else if (arrivedCount > 0) {
+          fill.style.background = 'linear-gradient(90deg, #e67e22, #f39c12)';
+        } else {
+          fill.style.background = 'linear-gradient(90deg, #27ae60, #2ecc71)';
+        }
+        fill.style.width = pct + '%';
+        if (pct === 0) {
+          label.textContent = `0 / ${total}`;
+        } else {
+          label.textContent = `${arrivedCount}/${total} · ${pct}%`;
+        }
+        label.style.color = pct >= 50 ? 'white' : (arrivedCount === total ? '#1a6b3a' : '#7c3a00');
+      }
+    }
+  });
+}
+
+function clearSelection() {
+  selectedId = null;
+  render();
+  updateMap();
+}
+
+function updateStats() {
+  const count = Object.keys(arrived).length;
+  const paidCount = Object.keys(paid).length;
+  document.getElementById('statTotal').textContent = guests.length;
+  document.getElementById('statArrived').textContent = count;
+  document.getElementById('statRemaining').textContent = guests.length - count;
+  document.getElementById('statPaid').textContent = paidCount;
+  document.getElementById('progressFill').style.width = (count / guests.length * 100) + '%';
+}
+
+function updateMap() {
+  document.querySelectorAll('.table-block').forEach(el => el.classList.remove('highlighted'));
+  const banner = document.getElementById('guestBanner');
+  const noTable = document.getElementById('noTableNotice');
+
+  if (!selectedId) {
+    banner.classList.remove('visible');
+    noTable.classList.remove('visible');
+    document.getElementById('mapHint').textContent = 'Cliquez sur un invité pour localiser sa table';
+    return;
+  }
+
+  const g = guests.find(x => x.id === selectedId);
+  if (!g) return;
+
+  document.getElementById('bannerName').textContent = g.name;
+  document.getElementById('bannerDetail').textContent = `Réservé par ${g.reservedBy} · Groupe de ${g.group}`;
+  if (g.table) {
+    document.getElementById('bannerTable').textContent = g.table;
+    banner.classList.add('visible');
+    noTable.classList.remove('visible');
+    const ids = getTableIds(g.table);
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.classList.add('highlighted'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    });
+    document.getElementById('mapHint').textContent = ids.length > 0 ? `Table surlignée en jaune ↓` : 'Table visible sur le plan';
+  } else {
+    document.getElementById('bannerTable').textContent = 'Table à définir';
+    banner.classList.add('visible');
+    noTable.classList.add('visible');
+    document.getElementById('mapHint').textContent = 'Table non encore assignée';
+  }
+}
+
+function render() {
+  const query = normalize(document.getElementById('search').value.trim());
+  const list = document.getElementById('guestList');
+
+  let filtered = guests.filter(g => {
+    if (filter === 'arrived' && !arrived[g.id]) return false;
+    if (filter === 'pending' && arrived[g.id]) return false;
+    if (filter === 'paid' && !paid[g.id]) return false;
+    if (filter === 'unpaid' && paid[g.id]) return false;
+    if (!query) return true;
+    return normalize(g.name).includes(query) || normalize(g.reservedBy).includes(query) || normalize(g.table).includes(query);
+  });
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty-state">Aucun invité trouvé…</div>';
+    return;
+  }
+
+  const groups = {};
+  filtered.forEach(g => {
+    if (!groups[g.reservedBy]) groups[g.reservedBy] = [];
+    groups[g.reservedBy].push(g);
+  });
+
+  let html = '';
+  Object.entries(groups).forEach(([groupName, members]) => {
+    html += `<div class="group-header">Résa · ${groupName} · ${members[0].group} pers.</div>`;
+    members.forEach(g => {
+      const isArrived = !!arrived[g.id];
+      const isSelected = selectedId === g.id;
+      html += `
+        <div class="guest-card${isArrived?' arrived':''}${isSelected?' selected':''}" onclick="selectGuest(${g.id})">
+          <div class="arrive-toggle" onclick="toggleArrived(event,${g.id})">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="paid-toggle${paid[g.id] ? ' is-paid' : ''}" onclick="togglePaid(event,${g.id})" title="${paid[g.id] ? 'Payé' : 'Non payé'}">€</div>
+          <div class="guest-info">
+            <div class="guest-name">${g.name}</div>
+            <div class="guest-meta">
+              <span class="meta-item">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                ${g.reservedBy}
+              </span>
+              <span class="meta-item">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                ×${g.group}
+              </span>
+            </div>
+          </div>
+          ${g.table ? `<div class="table-badge">${getTableDisplayName(g.table)}</div>` : '<div class="table-badge no-table">À définir</div>'}
+          ${isArrived && arrivedTimes[g.id] ? `<div class="time-badge">✓ ${arrivedTimes[g.id]}${arrivedLanes[g.id] ? ' · ' + arrivedLanes[g.id] : ''}</div>` : ''}
+          ${paid[g.id] ? '<div class="paid-badge yes">Payé</div>' : '<div class="paid-badge no">Non payé</div>'}
+        </div>`;
+    });
+  });
+
+  list.innerHTML = html;
+}
+
+// Events
+document.getElementById('search').addEventListener('input', render);
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filter = btn.dataset.filter;
+    render();
+  });
+});
+
+// Init
+updateStats();
+updateTableProgressBars();
+render();
+</script>
+</body>
+</html>
