@@ -137,14 +137,15 @@ function showDeviceUid(uid){
   $('deviceUid').textContent=uid;
   $('pairingPanel').hidden=false;
 }
-async function startSession(profile){
+async function startSession(profile, applicantName){
   if(loginBusy)return;
   loginBusy=true;
   $('loginButton').disabled=true;
-  document.getElementById('pairingPanel').hidden=true;
+  $('pairingPanel').hidden=true;
+  stopListeners();
   role='none';operator='';lane='';ready=false;demo=false;
   try {
-    if(!config.enabled) {
+    if(!config.enabled){
       role=profile.role;operator=profile.name;user={uid:'local-'+role};
       demo=true;ready=true;online=true;state={reservations:{},tables:{}};
       showApp();return;
@@ -159,29 +160,78 @@ async function startSession(profile){
     user=account;
     showDeviceUid(account.uid);
     const membershipRef=eventRef.child('members').child(account.uid);
-    // Seul le propriétaire du projet peut inscrire les UID autorisés depuis Firebase.
-    const member=(await membershipRef.once('value')).val();
-    if(!member){
-      $('loginMessage').textContent='Appareil identifié, mais pas encore autorisé. Ajoutez son UID dans Firebase > Realtime Database > Données > events/saint-eloi-2026/members.';
+    const requestRef=eventRef.child('accessRequests').child(account.uid);
+
+    const connectAuthorized=member=>{
+      if(!member)return false;
+      // Les droits effectifs sont toujours ceux approuvés dans members par le propriétaire.
+      if(member.role!==profile.role||member.name!==profile.name){
+        $('loginMessage').textContent='Cet appareil est autorisé pour un autre rôle. Utilisez le code correspondant.';
+        return false;
+      }
+      if(dataRef)return true;
+      role=member.role;operator=member.name;
+      dataRef=eventRef.child('data');
+      dataRef.on('value',snapshot=>{
+        state=snapshot.val()||{reservations:{},tables:{}};
+        ready=true;showApp();
+      },()=>lock('Accès aux réservations refusé. Vérifiez les règles Firebase.'));
+      db.ref('.info/connected').on('value',snapshot=>{online=snapshot.val()===true;render();});
+      $('loginMessage').textContent='Demande approuvée. Connexion aux réservations en cours.';
+      return true;
+    };
+
+    const approved=(await membershipRef.once('value')).val();
+    if(approved){
+      connectAuthorized(approved);
       return;
     }
-    // Les droits réels proviennent uniquement de la liste côté Firebase.
-    if(member.role!==profile.role||member.name!==profile.name){
-      $('loginMessage').textContent='Ce compte anonyme a un autre profil autorisé. Utilisez le code correspondant ou demandez une correction dans Firebase.';
+
+    // Chaque compte anonyme dépose au plus une demande. Le code n'est jamais stocké.
+    // Le rôle demandé provient du formulaire ; seul l'approbateur décide de l'accès réel.
+    const existing=(await requestRef.once('value')).val();
+    if(existing&&existing.requestedRole!==profile.role){
+      $('loginMessage').textContent='Une demande avec un autre rôle existe déjà pour cet appareil. Contactez l’organisateur.';
       return;
     }
-    role=member.role;operator=member.name;
-    dataRef=eventRef.child('data');
-    dataRef.on('value',snapshot=>{
-      state=snapshot.val()||{reservations:{},tables:{}};
-      ready=true;showApp();
-    },error=>lock('Accès aux réservations refusé par les règles Firebase. Vérifiez le rôle autorisé.'));
-    db.ref('.info/connected').on('value',snapshot=>{online=snapshot.val()===true;render();});
+    if(!existing){
+      const cleanName=String(applicantName||'').trim().replace(/\s+/g,' ');
+      if(cleanName.length<3||cleanName.length>100)throw Error('Indiquez votre prénom et votre nom pour la demande d’accès.');
+      await requestRef.set({
+        name:cleanName,
+        requestedRole:profile.role,
+        requestedOperator:profile.name,
+        requestedAt:firebase.database.ServerValue.TIMESTAMP,
+        status:'pending'
+      });
+    }
+    const request=(await requestRef.once('value')).val();
+    $('accessRequestStatus').textContent=request?.status==='rejected'
+      ? 'Votre demande a été refusée. Contactez l’organisateur.'
+      : 'Demande envoyée. Votre accès reste bloqué tant que l’organisateur ne l’a pas approuvée.';
+    $('loginMessage').textContent=request?.status==='rejected'
+      ? 'Demande refusée. Aucun accès aux réservations.'
+      : 'Demande d’accès enregistrée dans Firebase. En attente de validation par l’organisateur.';
+    // Lorsque le propriétaire valide la demande, l'accès est ouvert sans nouvelle saisie.
+    memberRef=membershipRef;
+    memberRef.on('value',snapshot=>{
+      const member=snapshot.val();
+      if(member)connectAuthorized(member);
+    },()=>{$('loginMessage').textContent='Impossible de vérifier votre autorisation Firebase.';});
+    requestRef.on('value',snapshot=>{
+      const req=snapshot.val();
+      if(!req||dataRef)return;
+      if(req.status==='rejected'){
+        $('accessRequestStatus').textContent='Demande refusée par l’organisateur.';
+        $('loginMessage').textContent='Votre demande a été refusée.';
+      }
+    });
   }catch(error){
-    const message=(String(error?.code||'').includes('PERMISSION_DENIED')||String(error?.message||'').includes('PERMISSION_DENIED'))
-      ? 'Appareil Firebase identifié. Les règles de sécurité doivent encore être installées dans la console.'
-      : 'Identification Firebase indisponible : '+(error?.message||'réessayez.');
-    $('loginMessage').textContent=message;
+    const forbidden=String(error?.code||'').toLowerCase().includes('permission_denied')
+      ||String(error?.message||'').toLowerCase().includes('permission_denied');
+    $('loginMessage').textContent=forbidden
+      ? 'Demande impossible : publiez d’abord les règles Firebase du dépôt GitHub dans la console.'
+      : 'Demande impossible : '+(error?.message||'réessayez.');
   }finally{
     loginBusy=false;
     $('loginButton').disabled=false;
@@ -194,8 +244,13 @@ $('accessForm').onsubmit=async e=>{
   if(!profile||!permissions[profile.role]){
     $('loginMessage').textContent='Code non reconnu.';return;
   }
+  const applicantName=$('requestName').value.trim();
+  if(config.enabled&&(applicantName.length<3||applicantName.length>100)){
+    $('loginMessage').textContent='Indiquez votre prénom et votre nom pour que l’organisateur sache qui demande l’accès.';
+    return;
+  }
   $('accessCode').value='';
-  await startSession(profile);
+  await startSession(profile,applicantName);
 };
 $('demoButton').onclick=()=>{
   stopListeners();$('pairingPanel').hidden=true;
