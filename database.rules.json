@@ -1,0 +1,104 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "events": {
+      "saint-eloi-2026": {
+        "members": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": false
+          }
+        },
+        "data": {
+          ".read": "auth != null && root.child('events/saint-eloi-2026/members').child(auth.uid).child('name').val() != null",
+          ".write": "auth != null && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('name').val() === 'Antonin Blanckaert' || root.child('events/saint-eloi-2026/members').child(auth.uid).child('name').val() === 'Antonin Bassut')",
+          "tables": {
+            "$id": {
+              ".validate": "newData.hasChildren(['capacity'])",
+              "capacity": {
+                ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 100 && newData.val() % 1 === 0"
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          },
+          "reservations": {
+            "$id": {
+              ".validate": "newData.hasChildren(['reservedBy','status','participants','version','createdBy','createdAt','updatedBy','updatedAt'])",
+              "reservedBy": {
+                ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
+              },
+              "phone": {
+                ".validate": "newData.isString() && newData.val().length <= 30"
+              },
+              "notes": {
+                ".validate": "newData.isString() && newData.val().length <= 2000"
+              },
+              "status": {
+                ".validate": "newData.val() === 'pending' || newData.val() === 'accepted' || newData.val() === 'cancelled'"
+              },
+              "version": {
+                ".validate": "newData.isNumber() && newData.val() >= 1"
+              },
+              "createdBy": {
+                ".validate": "newData.isString()"
+              },
+              "createdAt": {
+                ".validate": "newData.isString()"
+              },
+              "updatedBy": {
+                ".validate": "newData.isString()"
+              },
+              "updatedAt": {
+                ".validate": "newData.isString()"
+              },
+              "participants": {
+                "$pid": {
+                  ".validate": "newData.hasChildren(['name','tableId','seat','arrived','paid'])",
+                  "name": {
+                    ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
+                  },
+                  "tableId": {
+                    ".validate": "newData.isString() && (newData.val() === '' || newData.val().matches(/^t[0-9]+-[123]$/))"
+                  },
+                  "seat": {
+                    ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100 && newData.val() % 1 === 0"
+                  },
+                  "arrived": {
+                    ".validate": "newData.isBoolean()"
+                  },
+                  "paid": {
+                    ".validate": "newData.isBoolean()"
+                  },
+                  "arrivedAt": {
+                    ".validate": "newData.isString()"
+                  },
+                  "paidAt": {
+                    ".validate": "newData.isString()"
+                  },
+                  "arrivedBy": {
+                    ".validate": "newData.isString()"
+                  },
+                  "paidBy": {
+                    ".validate": "newData.isString()"
+                  },
+                  "$other": {
+                    ".validate": false
+                  }
+                }
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    }
+  }
+}
