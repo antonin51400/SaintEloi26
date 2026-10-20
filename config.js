@@ -20,8 +20,8 @@ window.SAINT_ELOI_CONFIG = {
     // Paramètres PUBLICS de l'application Web Firebase (sans mot de passe privé).
     apiKey: 'AIzaSyA8oH7LLeY-ZYU8nssatUN4m3QmtNxXTVQ',
     authDomain: 'sainteloi26-371e3.firebaseapp.com',
-    // À compléter après la création de Realtime Database ; ne pas deviner la région.
-    databaseURL: '',
+    // Realtime Database de Saint Éloi 2026 (europe-west1).
+    databaseURL: 'https://sainteloi26-371e3-default-rtdb.europe-west1.firebasedatabase.app',
     projectId: 'sainteloi26-371e3',
     storageBucket: 'sainteloi26-371e3.firebasestorage.app',
     messagingSenderId: '207016607185',
