@@ -805,15 +805,15 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 
 <section class="code-modal" id="loginPanel"><div class="code-box">
 <div class="eyebrow-code">Saint Eloi 2026</div><h2>Réservations & accueil</h2>
-<p>Un espace pour Antonin Blanckaert et Antonin Bassut : enregistrer les demandes reçues par SMS, confirmer les invités et préparer leur accueil.</p>
+<p>Réservations par SMS, placement des tables et accueil des invités. Choisissez votre code d'accès pour ouvrir votre espace.</p>
 <form id="accessForm" class="access-form">
-  <label for="accessCode" class="access-label">Code personnel à quatre chiffres</label>
+  <label for="accessCode" class="access-label">Code d’accès à quatre chiffres</label>
   <input id="accessCode" class="access-input" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" placeholder="••••" required>
   <button class="primary" type="submit" id="loginButton">Se connecter</button>
 </form>
 <p id="loginMessage" role="status"></p>
 <button class="secondary" type="button" id="demoButton">Essayer avec des données fictives</button>
-<p class="muted">La démonstration reste dans cet onglet et ne sauvegarde aucune donnée.</p>
+<p class="muted">Mode essai : vos saisies ne sont ni sauvegardées ni partagées entre les appareils.</p>
 </div></section>
 <div class="wrapper" id="appWrapper" style="display:none">
 
@@ -1202,7 +1202,6 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 </form></dialog>
 <dialog id="placementDialog"><form id="placementForm"><div class="dialog-heading"><h2>Placer les invités</h2><button type="button" class="secondary" data-close="placementDialog">Fermer</button></div><p id="placementNames"></p><label>Table<select id="placementTable"></select></label><label id="newCapacityLabel" hidden>Combien de places à cette table ?<input id="newCapacity" type="number" min="1" max="100" step="1" placeholder="Ex. 8"></label><label id="seatLabel">Place<select id="placementSeat"></select></label><p id="placementError" role="alert"></p><button class="primary" type="submit">Enregistrer le placement</button></form></dialog>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="config.js"></script><script src="app.js"></script>
 </body></html>
