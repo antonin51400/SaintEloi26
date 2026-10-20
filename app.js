@@ -18,7 +18,13 @@ const permissions = {
   entry: ['arrival','payment'],
   view: []
 };
-const allowed = permission => !!permissions[role]?.includes(permission);
+const allowed = permission => {
+  if(!permissions[role]?.includes(permission))return false;
+  // Le placement partagé nécessite encore une transaction atomique entre
+  // les réservations : ne pas exposer des boutons qui écriraient sans droit.
+  if(!demo && role==='placement' && (permission==='reserve'||permission==='place'))return false;
+  return true;
+};
 function requireAccess(permission) { if (!allowed(permission)) throw Error('Ce code ne permet pas cette opération.'); }
 function selectEntryLane() {
   document.getElementById('laneChoice')?.remove();
@@ -252,21 +258,46 @@ $('reservationForm').onsubmit=async e=>{
 async function setStatus(rid,status){requireAccess('reserve');if(status==='cancelled'&&!confirm('Annuler cette réservation et libérer ses places ? Les informations de paiement seront conservées.'))return;await mutate(data=>{const r=data.reservations[rid];if(!r)throw Error('Réservation introuvable.');r.status=status;if(status!=='accepted')Object.values(r.participants||{}).forEach(p=>{p.tableId='';p.seat=0;p.arrived=false;});updated(r);});}
 async function setFlag(rid,pid,flag){
   requireAccess(flag==='arrived'?'arrival':'payment');
+  if(!ready||!user||(!demo&&!online))throw Error('Connexion indisponible.');
   const expected=!!state.reservations[rid]?.participants?.[pid]?.[flag];
-  await mutate(data=>{
-    const r=data.reservations[rid],p=r?.participants?.[pid];
-    if(!p||r.status!=='accepted')throw Error('Cet invité ne fait pas partie d’une réservation acceptée.');
+  const applyFlag=p=>{
+    if(!p)throw Error('Cet invité est introuvable.');
     if(!!p[flag]!==expected)throw Error('Ce statut a déjà été modifié sur un autre appareil.');
     if(flag==='paid'&&p.arrived&&p.paid)throw Error('Une personne arrivée reste payée. Annulez d’abord son arrivée pour corriger.');
     const now=new Date().toISOString();
-    p[flag]=!expected;p[flag+'At']=!expected?now:'';p[flag+'By']=operator+(lane?' · File '+(lane==='left'?'Gauche':'Droite'):'');
+    p[flag]=!expected;p[flag+'At']=!expected?now:'';
+    p[flag+'By']=operator+(lane?' · File '+(lane==='left'?'Gauche':'Droite'):'');
     if(flag==='arrived'&&!expected){
-      // L'arrivée confirme le paiement ; une personne peut déjà être payée avant son entrée.
       p.paid=true;
       if(!p.paidAt)p.paidAt=now;
       if(!p.paidBy)p.paidBy=operator+' · validation à l’entrée';
     }
-    updated(r);
+    return p;
+  };
+  if(!demo&&role==='entry'){
+    // Une écriture directe sous l'invité permet aux règles Firebase d'autoriser
+    // uniquement l'arrivée et le paiement, et rien d'autre.
+    if(state.reservations[rid]?.status!=='accepted')throw Error('Réservation non acceptée.');
+    if(busy)throw Error('Un enregistrement est déjà en cours.');
+    busy=true;
+    try{
+      const ref=dataRef.child('reservations').child(rid).child('participants').child(pid);
+      let conflict='';
+      const result=await ref.transaction(current=>{
+        try{
+          const next=applyFlag(current?{...current}:null);
+          conflict='';return next;
+        }catch(error){conflict=error.message;return;}
+      },undefined,false);
+      if(!result.committed)throw Error(conflict||'Modification refusée. Vérifiez les droits Firebase.');
+      notice('Arrivée et paiement mis à jour pour tous les appareils.');
+    }finally{busy=false;}
+    return;
+  }
+  await mutate(data=>{
+    const r=data.reservations[rid],p=r?.participants?.[pid];
+    if(!p||r.status!=='accepted')throw Error('Cet invité ne fait pas partie d’une réservation acceptée.');
+    applyFlag(p);updated(r);
   });
 }
 function choose(sel){requireAccess('place');membersFor(sel);closeTablePopup();selection=sel;render();document.querySelector('.panel-right').scrollIntoView({behavior:'smooth',block:'start'});}
