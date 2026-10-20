@@ -26,12 +26,15 @@
           },
           "reservations": {
             "$id": {
-              ".validate": "newData.hasChildren(['reservedBy','status','participants','version','createdBy','createdAt','updatedBy','updatedAt'])",
+              ".validate": "newData.hasChildren(['reservedBy','contactedOrganizer','status','participants','version','createdBy','createdAt','updatedBy','updatedAt'])",
               "reservedBy": {
                 ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
               },
               "phone": {
                 ".validate": "newData.isString() && newData.val().length <= 30"
+              },
+              "contactedOrganizer": {
+                ".validate": "newData.val() === 'Antonin Blanckaert' || newData.val() === 'Antonin Bassut'"
               },
               "notes": {
                 ".validate": "newData.isString() && newData.val().length <= 2000"
