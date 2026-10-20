@@ -111,6 +111,31 @@
           "$other": {
             ".validate": false
           }
+        },
+        "accessRequests": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.exists() && newData.child('status').val() === 'pending'",
+            ".validate": "newData.hasChildren(['name','requestedRole','requestedOperator','requestedAt','status'])",
+            "name": {
+              ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 100"
+            },
+            "requestedRole": {
+              ".validate": "newData.val() === 'organizer' || newData.val() === 'admin' || newData.val() === 'placement' || newData.val() === 'entry' || newData.val() === 'view'"
+            },
+            "requestedOperator": {
+              ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 120"
+            },
+            "requestedAt": {
+              ".validate": "newData.isNumber() && newData.val() > 0"
+            },
+            "status": {
+              ".validate": "newData.val() === 'pending'"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
         }
       }
     }
