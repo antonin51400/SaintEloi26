@@ -1,0 +1,23 @@
+name: Vérification Saint Éloi 2026
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  tests:
+    name: Tester l’application et la configuration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node --check app.js
+      - run: npm test
+      - name: Vérifier règles et configuration Firebase
+        run: |
+          node -e "const fs=require('fs'); const r=JSON.parse(fs.readFileSync('database.rules.json','utf8'));const c=fs.readFileSync('config.js','utf8');if(r.rules['.read']!==false||r.rules['.write']!==false)process.exit(1);if(!c.includes('sainteloi26-371e3-default-rtdb.europe-west1.firebasedatabase.app'))process.exit(1);console.log('Règles fermées par défaut et adresse Firebase validées');"
