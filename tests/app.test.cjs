@@ -25,8 +25,8 @@ async function create(by,names,status='accepted',contacted='Antonin Blanckaert')
  assert.equal($('entryTablesGrid').querySelector('.entry-table-card').textContent.includes('2/6 places'),true);
  assert.equal($('entryTablesGrid').querySelector('.entry-table-card').classList.contains('status-partial'),true);
  assert.equal($('entryTablesGrid').querySelector('.entry-table-card').querySelectorAll('.seat-expected').length,2);
- assert.equal(document.getElementById('t1-1').classList.contains('capacity-partial'),true);
- const ids=Object.keys(app.state.reservations[a].participants);await app.setFlag(a,ids[0],'arrived');assert.equal($('statPaid').textContent,'1');assert.equal($('statArrived').textContent,'1');assert.equal(document.getElementById('t1-1').classList.contains('arrival-partial'),true);
+ assert.equal(d.getElementById('t1-1').classList.contains('capacity-partial'),true);
+ const ids=Object.keys(app.state.reservations[a].participants);await app.setFlag(a,ids[0],'arrived');assert.equal($('statPaid').textContent,'1');assert.equal($('statArrived').textContent,'1');assert.equal(d.getElementById('t1-1').classList.contains('arrival-partial'),true);
  assert.equal($('entryTablesGrid').querySelector('.entry-table-card').querySelectorAll('.seat-arrived').length,1);
  assert.equal($('entryTablesGrid').querySelector('.entry-table-card').querySelectorAll('.seat-expected').length,1);await assert.rejects(()=>app.setFlag(a,ids[0],'paid'),/personne arrivée/);await app.setFlag(a,ids[1],'paid');assert.equal($('statPaid').textContent,'2');assert.equal(app.state.reservations[a].participants[ids[1]].arrived,false);
  const b=await create('<img src=x onerror=alert(1)>',['Charlie Test'],'accepted','Antonin Blanckaert');assert.equal($('guestList').querySelectorAll('img').length,0);
