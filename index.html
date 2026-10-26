@@ -980,6 +980,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 .guest-card:not(.arrived){border-left:4px solid #528ecb}
 .guest-card .guest-info{flex-basis:100%}.payment-alert{overflow-wrap:anywhere;white-space:pre-wrap;margin-top:6px;padding:9px 12px;border:2px solid #d6a329;border-radius:8px;background:#fff3c4;color:#704600;font-size:13px}.arrival-detail{font-size:12px;color:#2d5442;margin-top:5px}.countdown-box{margin:18px 0;padding:14px;border:1px solid #c9a84c;border-radius:12px;text-align:center}.countdown-box strong{display:block;font-size:24px;font-variant-numeric:tabular-nums}#paymentDialog form,#arrivalDialog form{display:grid;gap:12px}#paymentDialog input,#paymentDialog textarea{width:100%}
 #inviteUserDialog .invite-confirmation{display:flex;align-items:flex-start;gap:10px;font-weight:500}#inviteUserDialog .invite-confirmation input{width:auto;flex:none;margin-top:4px}
+.countdown-units{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}.countdown-unit{padding:12px 6px;border-radius:10px;background:#ffffff0c;border:1px solid #c9a84c66}.countdown-box .countdown-unit strong{font-size:40px;line-height:1.1;letter-spacing:1px;color:#fff}.countdown-unit span{display:block;margin-top:6px;font-size:13px;color:#e8c982}.countdown-box>span{font-size:14px}#countdownFinished{margin:12px 0 0;font-weight:700}@media(max-width:600px){.countdown-box{padding:12px 8px}.countdown-units{gap:6px}.countdown-unit{padding:10px 3px}.countdown-box .countdown-unit strong{font-size:28px}.countdown-unit span{font-size:11px}}
 </style>
 </head>
 <body>
@@ -996,7 +997,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
       </div>
       <div class="cover-kicker">LES JEUNES AGRICULTEURS PRÉSENTENT</div>
       <h1 class="cover-title">La Saint <em>Éloi</em><span>2026</span></h1>
-      <div class="countdown-box"><span>Saint Éloi · 5 décembre 2026 à 20 h (heure de Paris)</span><strong id="eventCountdown" role="timer"></strong></div>
+      <div class="countdown-box"><span>Saint Éloi · 5 décembre 2026 à 20 h (heure de Paris)</span><div id="eventCountdown" class="countdown-units" role="timer" aria-live="off"><div class="countdown-unit"><strong id="countdownDays">00</strong><span>Jours</span></div><div class="countdown-unit"><strong id="countdownHours">00</strong><span>Heures</span></div><div class="countdown-unit"><strong id="countdownMinutes">00</strong><span>Minutes</span></div><div class="countdown-unit"><strong id="countdownSeconds">00</strong><span>Secondes</span></div></div><p id="countdownFinished" role="status" hidden>La soirée a commencé !</p></div>
       <p class="cover-subtitle">Réservations, plan de table et accueil des invités — un espace pour préparer ensemble la soirée.</p>
       <div class="cover-team-label">UNE ORGANISATION SIGNÉE</div>
       <div class="cover-team" aria-label="Organisateurs et partenaires">

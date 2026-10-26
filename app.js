@@ -8,7 +8,11 @@ const EVENT_START=Date.parse('2026-12-05T20:00:00+01:00');
 function updateCountdown(now=Date.now()){
  const seconds=Math.max(0,Math.floor((EVENT_START-now)/1000));
  const days=Math.floor(seconds/86400),hours=Math.floor(seconds%86400/3600),minutes=Math.floor(seconds%3600/60);
- $('eventCountdown').textContent=seconds?days+' j · '+hours+' h · '+minutes+' min · '+seconds%60+' s':'La soirée a commencé !';
+ for(const [unit,value] of Object.entries({Days:days,Hours:hours,Minutes:minutes,Seconds:seconds%60})){
+  $('countdown'+unit).textContent=String(value).padStart(2,'0');
+ }
+ $('eventCountdown').setAttribute('aria-label',days+' jours, '+hours+' heures, '+minutes+' minutes et '+seconds%60+' secondes');
+ $('countdownFinished').hidden=seconds>0;
 }
 updateCountdown();setInterval(updateCountdown,1000);
 const displayTime=value=>{const date=new Date(value);return value&&!Number.isNaN(date.getTime())?new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(date):'';};
