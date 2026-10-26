@@ -563,6 +563,25 @@ function drawTable(){const id=popupTable,cap=capacity(id),people=accepted().filt
 function showPlacement(tableId){try{requireAccess('place');if(role==='placement'&&!selection?.pid)throw Error('Pour cette accréditation, sélectionnez un invité à la fois.');const people=membersFor(selection);closeTablePopup();$('placementNames').textContent=people.map(p=>p.name).join(', ');$('placementTable').innerHTML='<option value="">Retirer du plan (à placer)</option>'+tableElements.map(el=>`<option value="${el.id}">${esc(tableNames[el.id])} — ${capacity(el.id)?freeSeats(el.id,selection).length+' places disponibles':'capacité à définir'}</option>`).join('');$('placementTable').value=tableId;$('newCapacity').value='';$('placementError').textContent='';updateSeatOptions();$('placementDialog').showModal();}catch(err){notice(err.message);}}
 function updateSeatOptions(){try{const tableId=$('placementTable').value,people=membersFor(selection);$('newCapacityLabel').hidden=!tableId||!!capacity(tableId);const draft=clone(state);if(tableId&&!capacity(tableId)){draft.tables ||= {};draft.tables[tableId]={capacity:Math.min(100,Math.max(0,Math.floor(Number($('newCapacity').value)||0))) };}$('seatLabel').style.display=people.length===1&&tableId?'block':'none';$('placementSeat').innerHTML=tableId?freeSeats(tableId,selection,draft).map(n=>`<option value="${n}">Place ${n}</option>`).join(''):'';const free=tableId?freeSeats(tableId,selection,draft).length:0;$('placementError').textContent=tableId&&!capacity(tableId,draft)?'Indiquez le nombre de places : la table sera configurée en même temps que le placement.':tableId&&free<people.length?`Pas assez de places : ${free} libres pour ${people.length} personnes. Choisissez une autre table ou placez les invités individuellement.`:people.length>1&&tableId?'Le groupe sera affecté aux premières places libres de cette table.':'';}catch(err){$('placementError').textContent=err.message;}}
 $('placementTable').onchange=()=>{$('newCapacity').value='';updateSeatOptions();};$('newCapacity').oninput=updateSeatOptions;
+async function placeSingleRestricted(sel,tableId,seat){
+ if(!ready||!user||!online)throw Error('Connexion indisponible.');
+ const reservation=state.reservations?.[sel.rid],expected=reservation?.participants?.[sel.pid];
+ if(reservation?.status!=='accepted'||!expected)throw Error('Invité indisponible pour le placement.');
+ if(tableId&&(!capacity(tableId)||!freeSeats(tableId,sel).includes(seat)))
+   throw Error('Place indisponible ou capacité non définie.');
+ if(busy)throw Error('Une modification est déjà en cours.');
+ busy=true;
+ try{
+  const ref=dataRef.child('reservations').child(sel.rid).child('participants').child(sel.pid);
+  const result=await ref.transaction(current=>{
+   if(!current||current.tableId!==expected.tableId||current.seat!==expected.seat||
+     current.arrived!==expected.arrived||current.paid!==expected.paid)return;
+   return {...current,tableId:tableId||'',seat:tableId?seat:0};
+  },undefined,false);
+  if(!result.committed)throw Error('Cet invité a été modifié ailleurs. Recharge et réessaie.');
+  notice('Placement enregistré pour cet invité.');
+ }finally{busy=false;}
+}
 $('placementForm').onsubmit=async e=>{e.preventDefault();requireAccess('place');const sel={...selection},tableId=$('placementTable').value,seat=Number($('placementSeat').value),newCap=Number($('newCapacity').value);try{await mutate(data=>{const people=membersFor(sel,data),r=data.reservations[sel.rid];if(tableId){if(!capacity(tableId,data)){if(!Number.isInteger(newCap)||newCap<1||newCap>100)throw Error('Indiquez une capacité entre 1 et 100 places.');data.tables[tableId]={capacity:newCap};}const free=freeSeats(tableId,sel,data);if(free.length<people.length)throw Error('La table ne dispose plus d’assez de places.');const seats=people.length===1?[seat]:free;if(people.length===1&&!free.includes(seat))throw Error('Cette place n’est plus disponible.');people.forEach((p,i)=>{r.participants[p.pid].tableId=tableId;r.participants[p.pid].seat=seats[i];});}else people.forEach(p=>{r.participants[p.pid].tableId='';r.participants[p.pid].seat=0;});updated(r);});selection=null;$('placementDialog').close();render();if(tableId)openTablePopup(tableId);}catch(err){$('placementError').textContent=err.message;}};
 $('exportButton').onclick=()=>{requireAccess('export');const cell=v=>'"'+String(v??'').replace(/^[=+@\-\t\r]/,"'$&").replaceAll('"','""')+'"';const rows=[['Réservant','Téléphone','Organisateur contacté','Invité','Statut','Table','Place','Arrivé','Payé','Saisi par'],...allGuests().map(p=>[p.reservedBy,state.reservations[p.rid].phone,state.reservations[p.rid].contactedOrganizer||'',p.name,statuses[p.status],tableNames[p.tableId]||'',p.seat||'',p.arrived?'Oui':'Non',p.paid?'Oui':'Non',state.reservations[p.rid].createdBy])];const url=URL.createObjectURL(new Blob(['\uFEFF'+rows.map(r=>r.map(cell).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='Saint-Eloi-2026-reservations.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeTablePopup();}});
