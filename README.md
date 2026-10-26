@@ -22,11 +22,14 @@ Le texte et les réglages de l'e-mail de définition/réinitialisation du mot de
 
 ## Ajouter un utilisateur (organisateur uniquement)
 
-Après le déploiement de la fonction serveur `inviteUser`, un administrateur ouvre **Inviter un utilisateur**, saisit une vraie adresse e-mail puis confirme. Le serveur vérifie son identité et son rôle, crée le compte avec un mot de passe aléatoire non communiqué et attribue le rôle Réservations. Le navigateur demande ensuite à Firebase l’envoi du lien pour choisir son mot de passe. Le compte invité n’est jamais connecté dans la session de l’administrateur.
+Le projet reste sur le forfait **Spark**, sans compte de facturation et sans Cloud Functions. L’invitation se fait en deux étapes :
 
-Un compte existant reçoit un nouveau lien sans modification de ses droits. Un compte suspendu est refusé. Si l’envoi échoue après la création, le message précise que le compte est prêt et que l’invitation doit être réessayée. La réception de l’e-mail reste à vérifier dans une vraie boîte ; une réponse positive de Firebase ne prouve pas sa délivrance.
+1. Un administrateur ouvre **Inviter un utilisateur**, puis **Ouvrir Firebase pour créer le compte**. Dans **Authentication → Utilisateurs → Ajouter un utilisateur**, il crée le compte avec une vraie adresse e-mail et un mot de passe provisoire robuste qui n’a pas besoin d’être communiqué.
+2. Il revient au site, saisit la même adresse, confirme que le compte existe et clique sur **Envoyer le lien de choix du mot de passe**. Pour un compte existant, seule cette seconde étape est nécessaire.
 
-La création dans Firebase Authentication reste possible comme solution de secours. Voir [DEPLOIEMENT.md](./DEPLOIEMENT.md) pour les étapes de mise en service obligatoires.
+Le site utilise l’envoi natif Firebase de réinitialisation du mot de passe. Les droits existants et la session de l’administrateur sont conservés. Une réponse positive signifie que la demande est transmise, pas que le compte existe ou que le message est reçu : vérifier la boîte de réception et les spams. La personne choisit son mot de passe puis se connecte au site et renseigne son prénom et son nom.
+
+Voir [DEPLOIEMENT.md](./DEPLOIEMENT.md) pour publier les règles gratuitement. Aucun déploiement de fonction ni activation de Blaze n’est nécessaire.
 
 ### Les quatre comptes historiques : adresses techniques
 
@@ -79,7 +82,7 @@ Cinq vues sont prévues : **Administrateur**, **Inscriptions et réservations**,
 
 Les comptes créés dans Firebase Authentication sont authentifiés par e-mail. À la première connexion, leur profil prénom et nom est enregistré, puis un rôle `reservations` est créé pour leur UID si aucun autre rôle n'a été préattribué par un administrateur. Les rôles peuvent être changés depuis « Gestion des utilisateurs » avec le **UID** du compte.
 
-**Inviter un utilisateur** crée désormais le compte via une fonction serveur réservée aux administrateurs, puis demande l’e-mail de définition du mot de passe. Cette fonction doit être déployée séparément de GitHub Pages.
+**Inviter un utilisateur** guide la création manuelle dans Firebase Authentication, puis demande l’e-mail de choix du mot de passe. Ce parcours fonctionne sans Cloud Functions sur Spark.
 
 **Publication obligatoire :** les règles dans [`database.rules.managed-users.json`](./database.rules.managed-users.json) ont été renforcées pour les cinq rôles **après la dernière publication confirmée par l'organisateur**. Elles ne sont pas automatiquement publiées dans Firebase par un commit GitHub. Tester la syntaxe et les autorisations dans **Realtime Database → Règles**, puis publier cette version actualisée avant d'utiliser les profils Accueil, Placement, Consultation ou Gestion des utilisateurs sur le site réel. Les tests GitHub sont des tests statiques et de simulation JavaScript, pas une simulation complète du moteur de règles Firebase.
 

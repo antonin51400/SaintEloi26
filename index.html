@@ -979,6 +979,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 .guest-card.arrived{border-left:4px solid #32946f}
 .guest-card:not(.arrived){border-left:4px solid #528ecb}
 .guest-card .guest-info{flex-basis:100%}.payment-alert{overflow-wrap:anywhere;white-space:pre-wrap;margin-top:6px;padding:9px 12px;border:2px solid #d6a329;border-radius:8px;background:#fff3c4;color:#704600;font-size:13px}.arrival-detail{font-size:12px;color:#2d5442;margin-top:5px}.countdown-box{margin:18px 0;padding:14px;border:1px solid #c9a84c;border-radius:12px;text-align:center}.countdown-box strong{display:block;font-size:24px;font-variant-numeric:tabular-nums}#paymentDialog form,#arrivalDialog form{display:grid;gap:12px}#paymentDialog input,#paymentDialog textarea{width:100%}
+#inviteUserDialog .invite-confirmation{display:flex;align-items:flex-start;gap:10px;font-weight:500}#inviteUserDialog .invite-confirmation input{width:auto;flex:none;margin-top:4px}
 </style>
 </head>
 <body>
@@ -1464,12 +1465,15 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
       <h2 id="inviteUserTitle">Inviter un utilisateur</h2>
       <button type="button" class="secondary" data-close="inviteUserDialog">Fermer</button>
     </div>
-    <p>Crée le compte et demande l’envoi d’un lien pour choisir son mot de passe. Un compte existant reçoit un nouveau lien sans modification de ses droits.</p>
-    <label for="inviteEmail">Adresse e-mail du nouvel utilisateur
+    <p>1. Ouvre Firebase, clique sur « Ajouter un utilisateur » et crée le compte avec sa vraie adresse e-mail et un mot de passe provisoire robuste. Tu n’as pas besoin de communiquer ce mot de passe.</p>
+    <button class="secondary" id="createInviteAccountButton" type="button">Ouvrir Firebase pour créer le compte</button>
+    <p>2. Reviens ici pour lui envoyer le lien qui lui permettra de choisir son mot de passe. Pour un compte existant, passe directement à cette étape.</p>
+    <label for="inviteEmail">Adresse e-mail du compte créé
       <input id="inviteEmail" type="email" autocomplete="email" maxlength="254" placeholder="prenom@exemple.fr" required>
     </label>
+    <label class="invite-confirmation"><input id="inviteAccountCreated" type="checkbox" required> Ce compte existe déjà dans Firebase avec cette adresse e-mail.</label>
     <p id="inviteUserMessage" role="status"></p>
-    <button class="primary" id="sendInviteButton" type="submit">Envoyer l'e-mail de création de mot de passe</button>
+    <button class="primary" id="sendInviteButton" type="submit">Envoyer le lien de choix du mot de passe</button>
   </form>
 </dialog>
 <dialog id="usersManagerDialog" aria-labelledby="usersManagerTitle"><div class="dialog-heading"><h2 id="usersManagerTitle">Gestion des utilisateurs</h2><button type="button" class="secondary" data-close="usersManagerDialog">Fermer</button></div><p class="muted">Créer un utilisateur dans Firebase Authentication puis attribuer ses droits ici.</p><form id="memberForm"><label>Adresse e-mail<input id="memberEmail" type="email" maxlength="254" required></label><label>UID Firebase<input id="memberUid" maxlength="128" required></label><label>Accréditation<select id="memberRole"><option value="reservations">Inscriptions et réservations</option><option value="placement">Placement des tables</option><option value="entry">Pointage des entrées</option><option value="viewer">Consultation des entrées et du plan</option><option value="admin">Administrateur</option><option value="disabled">Suspendu</option></select></label><div class="admin-actions"><button class="primary" type="submit" id="saveMemberButton">Enregistrer les droits</button><button type="button" class="secondary" id="resetMemberPasswordButton">Envoyer un lien de mot de passe</button><button type="button" class="secondary" id="openFirebaseUsersButton">Créer le compte dans Firebase</button></div><p id="memberFeedback" role="status"></p></form><h3>Utilisateurs et droits</h3><div id="memberList"></div></dialog><dialog id="adminDashboardDialog" aria-labelledby="adminDashboardTitle"><div class="dialog-heading"><h2 id="adminDashboardTitle">Pilotage des entrées</h2><button type="button" class="secondary" data-close="adminDashboardDialog">Fermer</button></div><p class="muted">Dashboard privé administrateur — suivi en direct.</p><div id="adminKpis"></div><label>Rechercher<input type="search" id="adminGuestSearch"></label><label>Filtrer<select id="adminGuestFilter"><option value="not-arrived">Attendus</option><option value="arrived">Arrivés</option><option value="unplaced">À placer</option><option value="unpaid">Non payés</option><option value="all">Tous</option></select></label><div id="adminGuestResults"></div></dialog><dialog id="reservationDialog"><form id="reservationForm">

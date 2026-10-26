@@ -5,7 +5,6 @@
 window.SAINT_ELOI_CONFIG = {
   // Base partagée active avec authentification e-mail / mot de passe.
   enabled: true,
-  inviteUserUrl: 'https://europe-west1-sainteloi26-371e3.cloudfunctions.net/inviteUser',
   eventPath: 'events/saint-eloi-2026',
   firebase: {
     // Paramètres PUBLICS de l'application Web Firebase (sans mot de passe privé).
