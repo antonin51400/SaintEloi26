@@ -71,6 +71,31 @@ function freeSeats(tableId, sel, data = state) {
   const used = new Set(accepted(data).filter(p=>p.tableId===tableId&&!selected.has(p.rid+'/'+p.pid)).map(p=>p.seat));
   return Array.from({length:capacity(tableId,data)},(_,i)=>i+1).filter(n=>!used.has(n));
 }
+function tableMetrics(id, guests=accepted()){
+ const list=guests.filter(p=>p.tableId===id);
+ const total=list.length,arrived=list.filter(p=>p.arrived).length;
+ return {
+  tableId:id,name:tableNames[id],people:list,total,arrived,
+  capacity:FIXED_TABLE_CAPACITY,free:Math.max(0,FIXED_TABLE_CAPACITY-total),
+  occupancy:total>FIXED_TABLE_CAPACITY?'overflow':total===0?'empty':total===FIXED_TABLE_CAPACITY?'full':'partial',
+  arrival:total===0?'empty':arrived===0?'waiting':arrived===total?'complete':'partial'
+ };
+}
+function renderEntryTables(guests){
+ const rows=tableElements.map(el=>tableMetrics(el.id,guests));
+ const fullyBooked=rows.filter(t=>t.occupancy==='full').length;
+ const fullyArrived=rows.filter(t=>t.arrival==='complete').length;
+ $('entryTablesTotals').innerHTML='<span>'+rows.length+' tables · 6 places</span><span>'+fullyBooked+' complètes</span><span>'+fullyArrived+' avec tous les invités arrivés</span>';
+ $('entryTablesGrid').innerHTML=rows.map(t=>{
+  const seats=Array.from({length:FIXED_TABLE_CAPACITY},(_,index)=>{
+   const p=t.people.find(person=>person.seat===index+1);
+   return '<span class="entry-seat'+(p?(p.arrived?' seat-arrived':' seat-expected'):'')+'" title="'+(p?esc(p.name+(p.arrived?' · arrivé':' · attendu')):'Place libre')+'" aria-label="'+(p?esc('Place '+(index+1)+' : '+p.name+(p.arrived?', arrivé':', attendu')):'Place '+(index+1)+' libre')+'"></span>';
+  }).join('');
+  const label=t.arrival==='complete'?'Tous arrivés':t.arrival==='partial'?'Arrivées en cours':t.arrival==='waiting'?'En attente':'Aucun invité';
+  const excess=t.total>t.capacity?'<div class="entry-card-note">⚠ Surcapacité : placement à corriger</div>':'';
+  return '<article class="entry-table-card status-'+t.occupancy+'"><div class="entry-card-heading"><strong>'+esc(t.name)+'</strong><small>'+t.total+'/'+t.capacity+' places</small></div><div class="entry-seats" aria-label="Places : bleu attendu, vert arrivé, gris libre">'+seats+'</div><div class="arrival-status arrival-'+t.arrival+'">'+t.arrived+'/'+t.total+' arrivés · '+label+'</div><div class="entry-card-note">'+t.free+' place'+(t.free>1?'s':'')+' libre'+(t.free>1?'s':'')+'</div>'+excess+'</article>';
+ }).join('');
+}
 function validateData(data) {
   const seen = new Set();
   for (const p of accepted(data)) {
