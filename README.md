@@ -38,6 +38,20 @@ Les anciens comptes avaient des adresses fictives (`access2002@sainteloi26-371e3
 
 **Autre possibilité** : changer l'adresse d'un ancien compte existant tout en conservant son UID (par exemple via l'Admin SDK Firebase). Si tu choisis cette méthode, **publie d'abord la version à jour de `database.rules.managed-users.json`** qui autorise les UID historiques même après changement d'adresse.
 
+### Prévisualisation des vues depuis un compte administrateur
+
+Dans la barre d'outils, une liste **« Voir l'interface comme : »** est réservée aux comptes possédant réellement le rôle `admin`. Elle affiche :
+
+- **Administrateur (vue normale)** : toutes les fonctions et tableaux de bord d'administration
+- **Inscriptions et réservations** : vue des réservataires
+- **Placement des tables** : boutons et plan accessibles aux placeurs
+- **Accueil — File 1 / File 2** : vue plein écran des invités avec choix de file
+- **Consultation** : suivi en lecture seule
+
+En choisissant une autre vue, l'administrateur **ne change pas son accréditation Firebase** : c'est un **aperçu temporaire**. Les boutons de modification sont bloqués pendant l'aperçu et un bandeau visible rappelle ce fonctionnement. Revenir à **Administrateur (vue normale)** restaure immédiatement les fonctionnalités. Le menu reste accessible dans toutes les vues simulées.
+
+Cet aperçu ne remplace pas les tests de sécurité avec de véritables comptes Firebase affectés aux rôles correspondants.
+
 ## Accréditations et tableaux de bord (mise à jour du 26 octobre 2026)
 
 Cinq vues sont prévues : **Administrateur**, **Inscriptions et réservations**, **Placement**, **Accueil**, **Consultation**. Un rôle `disabled` suspend la lecture des réservations.
