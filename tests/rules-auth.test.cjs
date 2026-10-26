@@ -27,4 +27,15 @@ for (const [email, uid] of users) {
 assert.equal(evaluate(data['.read'], null), false);
 assert.equal(evaluate(data['.write'], null), false);
 assert.equal(evaluate(data['.read'], {uid:'stranger',provider:'password',token:{email:'hacker@example.com'}}), false);
+// Le nouveau système e-mail est préparé mais n'est pas publié tant que
+// la création de comptes en libre-service n'a pas été désactivée dans Firebase.
+const future=JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'database.rules.managed-users.json'),'utf8'));
+const event=future.rules.events['saint-eloi-2026'];
+assert.equal(future.rules['.read'],false);
+assert.equal(future.rules['.write'],false);
+assert.match(event.data['.read'],/profiles/);
+assert.match(event.data['.write'],/profiles/);
+assert.match(event.profiles['$uid']['.write'],/auth.uid === \$uid/);
+assert.match(event.profiles['$uid']['.write'],/!data.exists\(\)/);
+assert.equal(event.profiles['$uid'].firstName['.validate'].includes('isString()'),true);
 console.log('PASS: exact four organizer UID and email pairs; unapproved users rejected.');
