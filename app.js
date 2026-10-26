@@ -115,8 +115,10 @@ async function mutate(change) {
 }
 function showApp(){
   $('loginPanel').style.display='none';$('appWrapper').style.display='flex';
+  $('appWrapper').dataset.role=role;
   $('sessionBadge').textContent=lane?(lane==='left'?'◀ File 1':'▶ File 2'):operator;
   $('sessionBadge').className='lane-badge'+(lane?' '+lane:'');
+  if(role==='admin')$('sessionBadge').textContent='★ ADMIN · '+operator;
   $('newReservation').style.display=allowed('reserve')?'':'none';
   $('exportButton').style.display=allowed('export')?'':'none';
   $('inviteUserButton').hidden=demo||!allowed('users');
@@ -468,7 +470,7 @@ function guestCard(rid,pid,p,r){
 $('search').oninput=render;
 document.querySelectorAll('.filter-btn').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;document.querySelectorAll('.filter-btn').forEach(x=>x.classList.toggle('active',x===b));render();});
 function addParticipant(p={}){const row=document.createElement('div');row.className='participant-row';row.dataset.pid=p.pid||uid();const input=document.createElement('input');input.required=true;input.maxLength=120;input.placeholder='Nom et prénom de l’invité';input.setAttribute('aria-label','Nom du participant');input.value=p.name||'';const remove=document.createElement('button');remove.type='button';remove.className='secondary';remove.textContent='Retirer';remove.onclick=()=>row.remove();row.append(input,remove);$('participantRows').append(row);return input;}
-function editReservation(rid=null){requireAccess('reserve');editing=rid;const r=state.reservations?.[rid];editVersion=r?.version||0;$('reservationForm').reset();$('participantRows').replaceChildren();$('formError').textContent='';$('reservationTitle').textContent=rid?'Modifier la réservation':'Nouvelle réservation SMS';$('reservedBy').value=r?.reservedBy||'';$('phone').value=r?.phone||'';$('contactedOrganizer').value=r?.contactedOrganizer||(role==='organizer'?operator:'');$('reservationNotes').value=r?.notes||'';$('reservationStatus').value=r?.status||'pending';if(r)Object.entries(r.participants||{}).forEach(([pid,p])=>addParticipant({...p,pid}));else addParticipant();$('reservationDialog').showModal();$('reservedBy').focus();}
+function editReservation(rid=null){requireAccess('reserve');editing=rid;const r=state.reservations?.[rid];editVersion=r?.version||0;$('reservationForm').reset();$('participantRows').replaceChildren();$('formError').textContent='';$('reservationTitle').textContent=rid?'Modifier la réservation':'Nouvelle réservation SMS';$('reservedBy').value=r?.reservedBy||'';$('phone').value=r?.phone||'';$('contactedOrganizer').value=r?.contactedOrganizer||(role==='organizer'||role==='reservations'||role==='admin'?operator:'');$('reservationNotes').value=r?.notes||'';$('reservationStatus').value=r?.status||'pending';if(r)Object.entries(r.participants||{}).forEach(([pid,p])=>addParticipant({...p,pid}));else addParticipant();$('reservationDialog').showModal();$('reservedBy').focus();}
 $('newReservation').onclick=()=>{requireAccess('reserve');editReservation();};$('addParticipant').onclick=()=>addParticipant().focus();
 $('reservedBy').addEventListener('change',()=>{const rows=$('participantRows').children;if(!editing&&rows.length===1&&!rows[0].querySelector('input').value)rows[0].querySelector('input').value=$('reservedBy').value.trim();});
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{if(!busy)$(b.dataset.close).close();});
@@ -491,6 +493,7 @@ $('reservationForm').onsubmit=async e=>{
 async function setStatus(rid,status){requireAccess('reserve');if(status==='cancelled'&&!confirm('Annuler cette réservation et libérer ses places ? Les informations de paiement seront conservées.'))return;await mutate(data=>{const r=data.reservations[rid];if(!r)throw Error('Réservation introuvable.');r.status=status;if(status!=='accepted')Object.values(r.participants||{}).forEach(p=>{p.tableId='';p.seat=0;p.arrived=false;});updated(r);});}
 async function setFlag(rid,pid,flag){
   requireAccess(flag==='arrived'?'arrival':'payment');
+  if(role==='entry'&&!lane)throw Error('Sélectionne d’abord la File 1 ou la File 2.');
   if(!ready||!user||(!demo&&!online))throw Error('Connexion indisponible.');
   const expected=!!state.reservations[rid]?.participants?.[pid]?.[flag];
   const applyFlag=p=>{
@@ -499,7 +502,7 @@ async function setFlag(rid,pid,flag){
     if(flag==='paid'&&p.arrived&&p.paid)throw Error('Une personne arrivée reste payée. Annulez d’abord son arrivée pour corriger.');
     const now=new Date().toISOString();
     p[flag]=!expected;p[flag+'At']=!expected?now:'';
-    p[flag+'By']=operator+(lane?' · File '+(lane==='left'?'Gauche':'Droite'):'');
+    p[flag+'By']=operator+(lane?' · File '+(lane==='left'?'1':'2'):'');
     if(flag==='arrived'&&!expected){
       p.paid=true;
       if(!p.paidAt)p.paidAt=now;
