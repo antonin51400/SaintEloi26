@@ -870,6 +870,22 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 /* Le code peut contenir 12 chiffres ; l'invite reste compacte sur téléphone. */
 #loginPanel #accessCode{font-size:19px;letter-spacing:.16em}
 #loginPanel #accessCode::placeholder{font-size:14px;letter-spacing:normal;opacity:.72}
+/* Connexion simple et invitation à l'équipe */
+#loginPanel [hidden]{display:none!important}
+#loginPanel .auth-method-switch{display:flex;gap:10px;margin-top:12px;margin-bottom:12px}
+#loginPanel .auth-method-switch button{flex:1;border-radius:10px;padding:10px}
+#loginPanel .auth-method-switch button.active{background:#c9a84c;color:#1a1a1a;font-weight:700}
+#loginPanel .email-field{font-size:16px;letter-spacing:normal;text-align:left}
+#loginPanel #emailAccessForm{gap:10px}
+#loginPanel #forgotPasswordButton{width:100%;margin-top:6px}
+#firstLoginDialog{max-width:470px;width:calc(100% - 24px)}
+#firstLoginDialog form{display:grid;gap:14px}
+#firstLoginDialog input{width:100%}
+#inviteUserDialog{max-width:530px;width:calc(100% - 24px)}
+#inviteUserDialog form{display:grid;gap:12px}
+#inviteUserDialog input{width:100%}
+#inviteUserButton[hidden]{display:none!important}
+
 </style>
 </head>
 <body>
@@ -905,6 +921,18 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
         <label for="accessCode" class="access-label">Ton code d’accès</label>
         <input id="accessCode" class="access-input" type="password" inputmode="numeric" pattern="[0-9]{4,12}" maxlength="12" autocomplete="off" placeholder="Code confidentiel" required>
         <button class="primary" type="submit" id="loginButton">Entrer <span aria-hidden="true">→</span></button>
+      </form>
+      <div class="auth-method-switch" role="group" aria-label="Méthode de connexion">
+        <button type="button" class="secondary active" id="usePinButton" aria-pressed="true">Code</button>
+        <button type="button" class="secondary" id="useEmailButton" aria-pressed="false">E-mail</button>
+      </div>
+      <form id="emailAccessForm" class="access-form" hidden>
+        <label class="access-label" for="emailAddress">Adresse e-mail</label>
+        <input id="emailAddress" class="access-input email-field" type="email" autocomplete="username" maxlength="254" placeholder="prenom@exemple.fr" required>
+        <label class="access-label" for="emailPassword">Mot de passe</label>
+        <input id="emailPassword" class="access-input email-field" type="password" autocomplete="current-password" placeholder="Mot de passe" required>
+        <button class="primary" id="emailLoginButton" type="submit">Entrer <span aria-hidden="true">→</span></button>
+        <button class="secondary" id="forgotPasswordButton" type="button">Mot de passe oublié ?</button>
       </form>
       <p id="loginMessage" role="status"></p>
       <details id="accessOptions" class="access-options">
@@ -1293,6 +1321,34 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 
 </div><!-- /appWrapper -->
 
+<dialog id="firstLoginDialog" class="profile-dialog" aria-labelledby="firstLoginTitle">
+  <form id="firstLoginForm">
+    <h2 id="firstLoginTitle">Bienvenue dans l'équipe !</h2>
+    <p>Pour ta première connexion, indique ton prénom et ton nom. Ils seront enregistrés avec tes réservations.</p>
+    <label for="firstName">Prénom
+      <input id="firstName" type="text" autocomplete="given-name" maxlength="80" required placeholder="Prénom">
+    </label>
+    <label for="lastName">Nom
+      <input id="lastName" type="text" autocomplete="family-name" maxlength="80" required placeholder="Nom">
+    </label>
+    <p id="firstLoginError" role="alert"></p>
+    <button class="primary" type="submit" id="saveProfileButton">Enregistrer et accéder aux réservations</button>
+  </form>
+</dialog>
+<dialog id="inviteUserDialog" aria-labelledby="inviteUserTitle">
+  <form id="inviteUserForm">
+    <div class="dialog-heading">
+      <h2 id="inviteUserTitle">Inviter un utilisateur</h2>
+      <button type="button" class="secondary" data-close="inviteUserDialog">Fermer</button>
+    </div>
+    <p>Crée d'abord le compte avec son adresse e-mail et un mot de passe provisoire dans Firebase Authentication, puis envoie-lui un lien pour choisir son mot de passe.</p>
+    <label for="inviteEmail">Adresse e-mail du nouvel utilisateur
+      <input id="inviteEmail" type="email" autocomplete="email" maxlength="254" placeholder="prenom@exemple.fr" required>
+    </label>
+    <p id="inviteUserMessage" role="status"></p>
+    <button class="primary" id="sendInviteButton" type="submit">Envoyer l'e-mail de création de mot de passe</button>
+  </form>
+</dialog>
 <dialog id="reservationDialog"><form id="reservationForm">
 <div class="dialog-heading"><h2 id="reservationTitle">Nouvelle réservation SMS</h2><button type="button" class="secondary" data-close="reservationDialog">Fermer</button></div>
 <div class="form-grid"><label>Personne qui réserve<input id="reservedBy" maxlength="120" required autocomplete="off"></label><label>Téléphone (facultatif)<input id="phone" type="tel" maxlength="30" autocomplete="off"></label></div>
