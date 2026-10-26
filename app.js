@@ -93,6 +93,7 @@ function showApp(){
   $('sessionBadge').className='lane-badge'+(lane?' '+lane:'');
   $('newReservation').style.display=allowed('reserve')?'':'none';
   $('exportButton').style.display=allowed('export')?'':'none';
+  $('inviteUserButton').hidden=demo||!user||user.uid!==PRIMARY_ADMIN_UID;
   $('sessionBadge').onclick=()=>{if(role==='entry')selectEntryLane();};
   render();if(role==='entry'&&!lane)selectEntryLane();
 }
@@ -115,6 +116,29 @@ const pinAccounts=window.SAINT_ELOI_PIN_ACCOUNTS||{};
 $('loginMessage').textContent=config.enabled
   ? 'Entre ton code confidentiel pour accéder aux réservations.'
   : 'Mode démonstration : aucune réservation n’est partagée ni sauvegardée.';
+const PRIMARY_ADMIN_UID='nCNc0JdWznOZ6j4B4GjfvQqWX4K2';
+function initFirebaseAuth(){
+  if(!window.firebase||!config.firebase?.databaseURL)throw Error('Firebase non disponible.');
+  if(!firebase.apps.length)firebase.initializeApp(config.firebase);
+  auth=firebase.auth();
+  db=firebase.database();
+  auth.languageCode='fr';
+}
+function connectLiveData(){
+  if(!eventRef||!user)throw Error('Compte Firebase absent.');
+  dataRef=eventRef.child('data');
+  $('loginMessage').textContent='Connexion acceptée. Chargement des réservations…';
+  dataRef.on('value',snapshot=>{
+    state=snapshot.val()||{reservations:{},tables:{}};
+    ready=true;showApp();
+  },()=>{
+    lock('Accès aux réservations refusé : vérifie que les nouvelles règles Firebase sont publiées et que les inscriptions libres sont désactivées.');
+  });
+  db.ref('.info/connected').on('value',snapshot=>{
+    online=snapshot.val()===true;
+    if(ready)render();
+  });
+}
 async function startSession(profile,pin){
   if(loginBusy)return;
   loginBusy=true;$('loginButton').disabled=true;
@@ -139,18 +163,7 @@ async function startSession(profile,pin){
     }
     user=account;role=profile.role;operator=profile.name;
     eventRef=db.ref(config.eventPath);
-    dataRef=eventRef.child('data');
-    $('loginMessage').textContent='Code accepté. Chargement des réservations…';
-    dataRef.on('value',snapshot=>{
-      state=snapshot.val()||{reservations:{},tables:{}};
-      ready=true;showApp();
-    },()=>{
-      lock('Accès aux réservations bloqué. Vérifiez que les règles Firebase ont été publiées.');
-    });
-    db.ref('.info/connected').on('value',snapshot=>{
-      online=snapshot.val()===true;
-      if(ready)render();
-    });
+    connectLiveData();
   }catch(error){
     const code=String(error?.code||'');
     const invalid=code.startsWith('auth/invalid')||code==='auth/wrong-password'
@@ -163,6 +176,143 @@ async function startSession(profile,pin){
     loginBusy=false;$('loginButton').disabled=false;
   }
 }
+// Le formulaire à code reste inchangé pour les quatre organisateurs existants.
+// Les nouveaux membres utilisent leur compte e-mail créé dans Firebase Authentication.
+function selectLoginMethod(useEmail){
+  $('accessForm').hidden=useEmail;
+  $('emailAccessForm').hidden=!useEmail;
+  $('usePinButton').classList.toggle('active',!useEmail);
+  $('useEmailButton').classList.toggle('active',useEmail);
+  $('usePinButton').setAttribute('aria-pressed',String(!useEmail));
+  $('useEmailButton').setAttribute('aria-pressed',String(useEmail));
+  $('loginMessage').textContent=useEmail
+    ? 'Connecte-toi avec l’e-mail créé par l’organisateur.'
+    : 'Entre ton code confidentiel.';
+}
+$('usePinButton').onclick=()=>selectLoginMethod(false);
+$('useEmailButton').onclick=()=>selectLoginMethod(true);
+let pendingProfileRef=null;
+$('firstLoginForm').onsubmit=async e=>{
+  e.preventDefault();
+  if(loginBusy||!pendingProfileRef||!user)return;
+  const firstName=$('firstName').value.trim().replace(/\s+/g,' ');
+  const lastName=$('lastName').value.trim().replace(/\s+/g,' ');
+  if(firstName.length<2||lastName.length<2||firstName.length>80||lastName.length>80){
+    $('firstLoginError').textContent='Indique un prénom et un nom de 2 à 80 caractères.';
+    return;
+  }
+  $('saveProfileButton').disabled=true;
+  try{
+    const firstProfile={
+      firstName,lastName,
+      createdAt:firebase.database.ServerValue.TIMESTAMP
+    };
+    await pendingProfileRef.set(firstProfile);
+    operator=firstName+' '+lastName;
+    pendingProfileRef=null;
+    $('firstLoginDialog').close();
+    connectLiveData();
+  }catch(error){
+    $('firstLoginError').textContent='Enregistrement du profil refusé : '+(error?.message||'contacte l’organisateur.');
+  }finally{
+    $('saveProfileButton').disabled=false;
+  }
+};
+async function startEmailSession(email,password){
+  if(loginBusy)return;
+  if(!config.enabled){
+    $('loginMessage').textContent='La connexion e-mail nécessite la synchronisation Firebase.';
+    return;
+  }
+  loginBusy=true;$('emailLoginButton').disabled=true;
+  stopListeners();
+  role='none';operator='';lane='';ready=false;demo=false;
+  try{
+    initFirebaseAuth();
+    await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+    const account=(await auth.signInWithEmailAndPassword(email,password)).user;
+    if(!account||account.email?.trim().toLowerCase()!==email)throw Error('Identifiants non reconnus.');
+    user=account;eventRef=db.ref(config.eventPath);
+    // Un ancien compte à code reste associé à ses droits historiques.
+    const legacy=Object.values(pinAccounts).find(p=>p.email===email);
+    role=legacy?.role||'organizer';
+    if(legacy){
+      operator=legacy.name;
+      connectLiveData();
+      return;
+    }
+    $('loginMessage').textContent='Bienvenue ! Vérification du profil…';
+    const ownProfile=eventRef.child('profiles').child(account.uid);
+    const saved=(await ownProfile.once('value')).val();
+    if(saved&&typeof saved.firstName==='string'&&typeof saved.lastName==='string'){
+      operator=saved.firstName+' '+saved.lastName;
+      connectLiveData();
+      return;
+    }
+    pendingProfileRef=ownProfile;
+    $('firstLoginError').textContent='';
+    $('firstLoginForm').reset();
+    $('firstLoginDialog').showModal();
+    $('firstName').focus();
+  }catch(error){
+    pendingProfileRef=null;
+    const err=String(error?.code||'');
+    $('loginMessage').textContent=err.startsWith('auth/invalid')||err==='auth/wrong-password'||err==='auth/user-not-found'
+      ? 'Adresse e-mail ou mot de passe incorrect.'
+      : 'Connexion impossible : '+(error?.message||'vérifie les règles Firebase.');
+    role='none';operator='';user=null;
+    if(auth)try{await auth.signOut();}catch(_){}
+  }finally{
+    loginBusy=false;$('emailLoginButton').disabled=false;
+  }
+}
+$('emailAccessForm').onsubmit=async e=>{
+  e.preventDefault();
+  const email=$('emailAddress').value.trim().toLowerCase();
+  const password=$('emailPassword').value;
+  if(!email||!password)return;
+  $('emailPassword').value='';
+  await startEmailSession(email,password);
+};
+async function sendResetEmail(email){
+  if(!config.enabled)throw Error('Connexion Firebase indisponible.');
+  initFirebaseAuth();
+  await auth.sendPasswordResetEmail(email);
+}
+$('forgotPasswordButton').onclick=async()=>{
+  const email=$('emailAddress').value.trim().toLowerCase();
+  if(!email||!$('emailAddress').checkValidity()){
+    $('loginMessage').textContent='Renseigne d’abord ton adresse e-mail.';
+    $('emailAddress').focus();
+    return;
+  }
+  $('forgotPasswordButton').disabled=true;
+  try{
+    await sendResetEmail(email);
+    $('loginMessage').textContent='Si un compte existe pour cette adresse, un e-mail de réinitialisation a été demandé. Vérifie aussi les spams.';
+  }catch(error){
+    $('loginMessage').textContent='Demande impossible : '+(error?.message||'réessaie.');
+  }finally{$('forgotPasswordButton').disabled=false;}
+};
+$('inviteUserButton').onclick=()=>{
+  if(demo||!user||user.uid!==PRIMARY_ADMIN_UID)return;
+  $('inviteUserForm').reset();
+  $('inviteUserMessage').textContent='';
+  $('inviteUserDialog').showModal();
+};
+$('inviteUserForm').onsubmit=async e=>{
+  e.preventDefault();
+  if(demo||!user||user.uid!==PRIMARY_ADMIN_UID)return;
+  const email=$('inviteEmail').value.trim().toLowerCase();
+  if(!$('inviteEmail').checkValidity())return;
+  $('sendInviteButton').disabled=true;
+  try{
+    await sendResetEmail(email);
+    $('inviteUserMessage').textContent='Demande d’e-mail de réinitialisation transmise à Firebase. Vérifier la boîte de réception et les spams.';
+  }catch(error){
+    $('inviteUserMessage').textContent='Envoi impossible : '+(error?.message||'réessaie.');
+  }finally{$('sendInviteButton').disabled=false;}
+};
 $('accessForm').onsubmit=async e=>{
   e.preventDefault();
   const pin=$('accessCode').value.trim();
@@ -193,7 +343,8 @@ $('logoutButton').onclick=async()=>{
   if(demo&&!confirm('Quitter la démonstration ? Les données de cet onglet seront perdues.'))return;
   const exitingDemo=demo;
   demo=false;user=null;role='none';lane='';
-  stopListeners();
+  stopListeners();pendingProfileRef=null;
+  if($('firstLoginDialog').open)$('firstLoginDialog').close();
   if(auth&&!exitingDemo)try{await auth.signOut();}catch(error){
     lock('Impossible de fermer la session. Fermez également cet onglet.');return;
   }
