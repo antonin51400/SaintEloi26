@@ -10,6 +10,7 @@ w.HTMLDialogElement.prototype.close=function(){this.open=false;};
 w.confirm=()=>true;
 const calls={login:[],sent:[],profiles:{}};
 const auth={
+  onAuthStateChanged:callback=>{queueMicrotask(()=>callback(null));return ()=>{};},
   setPersistence:async()=>{},
   signInWithEmailAndPassword:async(email,password)=>{
     calls.login.push({email,password});

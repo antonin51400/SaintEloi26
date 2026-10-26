@@ -22,6 +22,9 @@ const tableElements = [...document.querySelectorAll('.table-block')];
 const tableNames = Object.fromEntries(tableElements.map(el => [el.id, el.dataset.table]));
 let state = {reservations:{},tables:{}};
 let user = null, operator = '', role = 'none', lane = '', demo = false, online = false, ready = false, busy = false, loginBusy = false;
+let sessionGeneration=0;
+const laneKey=id=>'saint-eloi-entry-lane:'+id;
+function forgetEntryLane(){try{if(user)sessionStorage.removeItem(laneKey(user.uid));}catch{}}
 let db = null, auth = null, eventRef = null, dataRef = null, memberRef = null, pendingRequestRef = null;
 let filter = 'all', editing = null, editVersion = 0, selection = null, popupTable = null;
 const ROOT_ADMIN_UIDS=['nCNc0JdWznOZ6j4B4GjfvQqWX4K2','KpFkapZExKcToBcy52YCo6rdwuh2'];
@@ -59,6 +62,7 @@ function selectEntryLane() {
   panel.innerHTML='<h2>Quel poste occupez-vous ?</h2><div class="lane-buttons"><button type="button" class="lane-btn left" data-lane="left"><span class="lane-icon">◀️</span>File 1<span class="lane-sub">Poste 1</span></button><button type="button" class="lane-btn right" data-lane="right"><span class="lane-icon">▶️</span>File 2<span class="lane-sub">Poste 2</span></button></div>';
   panel.querySelectorAll('[data-lane]').forEach(btn => btn.onclick=()=>{
     lane=btn.dataset.lane;
+    if(!demo&&!inRolePreview()&&user)try{sessionStorage.setItem(laneKey(user.uid),lane);}catch{}
     $('sessionBadge').textContent=inRolePreview()?'APERÇU · Accueil · '+(lane==='left'?'File 1':'File 2'):(lane==='left'?'◀ File 1':'▶ File 2');
     $('sessionBadge').className='lane-badge '+lane;
     panel.remove();
@@ -338,31 +342,39 @@ $('firstLoginForm').onsubmit=async e=>{
     $('saveProfileButton').disabled=false;
   }
 };
-async function startEmailSession(email,password){
+async function startEmailSession(email,password,restoredAccount=null){
   if(loginBusy)return;
   if(!config.enabled){
     $('loginMessage').textContent='La connexion e-mail nécessite la synchronisation Firebase.';
     return;
   }
   loginBusy=true;$('emailLoginButton').disabled=true;
+  const attempt=++sessionGeneration;
+  const checkAttempt=()=>{if(attempt!==sessionGeneration)throw Error('Connexion interrompue.');};
   stopListeners();
   role='none';previewRole=null;operator='';lane='';ready=false;demo=false;
   try{
     initFirebaseAuth();
     await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
-    const account=(await auth.signInWithEmailAndPassword(email,password)).user;
+    checkAttempt();
+    const account=restoredAccount||(await auth.signInWithEmailAndPassword(email,password)).user;
+    checkAttempt();
     if(!account||account.email?.trim().toLowerCase()!==email)throw Error('Identifiants non reconnus.');
     user=account;eventRef=db.ref(config.eventPath);
     memberRef=eventRef.child('members').child(account.uid);
     const membership=(await memberRef.once('value')).val();
+    checkAttempt();
     role=rootAdmin()?'admin':ROLE_LABELS[membership?.role]?membership.role:'reservations';
     if(role==='disabled')throw Error('Compte suspendu : contacte un administrateur.');
+    if(role==='entry')try{const savedLane=sessionStorage.getItem(laneKey(account.uid));if(['left','right'].includes(savedLane))lane=savedLane;}catch{}
     $('loginMessage').textContent='Bienvenue ! Vérification du profil…';
     const ownProfile=eventRef.child('profiles').child(account.uid);
     const saved=(await ownProfile.once('value')).val();
+    checkAttempt();
     if(saved&&typeof saved.firstName==='string'&&typeof saved.lastName==='string'){
       operator=saved.firstName+' '+saved.lastName;
       await ensureDefaultMembership();
+      checkAttempt();
       connectLiveData();
       return;
     }
@@ -372,6 +384,7 @@ async function startEmailSession(email,password){
     $('firstLoginDialog').showModal();
     $('firstName').focus();
   }catch(error){
+    if(attempt!==sessionGeneration)return;
     pendingProfileRef=null;
     const err=String(error?.code||'');
     $('loginMessage').textContent=err.startsWith('auth/invalid')||err==='auth/wrong-password'||err==='auth/user-not-found'
@@ -480,6 +493,7 @@ $('inviteUserForm').onsubmit=async e=>{
   }finally{$('sendInviteButton').disabled=false;}
 };
 $('demoButton').onclick=()=>{
+  sessionGeneration++;forgetEntryLane();
   stopListeners();
   if(auth)auth.signOut().catch(()=>{});
   role='admin';operator='Démonstration';lane='';user={uid:'demo'};
@@ -489,6 +503,7 @@ $('logoutButton').onclick=async()=>{
   if(busy)return;
   if(demo&&!confirm('Quitter la démonstration ? Les données de cet onglet seront perdues.'))return;
   const exitingDemo=demo;
+  sessionGeneration++;forgetEntryLane();
   demo=false;user=null;role='none';previewRole=null;lane='';
   stopListeners();pendingProfileRef=null;
   if($('firstLoginDialog').open)$('firstLoginDialog').close();
@@ -777,3 +792,20 @@ $('paymentForm').onsubmit=async e=>{
   $('paymentDialog').close();notice('Paiement et commentaire enregistrés. Prévenir la personne à son arrivée.');
  }catch(error){$('paymentError').textContent=error.message;}
 };
+
+// Firebase restores the tab's authenticated session after F5. Re-read the
+// profile and accreditation instead of requiring the password again.
+if(config.enabled){
+ try{
+  initFirebaseAuth();
+  auth.onAuthStateChanged(account=>{
+   if(demo||loginBusy)return;
+   if(account){
+    if(user?.uid!==account.uid)void startEmailSession(account.email||'','',account);
+   }else if(user){
+    sessionGeneration++;forgetEntryLane();user=null;role='none';previewRole=null;operator='';lane='';pendingProfileRef=null;
+    lock('Session terminée. Connecte-toi pour revenir.');
+   }
+  },()=>{if(!demo)lock('Impossible de restaurer la session. Reconnecte-toi.');});
+ }catch(error){$('loginMessage').textContent='Connexion Firebase indisponible : '+error.message;}
+}
