@@ -96,203 +96,108 @@ function showApp(){
   $('sessionBadge').onclick=()=>{if(role==='entry')selectEntryLane();};
   render();if(role==='entry'&&!lane)selectEntryLane();
 }
-function stopListeners(){if(dataRef)dataRef.off();if(memberRef)memberRef.off();if(pendingRequestRef)pendingRequestRef.off();if(db)db.ref('.info/connected').off();dataRef=null;memberRef=null;pendingRequestRef=null;ready=false;}
-function lock(message){stopListeners();state={reservations:{},tables:{}};selection=null;popupTable=null;document.getElementById('laneChoice')?.remove();document.querySelectorAll('dialog[open]').forEach(d=>d.close());closeTablePopup();$('appWrapper').style.display='none';$('loginPanel').style.display='flex';$('loginMessage').textContent=message;render();}
-const config = window.SAINT_ELOI_CONFIG || {};
-const codeProfiles = window.SAINT_ELOI_ACCESS_CODES || {};
-$('loginMessage').textContent = config.enabled
-  ? 'Identifiez-vous avec votre code. Une autorisation préalable de cet appareil est nécessaire pour les données réelles.'
-  : 'Saisissez votre code. Le mode démonstration reste local et ne sauvegarde rien.';
-$('pairDeviceButton').onclick=async()=>{
-  if(loginBusy)return;
-  loginBusy=true;
-  $('pairDeviceButton').disabled=true;
-  try{
-    if(!window.firebase)throw Error('Bibliothèques Firebase indisponibles.');
-    if(!firebase.apps.length)firebase.initializeApp(config.firebase);
-    auth=firebase.auth();
-    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    const current=auth.currentUser||(await auth.signInAnonymously()).user;
-    if(!current?.uid)throw Error('Aucun identifiant obtenu.');
-    showDeviceUid(current.uid);
-    $('accessOptions').open=true;
-    $('loginMessage').textContent='Identifiant affiché dans les options. La base partagée reste protégée.';
-  }catch(error){
-    $('loginMessage').textContent='Impossible d’identifier cet appareil : '+(error?.message||'réessayez.');
-  }finally{
-    loginBusy=false;
-    $('pairDeviceButton').disabled=false;
-  }
-};
-$('copyDeviceUid').onclick=async()=>{
-  const text=$('deviceUid').textContent;
-  if(!text)return;
-  try {
-    await navigator.clipboard.writeText(text);
-    $('loginMessage').textContent='Identifiant de cet appareil copié. Vous pouvez le renseigner dans Firebase.';
-  }catch(error){
-    $('loginMessage').textContent='Sélectionnez et copiez l’identifiant affiché ci-dessus.';
-  }
-};
-function showDeviceUid(uid){
-  $('deviceUid').textContent=uid;
-  $('deviceUid').hidden=false;
-  $('copyDeviceUid').hidden=false;
+function stopListeners(){
+  if(dataRef)dataRef.off();
+  if(db)db.ref('.info/connected').off();
+  dataRef=null;memberRef=null;pendingRequestRef=null;ready=false;online=false;
 }
-async function startSession(profile){
+function lock(message){
+  stopListeners();state={reservations:{},tables:{}};selection=null;popupTable=null;
+  document.getElementById('laneChoice')?.remove();
+  document.querySelectorAll('dialog[open]').forEach(d=>d.close());
+  closeTablePopup();
+  $('appWrapper').style.display='none';$('loginPanel').style.display='flex';
+  $('loginMessage').textContent=message;render();
+}
+const config=window.SAINT_ELOI_CONFIG||{};
+const codeProfiles=window.SAINT_ELOI_ACCESS_CODES||{};
+const pinAccounts=window.SAINT_ELOI_PIN_ACCOUNTS||{};
+$('loginMessage').textContent=config.enabled
+  ? 'Entre ton code confidentiel pour accéder aux réservations.'
+  : 'Mode démonstration : aucune réservation n’est partagée ni sauvegardée.';
+async function startSession(profile,pin){
   if(loginBusy)return;
-  loginBusy=true;
-  $('loginButton').disabled=true;
-  $('pairingPanel').hidden=true;
-  $('requestAccessForm').hidden=true;
-  $('requestAccessForm').onsubmit=null;
-  stopListeners();
-  role='none';operator='';lane='';ready=false;demo=false;
-  try {
+  loginBusy=true;$('loginButton').disabled=true;
+  stopListeners();role='none';operator='';lane='';ready=false;demo=false;
+  try{
     if(!config.enabled){
       role=profile.role;operator=profile.name;user={uid:'local-'+role};
-      demo=true;ready=true;online=true;state={reservations:{},tables:{}};
-      showApp();return;
+      demo=true;ready=true;online=true;state={reservations:{},tables:{}};showApp();return;
     }
-    if(!window.firebase)throw Error('Bibliothèques Firebase indisponibles.');
-    if(!config.firebase?.databaseURL)throw Error('Adresse de Realtime Database non renseignée.');
+    if(!window.firebase)throw Error('Connexion indisponible.');
+    if(!config.firebase?.databaseURL)throw Error('Configuration de la base absente.');
     if(!firebase.apps.length)firebase.initializeApp(config.firebase);
-    db=firebase.database();auth=firebase.auth();eventRef=db.ref(config.eventPath);
-    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    const account=auth.currentUser||(await auth.signInAnonymously()).user;
-    if(!account?.uid)throw Error('Identification anonyme impossible.');
-    user=account;
-    showDeviceUid(account.uid);
-    const membershipRef=eventRef.child('members').child(account.uid);
-    const requestRef=eventRef.child('accessRequests').child(account.uid);
-
-    const connectAuthorized=member=>{
-      if(!member)return false;
-      // Les droits effectifs sont toujours ceux approuvés dans members par le propriétaire.
-      if(member.role!==profile.role||member.name!==profile.name){
-        $('loginMessage').textContent='Cet appareil est autorisé pour un autre rôle. Utilisez le code correspondant.';
-        return false;
-      }
-      if(dataRef)return true;
-      $('pairingPanel').hidden=true;
-      $('requestAccessForm').hidden=true;
-      role=member.role;operator=member.name;
-      dataRef=eventRef.child('data');
-      dataRef.on('value',snapshot=>{
-        state=snapshot.val()||{reservations:{},tables:{}};
-        ready=true;showApp();
-      },()=>lock('Accès aux réservations refusé. Vérifiez les règles Firebase.'));
-      db.ref('.info/connected').on('value',snapshot=>{online=snapshot.val()===true;render();});
-      $('loginMessage').textContent='Demande approuvée. Connexion aux réservations en cours.';
-      return true;
-    };
-
-    const approved=(await membershipRef.once('value')).val();
-    if(approved){
-      connectAuthorized(approved);
-      memberRef=membershipRef;
-      memberRef.on('value',snapshot=>{
-        if(!snapshot.val()&&dataRef)lock('Votre autorisation a été retirée. Accès interrompu.');
-      });
-      return;
+    auth=firebase.auth();
+    db=firebase.database();
+    // L'utilisateur ne voit jamais de formulaire Firebase. Le code est
+    // vérifié PAR Firebase Authentication et n'est jamais présent sur GitHub.
+    await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+    const credential=await auth.signInWithEmailAndPassword(profile.email,pin);
+    const account=credential.user;
+    if(!account||account.email?.toLowerCase()!==profile.email){
+      await auth.signOut();throw Error('Compte non reconnu.');
     }
-
-    // Le code à quatre chiffres suffit à lancer la connexion. Le nom n'est
-    // demandé que lors de la toute première demande d'autorisation d'un appareil.
-    const existing=(await requestRef.once('value')).val();
-    $('pairingPanel').hidden=false;
-    if(existing&&existing.requestedRole!==profile.role){
-      $('accessRequestStatus').textContent='Cet appareil a déjà demandé un autre rôle. Contactez l’organisateur.';
-      $('loginMessage').textContent='Demande existante pour un autre rôle.';
-      return;
-    }
-    const reflectStatus=request=>{
-      if(!request){
-        $('accessRequestStatus').textContent='Première utilisation : indiquez votre nom pour que l’organisateur puisse autoriser cet appareil.';
-        $('requestAccessForm').hidden=false;
-        $('loginMessage').textContent='L’organisateur doit valider cet appareil avant l’accès aux réservations.';
-      }else{
-        $('requestAccessForm').hidden=true;
-        const rejected=request.status==='rejected';
-        $('accessRequestStatus').textContent=rejected
-          ? 'La demande a été refusée. Contactez l’organisateur.'
-          : 'Demande enregistrée : en attente de la validation de l’organisateur.';
-        $('loginMessage').textContent=rejected?'Accès refusé.':'En attente de validation. Tu peux revenir plus tard avec le même code.';
-      }
-    };
-    reflectStatus(existing);
-    $('requestAccessForm').onsubmit=async e=>{
-      e.preventDefault();
-      if(loginBusy)return;
-      const name=$('requestName').value.trim().replace(/\s+/g,' ');
-      if(name.length<3||name.length>100){
-        $('loginMessage').textContent='Entre ton prénom et ton nom pour demander un accès.';
-        return;
-      }
-      loginBusy=true;
-      $('sendRequestButton').disabled=true;
-      try{
-        await requestRef.set({
-          name,
-          requestedRole:profile.role,
-          requestedOperator:profile.name,
-          requestedAt:firebase.database.ServerValue.TIMESTAMP,
-          status:'pending'
-        });
-        $('requestName').value='';
-        reflectStatus((await requestRef.once('value')).val());
-      }catch(error){
-        $('loginMessage').textContent='Demande impossible : '+(error?.message||'vérifiez les règles de la base Firebase.');
-      }finally{
-        loginBusy=false;
-        $('sendRequestButton').disabled=false;
-      }
-    };
-    // Lorsque le propriétaire valide la demande, l'accès est ouvert sans nouvelle saisie.
-    memberRef=membershipRef;
-    memberRef.on('value',snapshot=>{
-      const member=snapshot.val();
-      if(member)connectAuthorized(member);
-      else if(dataRef)lock('Votre autorisation a été retirée. Accès interrompu.');
-    },()=>{$('loginMessage').textContent='Impossible de vérifier votre autorisation Firebase.';});
-    pendingRequestRef=requestRef;
-    pendingRequestRef.on('value',snapshot=>{
-      const req=snapshot.val();
-      if(!req||dataRef)return;
-      reflectStatus(req);
+    user=account;role=profile.role;operator=profile.name;
+    eventRef=db.ref(config.eventPath);
+    dataRef=eventRef.child('data');
+    $('loginMessage').textContent='Code accepté. Chargement des réservations…';
+    dataRef.on('value',snapshot=>{
+      state=snapshot.val()||{reservations:{},tables:{}};
+      ready=true;showApp();
+    },()=>{
+      lock('Accès aux réservations bloqué. Vérifiez que les règles Firebase ont été publiées.');
+    });
+    db.ref('.info/connected').on('value',snapshot=>{
+      online=snapshot.val()===true;
+      if(ready)render();
     });
   }catch(error){
-    const forbidden=String(error?.code||'').toLowerCase().includes('permission_denied')
-      ||String(error?.message||'').toLowerCase().includes('permission_denied');
-    $('loginMessage').textContent=forbidden
-      ? 'Demande impossible : publiez d’abord les règles Firebase du dépôt GitHub dans la console.'
-      : 'Demande impossible : '+(error?.message||'réessayez.');
+    const code=String(error?.code||'');
+    const invalid=code.startsWith('auth/invalid')||code==='auth/wrong-password'
+      ||code==='auth/user-not-found'||code==='auth/too-many-requests';
+    $('loginMessage').textContent=invalid
+      ? 'Code incorrect ou compte temporairement bloqué. Vérifie ton code.'
+      : 'Connexion impossible : '+(error?.message||'réessaie plus tard.');
+    role='none';operator='';user=null;
   }finally{
-    loginBusy=false;
-    $('loginButton').disabled=false;
+    loginBusy=false;$('loginButton').disabled=false;
   }
 }
 $('accessForm').onsubmit=async e=>{
   e.preventDefault();
-  const code=$('accessCode').value.trim();
-  const profile=codeProfiles[code];
+  const pin=$('accessCode').value.trim();
+  let profile;
+  if(config.enabled){
+    if(!/^\d{12}$/.test(pin)){
+      $('loginMessage').textContent='Entre ton code confidentiel à 12 chiffres.';
+      return;
+    }
+    profile=pinAccounts[pin.slice(0,4)];
+  }else{
+    profile=codeProfiles[pin];
+  }
   if(!profile||!permissions[profile.role]){
     $('loginMessage').textContent='Code non reconnu.';return;
   }
   $('accessCode').value='';
-  await startSession(profile);
+  await startSession(profile,pin);
 };
 $('demoButton').onclick=()=>{
-  stopListeners();$('pairingPanel').hidden=true;$('requestAccessForm').hidden=true;
+  stopListeners();
+  if(auth)auth.signOut().catch(()=>{});
   role='admin';operator='Démonstration';lane='';user={uid:'demo'};
   demo=true;ready=true;online=true;state={reservations:{},tables:{}};showApp();
 };
 $('logoutButton').onclick=async()=>{
   if(busy)return;
   if(demo&&!confirm('Quitter la démonstration ? Les données de cet onglet seront perdues.'))return;
-  demo=false;user=null;role='none';lane='';$('pairingPanel').hidden=true;$('requestAccessForm').hidden=true;
-  // Conserver la session Firebase anonyme pour conserver le même UID d'appareil.
-  lock('Vous êtes déconnecté de l’interface. Votre identifiant d’appareil est conservé.');
+  const exitingDemo=demo;
+  demo=false;user=null;role='none';lane='';
+  stopListeners();
+  if(auth&&!exitingDemo)try{await auth.signOut();}catch(error){
+    lock('Impossible de fermer la session. Fermez également cet onglet.');return;
+  }
+  lock('Déconnecté. Entre ton code pour revenir.');
 };
 function render(){
  const guests=accepted(), rs=Object.entries(state.reservations||{}), query=normal($('search').value);
