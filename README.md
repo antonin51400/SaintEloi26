@@ -7,6 +7,8 @@
 
 La connexion par code de 4 ou 12 chiffres a été **supprimée**.
 
+La connexion est reprise automatiquement après **F5** dans le même onglet, sans ressaisir le mot de passe. Le profil et les droits sont relus dans Firebase ; un compte suspendu reste bloqué. Pour les postes Accueil, la file choisie est également conservée après F5. **Déconnexion** ferme la session et efface ce choix. La session reste limitée à l’onglet et prend fin à sa fermeture ; aucun mot de passe n’est stocké par le code du site.
+
 L'accueil propose :
 
 - **Se connecter** : adresse e-mail et mot de passe.
