@@ -53,7 +53,7 @@
               },
               "participants": {
                 "$pid": {
-                  ".validate": "newData.hasChildren(['name','tableId','seat','arrived','paid']) && (!newData.child('arrived').val() || newData.child('paid').val() === true)",
+                  ".validate": "newData.hasChildren(['name','tableId','seat','arrived','paid']) && (newData.child('arrived').val() === false || newData.child('paid').val() === true)",
                   "name": {
                     ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
                   },
