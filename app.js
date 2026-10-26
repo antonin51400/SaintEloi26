@@ -202,6 +202,17 @@ function showEmailLogin(){
 }
 $('showFirstAccess').onclick=()=>showFirstAccess($('emailAddress').value.trim());
 $('backToLogin').onclick=showEmailLogin;
+async function ensureDefaultMembership(){
+ if(!memberRef||rootAdmin()||demo)return;
+ const existing=await memberRef.once('value');
+ if(existing.val())return;
+ const result=await memberRef.transaction(current=>current||{
+  email:user.email,role:'reservations',updatedBy:user.uid,
+  updatedAt:firebase.database.ServerValue.TIMESTAMP
+ },undefined,false);
+ if(!result.committed)throw Error('Impossible d’activer les accès de ce compte.');
+ role=result.snapshot?.val()?.role||'reservations';
+}
 let pendingProfileRef=null;
 $('firstLoginForm').onsubmit=async e=>{
   e.preventDefault();
@@ -219,6 +230,7 @@ $('firstLoginForm').onsubmit=async e=>{
       createdAt:firebase.database.ServerValue.TIMESTAMP
     };
     await pendingProfileRef.set(firstProfile);
+    await ensureDefaultMembership();
     operator=firstName+' '+lastName;
     pendingProfileRef=null;
     $('firstLoginDialog').close();
@@ -253,6 +265,7 @@ async function startEmailSession(email,password){
     const saved=(await ownProfile.once('value')).val();
     if(saved&&typeof saved.firstName==='string'&&typeof saved.lastName==='string'){
       operator=saved.firstName+' '+saved.lastName;
+      await ensureDefaultMembership();
       connectLiveData();
       return;
     }
