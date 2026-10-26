@@ -6,7 +6,7 @@
       "saint-eloi-2026": {
         "data": {
           ".read": "auth != null && auth.provider === 'password' && (((auth.uid === 'nCNc0JdWznOZ6j4B4GjfvQqWX4K2') || (auth.uid === 'oJnhcgxm4KhnKHN3kFa2u6kYoTf2') || (auth.uid === 'AmCQErej08OtCuGkwvZyC8etGdl1') || (auth.uid === 'A5x97smh01XmZEoOZmLg63Nr2Ig1')) || root.child('events/saint-eloi-2026/profiles').child(auth.uid).exists())",
-          ".write": "auth != null && auth.provider === 'password' && (((auth.uid === 'nCNc0JdWznOZ6j4B4GjfvQqWX4K2') || (auth.uid === 'oJnhcgxm4KhnKHN3kFa2u6kYoTf2') || (auth.uid === 'AmCQErej08OtCuGkwvZyC8etGdl1') || (auth.uid === 'A5x97smh01XmZEoOZmLg63Nr2Ig1')) || root.child('events/saint-eloi-2026/profiles').child(auth.uid).exists()) && auth.token.email.matches(/^(access0722|access1234|access7890)@sainteloi26-371e3[.]firebaseapp[.]com$/) === false",
+          ".write": "auth != null && auth.provider === 'password' && (auth.uid === 'nCNc0JdWznOZ6j4B4GjfvQqWX4K2' || auth.uid === 'KpFkapZExKcToBcy52YCo6rdwuh2' || root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'admin')",
           "tables": {
             "$id": {
               ".validate": "newData.hasChildren(['capacity'])",
