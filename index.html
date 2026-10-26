@@ -1353,13 +1353,13 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 <div class="dialog-heading"><h2 id="reservationTitle">Nouvelle réservation SMS</h2><button type="button" class="secondary" data-close="reservationDialog">Fermer</button></div>
 <div class="form-grid"><label>Personne qui réserve<input id="reservedBy" maxlength="120" required autocomplete="off"></label><label>Téléphone (facultatif)<input id="phone" type="tel" maxlength="30" autocomplete="off"></label></div>
 <label>Organisateur contacté par le réservant
-  <select id="contactedOrganizer" required>
-    <option value="">— Choisir l’organisateur contacté —</option>
-    <option value="Antonin Blanckaert">Antonin Blanckaert</option>
-    <option value="Antonin Bassut">Antonin Bassut</option>
-    <option value="Théotime Laloua">Théotime Laloua</option>
-    <option value="Robin Maret">Robin Maret</option>
-  </select>
+  <input id="contactedOrganizer" list="organizerNameSuggestions" maxlength="120" required autocomplete="off" placeholder="Prénom et nom">
+  <datalist id="organizerNameSuggestions">
+    <option value="Antonin Blanckaert"></option>
+    <option value="Antonin Bassut"></option>
+    <option value="Théotime Laloua"></option>
+    <option value="Robin Maret"></option>
+  </datalist>
 </label>
 <label>Statut<select id="reservationStatus"><option value="pending">À valider</option><option value="accepted">Acceptée</option><option value="cancelled">Annulée</option></select></label>
 <p>Ajoutez chaque participant, y compris le réservant s’il vient. Une ligne correspond à une place.</p>
