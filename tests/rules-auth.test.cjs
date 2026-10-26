@@ -12,6 +12,10 @@ const users = [
 ];
 assert.equal(rules.rules['.read'], false);
 assert.equal(rules.rules['.write'], false);
+const participantRule=data.reservations['$id'].participants['$pid']['.validate'];
+assert.ok(participantRule.includes("newData.child('arrived').val() === false"), 'arrived must be compared explicitly to a boolean');
+assert.ok(participantRule.includes("newData.child('paid').val() === true"), 'arrived guests must have paid');
+assert.ok(!participantRule.includes("!newData.child('arrived').val()"), 'Firebase rules do not allow logical NOT on untyped values');
 for (const [email, uid] of users) {
   const valid = {provider: 'password', uid, token: {email}};
   assert.equal(evaluate(data['.read'], valid), true, email + ': read');
