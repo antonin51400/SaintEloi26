@@ -886,6 +886,12 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 #inviteUserDialog input{width:100%}
 #inviteUserButton[hidden]{display:none!important}
 
+#loginPanel #firstAccessForm[hidden],#loginPanel #emailAccessForm[hidden]{display:none!important}
+#loginPanel .first-access-toggle{width:100%;margin-top:13px;padding:12px;border-radius:10px}
+#loginPanel #firstAccessForm h3{font-size:22px;margin:0}
+#loginPanel #firstAccessForm .first-access-intro{font-size:14px;line-height:1.5;margin:4px 0 10px}
+#loginPanel #firstAccessForm button{width:100%;margin-top:8px}
+
 </style>
 </head>
 <body>
@@ -916,23 +922,23 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
     <div class="code-box">
       <div class="eyebrow-code">ESPACE ORGANISATION</div>
       <h2>Bienvenue à la Saint Éloi</h2>
-      <p>Entre simplement ton code confidentiel pour accéder à ton espace.</p>
-      <form id="accessForm" class="access-form">
-        <label for="accessCode" class="access-label">Ton code d’accès</label>
-        <input id="accessCode" class="access-input" type="password" inputmode="numeric" pattern="[0-9]{4,12}" maxlength="12" autocomplete="off" placeholder="Code confidentiel" required>
-        <button class="primary" type="submit" id="loginButton">Entrer <span aria-hidden="true">→</span></button>
-      </form>
-      <div class="auth-method-switch" role="group" aria-label="Méthode de connexion">
-        <button type="button" class="secondary active" id="usePinButton" aria-pressed="true">Code</button>
-        <button type="button" class="secondary" id="useEmailButton" aria-pressed="false">E-mail</button>
-      </div>
-      <form id="emailAccessForm" class="access-form" hidden>
+      <p>Connecte-toi avec l'adresse e-mail et le mot de passe de ton compte.</p>
+      <form id="emailAccessForm" class="access-form">
         <label class="access-label" for="emailAddress">Adresse e-mail</label>
         <input id="emailAddress" class="access-input email-field" type="email" autocomplete="username" maxlength="254" placeholder="prenom@exemple.fr" required>
         <label class="access-label" for="emailPassword">Mot de passe</label>
         <input id="emailPassword" class="access-input email-field" type="password" autocomplete="current-password" placeholder="Mot de passe" required>
-        <button class="primary" id="emailLoginButton" type="submit">Entrer <span aria-hidden="true">→</span></button>
+        <button class="primary" id="emailLoginButton" type="submit">Se connecter <span aria-hidden="true">→</span></button>
         <button class="secondary" id="forgotPasswordButton" type="button">Mot de passe oublié ?</button>
+      </form>
+      <button class="secondary first-access-toggle" id="showFirstAccess" type="button">Première connexion ? Activer mon compte</button>
+      <form id="firstAccessForm" class="access-form" hidden>
+        <h3>Première connexion</h3>
+        <p class="first-access-intro">Ton compte doit déjà avoir été créé par l'organisateur. Renseigne uniquement ton e-mail : tu recevras un lien pour choisir ton mot de passe.</p>
+        <label class="access-label" for="firstAccessEmail">Ton adresse e-mail</label>
+        <input id="firstAccessEmail" class="access-input email-field" type="email" autocomplete="email" maxlength="254" placeholder="prenom@exemple.fr" required>
+        <button class="primary" id="firstAccessSendButton" type="submit">Recevoir mon lien par e-mail</button>
+        <button class="secondary" id="backToLogin" type="button">Retour à la connexion</button>
       </form>
       <p id="loginMessage" role="status"></p>
       <details id="accessOptions" class="access-options">
