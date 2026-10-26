@@ -13,7 +13,7 @@ const auth={
   setPersistence:async()=>{},
   signInWithEmailAndPassword:async(email,password)=>{
     calls.login.push({email,password});
-    const uid=email==='ancien@example.fr'?'nCNc0JdWznOZ6j4B4GjfvQqWX4K2':email==='entree@example.fr'?'entreeUID01':email==='lecture@example.fr'?'lectureUID01':'nouveau123';
+    const uid=email==='ancien@example.fr'?'nCNc0JdWznOZ6j4B4GjfvQqWX4K2':email==='entree@example.fr'?'entreeUID01':email==='lecture@example.fr'?'lectureUID01':email==='place@example.fr'?'placeUID01':'nouveau123';
     return {user:{uid,email}};
   },
   sendPasswordResetEmail:async email=>calls.sent.push(email),
@@ -37,7 +37,7 @@ databaseFn.ServerValue={TIMESTAMP:123456789};
 w.firebase={apps:[{}],auth:authFn,database:databaseFn};
 w.eval(fs.readFileSync(path.join(__dirname,'../config.js'),'utf8'));
 w.eval(fs.readFileSync(path.join(__dirname,'../app.js'),'utf8')+
-'\nwindow.inspectEmail={get operator(){return operator;},get role(){return role;}};');
+'\nwindow.inspectEmail={get operator(){return operator;},get role(){return role;},canPlace(){return allowed("place");},guestCard(){return guestCard("reservation-1","guest-1",{name:"Invité Test",tableId:"",seat:0,arrived:false,paid:false},{status:"accepted",reservedBy:"Réservant Test"});}};');
 async function login(email,password){
   $('emailAddress').value=email;
   $('emailPassword').value=password;
@@ -71,6 +71,8 @@ async function nameProfile(first,last){
   assert.equal(w.inspectEmail.operator,'Camille Dupont');
   assert.equal(w.inspectEmail.role,'reservations');
   assert.equal(calls.profiles['events/saint-eloi-2026/members/nouveau123'].role,'reservations');
+  assert.equal(w.inspectEmail.canPlace(),false,'reservations cannot place');
+  assert.doesNotMatch(w.inspectEmail.guestCard(),/data-action="select"/,'no Placer button on reservations');
   assert.equal($('appWrapper').style.display,'flex');
   assert.notEqual($('newReservation').style.display,'none');
   assert.equal($('inviteUserButton').hidden,true);
@@ -86,6 +88,8 @@ async function nameProfile(first,last){
   assert.equal($('inviteUserButton').hidden,false,'owner can send invite');
   assert.equal($('usersManagerButton').hidden,false,'admin sees user permissions manager');
   assert.equal($('adminDashboardButton').hidden,false,'admin sees private attendance dashboard');
+  assert.equal(w.inspectEmail.canPlace(),true,'administrator can place');
+  assert.match(w.inspectEmail.guestCard(),/data-action="select"/,'admin sees Placer');
   assert.equal($('adminViewControl').hidden,false,'admin has access to view selector');
   assert.equal($('adminRoleView').value,'admin');
   for(const view of ['reservations','placement','viewer']){
@@ -131,6 +135,8 @@ async function nameProfile(first,last){
   calls.profiles['events/saint-eloi-2026/members/entreeUID01']={role:'entry',email:'entree@example.fr'};
   await login('entree@example.fr','secret entrée');
   assert.equal(w.inspectEmail.role,'entry');
+  assert.equal(w.inspectEmail.canPlace(),false,'entry cannot place');
+  assert.doesNotMatch(w.inspectEmail.guestCard(),/data-action="select"/,'entry has no placement action');
   assert.equal($('newReservation').style.display,'none');
   assert.equal($('adminDashboardButton').hidden,true);
   assert.equal($('usersManagerButton').hidden,true);
@@ -145,10 +151,20 @@ async function nameProfile(first,last){
   calls.profiles['events/saint-eloi-2026/members/lectureUID01']={role:'viewer',email:'lecture@example.fr'};
   await login('lecture@example.fr','secret lecture');
   assert.equal(w.inspectEmail.role,'viewer');
+  assert.equal(w.inspectEmail.canPlace(),false,'viewer cannot place');
+  assert.doesNotMatch(w.inspectEmail.guestCard(),/data-action="select"/,'view-only role has no placement action');
   assert.equal($('newReservation').style.display,'none');
   assert.equal($('adminDashboardButton').hidden,true);
   assert.equal($('usersManagerButton').hidden,true);
   assert.equal($('laneChoice'),null);
+  await $('logoutButton').onclick();
+  calls.profiles['events/saint-eloi-2026/profiles/placeUID01']={firstName:'Equipe',lastName:'Placement'};
+  calls.profiles['events/saint-eloi-2026/members/placeUID01']={role:'placement',email:'place@example.fr'};
+  await login('place@example.fr','secret placement');
+  assert.equal(w.inspectEmail.role,'placement');
+  assert.equal(w.inspectEmail.canPlace(),true,'placement accredited users can place');
+  assert.match(w.inspectEmail.guestCard(),/data-action="select"/,'placement has Placer button');
+  assert.equal($('newReservation').style.display,'none','placement cannot create reservations');
   w.close();
   console.log('PASS: email-only, first connection reset, named profile, legacy UID and invitations');
 })().catch(err=>{console.error(err);process.exitCode=1;});
