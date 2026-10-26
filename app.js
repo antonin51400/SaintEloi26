@@ -349,7 +349,46 @@ function render(){
  if(selection){try{const people=membersFor(selection);$('mapHint').textContent=`${people.length} personne(s) sélectionnée(s) : cliquez sur une table`;$('bannerName').textContent=selection.pid?people[0].name:state.reservations[selection.rid].reservedBy;$('bannerDetail').textContent='Cliquez sur une table, ou glissez la sélection sur le plan.';$('bannerTable').textContent=people.length+' personne(s)';$('guestBanner').classList.add('visible');}catch(e){selection=null;}}
  if(!selection){$('guestBanner').classList.remove('visible');$('mapHint').textContent='Sélectionnez une personne ou un groupe, puis cliquez sur sa table';}
  if(popupTable)drawTable();
+ if($('adminDashboardDialog').open)renderAdminDashboard();
 }
+function renderAdminDashboard(){
+ if(!allowed('dashboard')||!ready)return;
+ const guests=accepted(),arrived=guests.filter(p=>p.arrived),toCome=guests.filter(p=>!p.arrived);
+ const sums=[
+ ['Invités attendus',guests.length],['Présents',arrived.length],['Encore attendus',toCome.length],
+ ['Payés',guests.filter(p=>p.paid).length],['À placer',guests.filter(p=>!p.tableId).length],
+ ['Réservations à valider',Object.values(state.reservations||{}).filter(r=>r.status==='pending').length]
+ ];
+ $('adminKpis').innerHTML=sums.map(([label,n])=>'<div class="admin-kpi"><strong>'+n+'</strong><span>'+esc(label)+'</span></div>').join('');
+ const q=normal($('adminGuestSearch').value), f=$('adminGuestFilter').value;
+ const selected=guests.filter(p=>{
+  if(f==='not-arrived'&&p.arrived||f==='arrived'&&!p.arrived||f==='unplaced'&&p.tableId||f==='unpaid'&&p.paid)return false;
+  const r=state.reservations[p.rid];
+  return !q||normal([p.name,p.reservedBy,r?.createdBy,r?.contactedOrganizer,tableNames[p.tableId]].join(' ')).includes(q);
+ });
+ $('adminGuestResults').innerHTML=selected.length?selected.map(p=>{
+  const r=state.reservations[p.rid],label=p.tableId?(tableNames[p.tableId]+' · place '+p.seat):'Non placé';
+  return '<div class="admin-guest-row"><div><strong>'+esc(p.name)+'</strong><div class="muted">'+esc(p.reservedBy)+' · '+esc(label)+'</div><small>Saisi par '+esc(r?.createdBy||'inconnu')+(p.arrivedBy?' · pointé par '+esc(p.arrivedBy):'')+'</small></div><div class="admin-row-actions"><span>'+ (p.arrived?'✓ Arrivé':'⏳ Attendu')+' · '+(p.paid?'Payé':'Non payé')+'</span><button class="secondary" data-admin-action="edit" data-rid="'+esc(p.rid)+'">Réservation</button><button class="secondary" data-admin-action="arrived" data-rid="'+esc(p.rid)+'" data-pid="'+esc(p.pid)+'">'+(p.arrived?'Annuler arrivée':'Pointer arrivée')+'</button></div></div>';
+ }).join(''):'<p class="muted">Aucun invité pour ce filtre.</p>';
+}
+$('adminDashboardButton').onclick=()=>{
+ requireAccess('dashboard');
+ $('adminGuestFilter').value='not-arrived';
+ $('adminGuestSearch').value='';
+ renderAdminDashboard();
+ $('adminDashboardDialog').showModal();
+};
+$('adminGuestFilter').onchange=renderAdminDashboard;
+$('adminGuestSearch').oninput=renderAdminDashboard;
+$('adminGuestResults').onclick=async e=>{
+ const b=e.target.closest('[data-admin-action]');
+ if(!b)return;
+ try{
+  requireAccess('dashboard');
+  if(b.dataset.adminAction==='edit'){ $('adminDashboardDialog').close();editReservation(b.dataset.rid); }
+  else if(b.dataset.adminAction==='arrived'){await setFlag(b.dataset.rid,b.dataset.pid,'arrived');renderAdminDashboard();}
+ }catch(error){notice(error.message);}
+};
 function guestCard(rid,pid,p,r){
   const active=r.status==='accepted';
   const place=active&&allowed('place');
