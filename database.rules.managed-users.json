@@ -84,7 +84,7 @@
                   "$other": {
                     ".validate": false
                   },
-                  ".write": "auth != null && auth.provider === 'password' && auth.token.email === 'access0722@sainteloi26-371e3.firebaseapp.com' && root.child('events/saint-eloi-2026/data/reservations').child($id).child('status').val() === 'accepted' && data.exists() && newData.exists() && newData.child('name').val() === data.child('name').val() && newData.child('tableId').val() === data.child('tableId').val() && newData.child('seat').val() === data.child('seat').val() && newData.child('arrived').isBoolean() && newData.child('paid').isBoolean() && (newData.child('arrived').val() === false || newData.child('paid').val() === true)"
+                  ".write": "auth != null && auth.provider === 'password' && root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'entry' && root.child('events/saint-eloi-2026/data/reservations').child($id).child('status').val() === 'accepted' && data.exists() && newData.exists() && newData.child('name').val() === data.child('name').val() && newData.child('tableId').val() === data.child('tableId').val() && newData.child('seat').val() === data.child('seat').val() && newData.child('arrived').isBoolean() && newData.child('paid').isBoolean() && (newData.child('arrived').val() === false || newData.child('paid').val() === true)"
                 }
               },
               "$other": {
