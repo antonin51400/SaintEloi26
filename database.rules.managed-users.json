@@ -11,12 +11,13 @@
             "$id": {
               ".validate": "newData.hasChildren(['capacity'])",
               "capacity": {
-                ".validate": "newData.isNumber() && (newData.val() === 6 || (data.exists() && newData.val() === data.val()))"
+                ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() <= 50"
               },
               "$other": {
                 ".validate": false
               }
-            }
+            },
+            ".write": "auth != null && auth.provider === 'password' && (auth.uid === 'nCNc0JdWznOZ6j4B4GjfvQqWX4K2' || auth.uid === 'KpFkapZExKcToBcy52YCo6rdwuh2' || root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'admin')"
           },
           "reservations": {
             "$id": {
@@ -58,10 +59,10 @@
                     ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
                   },
                   "tableId": {
-                    ".validate": "newData.isString() && (newData.val() === '' || newData.val().matches(/^t[0-9]+-[123]$/)) && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() !== 'reservations' || (data.exists() ? newData.val() === data.val() : newData.val() === ''))"
+                    ".validate": "newData.isString() && (newData.val() === '' || (newData.val().matches(/^t[A-Za-z0-9_-]{1,80}$/) && newData.parent().parent().parent().parent().parent().child('tables').child(newData.val()).child('capacity').exists() && (newData.parent().parent().parent().parent().parent().child('layout').exists() ? newData.parent().parent().parent().parent().parent().child('layout/tables').child(newData.val()).exists() : newData.val().matches(/^t[0-9]+-[123]$/)))) && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() !== 'reservations' || (data.exists() ? newData.val() === data.val() : newData.val() === ''))"
                   },
                   "seat": {
-                    ".validate": "newData.isNumber() && newData.val() >= 0 && (newData.val() <= 6 || (data.exists() && newData.val() === data.val())) && newData.val() % 1 === 0 && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() !== 'reservations' || (data.exists() ? newData.val() === data.val() : newData.val() === 0))"
+                    ".validate": "newData.isNumber() && newData.val() % 1 === 0 && ((newData.val() === 0 && newData.parent().child('tableId').val() === '') || (newData.val() >= 1 && newData.val() <= 50 && newData.parent().child('tableId').val() !== '' && newData.val() <= newData.parent().parent().parent().parent().parent().child('tables').child(newData.parent().child('tableId').val()).child('capacity').val())) && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() !== 'reservations' || (data.exists() ? newData.val() === data.val() : newData.val() === 0))"
                   },
                   "arrived": {
                     ".validate": "newData.isBoolean() && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() !== 'reservations' || (data.exists() ? newData.val() === data.val() : newData.val() === false))"
@@ -110,6 +111,45 @@
           },
           "$other": {
             ".validate": false
+          },
+          "layout": {
+            ".write": "auth != null && auth.provider === 'password' && (auth.uid === 'nCNc0JdWznOZ6j4B4GjfvQqWX4K2' || auth.uid === 'KpFkapZExKcToBcy52YCo6rdwuh2' || root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'admin')",
+            ".validate": "newData.hasChildren(['revision','rows','leftColumns','rightColumns','tables'])",
+            "revision": {
+              ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 1000000000"
+            },
+            "rows": {
+              ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() <= 30"
+            },
+            "leftColumns": {
+              ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() <= 12"
+            },
+            "rightColumns": {
+              ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() <= 12"
+            },
+            "tables": {
+              "$id": {
+                ".validate": "$id.matches(/^t[A-Za-z0-9_-]{1,80}$/) && newData.hasChildren(['name','row','column','side']) && newData.parent().parent().parent().child('tables').child($id).child('capacity').exists()",
+                "name": {
+                  ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+                },
+                "row": {
+                  ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() <= newData.parent().parent().parent().child('rows').val()"
+                },
+                "column": {
+                  ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() <= (newData.parent().child('side').val() === 'left' ? newData.parent().parent().parent().child('leftColumns').val() : newData.parent().parent().parent().child('rightColumns').val())"
+                },
+                "side": {
+                  ".validate": "newData.val() === 'left' || newData.val() === 'right'"
+                },
+                "$other": {
+                  ".validate": false
+                }
+              }
+            },
+            "$other": {
+              ".validate": false
+            }
           }
         },
         "members": {

@@ -7,7 +7,7 @@ w.HTMLElement.prototype.scrollIntoView=function(){};
 w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
 w.HTMLDialogElement.prototype.close=function(){this.open=false;};
 w.confirm=()=>true;
-w.eval(fs.readFileSync('app.js','utf8')+`\nwindow.api={setFlag,openPaymentNote,updateCountdown,render,get state(){return state;},setup(value){state=value;},entry(ref){role='entry';lane='right';demo=false;online=true;dataRef=ref;}};`);
+w.eval(fs.readFileSync('plan.js','utf8')+'\n'+fs.readFileSync('app.js','utf8')+`\nwindow.api={setFlag,openPaymentNote,updateCountdown,render,get state(){return state;},setup(value){state=value;},entry(ref){role='entry';lane='right';demo=false;online=true;dataRef=ref;}};`);
 const $=id=>w.document.getElementById(id),api=w.api,event={preventDefault(){}};
 (async()=>{
  $('demoButton').click();

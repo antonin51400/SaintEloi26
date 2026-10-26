@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {JSDOM}=require('jsdom');
-const html=fs.readFileSync('index.html','utf8'),source=fs.readFileSync('app.js','utf8');
+const html=fs.readFileSync('index.html','utf8'),source=fs.readFileSync('plan.js','utf8')+'\n'+fs.readFileSync('app.js','utf8');
 const shared={account:null,logins:0,records:{},persistence:[]};
 const windows=[];
 const account={uid:'entry-user',email:'entree@example.fr'};

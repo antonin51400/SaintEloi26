@@ -55,21 +55,14 @@ En choisissant une autre vue, l'administrateur **ne change pas son accréditatio
 
 Cet aperçu ne remplace pas les tests de sécurité avec de véritables comptes Firebase affectés aux rôles correspondants.
 
-## Tables fixes de six personnes et suivi en couleurs
+## Capacités et suivi en couleurs
 
-La salle contient **42 tables de six places**, soit **252 places au total** si toutes sont utilisées. Cette capacité est fixe dans l'application : il n'y a plus de champ pour définir des capacités variables. Les nouvelles réservations ne peuvent pas être placées sur une septième place, et le placement refuse les groupes qui dépassent les places disponibles.
+Le plan initial contient 42 tables de six places. L’administrateur peut ajouter ou retirer des tables et régler leur capacité dans l’éditeur du plan. Les réservations et les jauges utilisent la capacité de chaque table. Une capacité absente vaut six ; la connexion administrateur initialise uniquement les capacités manquantes et conserve les valeurs déjà définies.
 
-Dès qu'un administrateur se connecte avec une synchronisation active, le site essaie d'enregistrer `capacity: 6` pour les 42 tables dans Realtime Database. Il préserve les réservations et ne lance pas la mise à jour si des invités occupent déjà des numéros de places supérieurs à six : ces cas doivent être corrigés avant migration. Les capacités historiques stockées sont ignorées par le calcul d'affichage qui utilise toujours six.
+- **Occupation** : gris pour une table vide, orange lorsqu’il reste des places, rouge lorsqu’elle est complète.
+- **Arrivées** : bleu lorsqu’aucun invité n’est arrivé, jaune/orange pour une arrivée partielle et vert lorsque tous les invités de la table sont arrivés.
 
-**Deux légendes distinctes, affichées sur toutes les vues :**
-
-- **Occupation** — gris : table vide (0/6) ; orange : partiellement occupée (1 à 5/6) ; rouge : complète (6/6). Une table en surcapacité est signalée.
-- **Arrivées** — bleu : aucun invité de cette table n'est arrivé ; jaune/orange : seulement une partie des invités est arrivée ; vert : tous les invités placés à cette table sont arrivés. Une table vide indique « Aucun invité ».
-- Dans la vue **Accueil**, six pastilles par table représentent les places : **gris pour une place libre**, **bleu pour un invité attendu**, **vert pour un invité arrivé**. Les nombres d'arrivées et de places restantes sont affichés sans devoir interpréter uniquement les couleurs.
-
-Le panneau de droite de l'Accueil et le plan sont rafraîchis par les données Firebase en temps réel.
-
-La dernière version de [`database.rules.managed-users.json`](./database.rules.managed-users.json) autorise les nouvelles capacités à **six uniquement**, et empêche l'attribution d'une nouvelle place supérieure à six ; elle préserve temporairement les anciens enregistrements inchangés. **Ces règles nécessitent une nouvelle publication manuelle dans Firebase Console** après validation. Un déploiement GitHub Pages ne déploie pas automatiquement les règles.
+Le même plan est affiché dans toutes les vues et actualisé en temps réel. Les nouvelles règles de base doivent être publiées manuellement avant la mise en service de l’éditeur.
 
 ## Accréditations et tableaux de bord (mise à jour du 26 octobre 2026)
 
@@ -77,9 +70,9 @@ Cinq vues sont prévues : **Administrateur**, **Inscriptions et réservations**,
 
 - **Administrateur :** toutes les réservations, plan, pointage, export, suivi privé des personnes attendues/arrivées/payées/non placées et accès à « Gestion des utilisateurs ».
 - **Inscriptions :** saisie, acceptation et modification de réservations, sans droit de pointage ni de placement.
-- **Commande « Placer » :** affichée et utilisable **uniquement** pour le rôle `placement` et les administrateurs. Un compte Inscriptions, Accueil ou Consultation ne peut ni placer ni déplacer un invité. **Toutes les tables ont désormais une capacité fixe de six places**, sans réglage manuel.
-- **Placement :** attribution d'une place à un invité à la fois parmi six places fixes par table. **Le contrôle atomique de l'unicité entre plusieurs placeurs n'est pas encore garanti côté serveur** ; éviter plusieurs sessions de placement simultanées avant finalisation.
-- **Accueil :** pointage des invités, en choisissant au préalable **File 1 ou File 2** ; le même plan de salle que la vue Administrateur est affiché, avec la scène, les 42 tables, les couleurs et les jauges d’arrivée.
+- **Commande « Placer » :** affichée et utilisable **uniquement** pour le rôle `placement` et les administrateurs. Un compte Inscriptions, Accueil ou Consultation ne peut ni placer ni déplacer un invité. **Les tables ont six places par défaut ; seul un administrateur peut changer leur capacité dans « Modifier le plan de table ».**
+- **Placement :** attribution d'une place à un invité à la fois parmi les places disponibles selon la capacité définie par l’administrateur. **Le contrôle atomique de l'unicité entre plusieurs placeurs n'est pas encore garanti côté serveur** ; éviter plusieurs sessions de placement simultanées avant finalisation.
+- **Accueil :** pointage des invités, en choisissant au préalable **File 1 ou File 2** ; le même plan de salle que la vue Administrateur est affiché, avec la scène, les tables, les couleurs et les jauges d’arrivée.
 - **Consultation :** suivi et plan en lecture seule, sans modification.
 
 Les comptes créés dans Firebase Authentication sont authentifiés par e-mail. À la première connexion, leur profil prénom et nom est enregistré, puis un rôle `reservations` est créé pour leur UID si aucun autre rôle n'a été préattribué par un administrateur. Les rôles peuvent être changés depuis « Gestion des utilisateurs » avec le **UID** du compte.
@@ -123,3 +116,11 @@ L’accueil public affiche un décompte vers le **5 décembre 2026 à 20 h, heur
 ## Plan commun à toutes les vues
 
 Administrateur, Inscriptions, Placement, Accueil (File 1 et File 2) et Consultation utilisent le même plan de salle et la même disposition responsive. L’ancien panneau Accueil composé de cartes distinctes est masqué. Le visuel et les données des tables sont communs ; les actions restent limitées aux droits du rôle : seuls Administrateur et Placement peuvent placer ou déplacer les invités.
+
+## Éditeur du plan et capacités (administrateur uniquement)
+
+Le bouton **Modifier le plan de table** ouvre un brouillon : choix de 1 à 30 lignes, de 0 à 12 tables par côté et par ligne, puis ajustement ligne par ligne. La scène reste en haut et l’allée au centre. Une table se déplace vers une case libre par deux clics (compatible téléphone), ou par glisser-déposer ; un dépôt sur une table échange leurs emplacements. Une case « + » ajoute une table. Le plan est limité à 200 tables.
+
+Sélectionner une table permet de la renommer, de la retirer ou de régler sa capacité de **1 à 50 personnes**, avec **6 par défaut** pour les nouvelles tables. Une table occupée ne peut pas être supprimée ; une capacité ne peut pas être réduite sous un numéro de siège déjà utilisé. Déplacer une table conserve son identifiant et ses invités. Enregistrer partage le plan et les capacités entre toutes les vues. Annuler abandonne le brouillon. Si un autre administrateur modifie le plan entre-temps, l’enregistrement est refusé pour éviter de l’écraser.
+
+Les installations sans plan personnalisé conservent le plan initial et ses identifiants. Les nouvelles règles `database.rules.managed-users.json` doivent être publiées dans Realtime Database avant la mise en service du nouvel éditeur. Elles réservent le plan et les capacités aux administrateurs et valident les sièges par rapport à la capacité enregistrée. Le contrôle serveur de l’unicité d’un siège entre plusieurs placeurs reste la limitation existante ; éviter des placements simultanés sur la même place.

@@ -27,3 +27,9 @@ Avec une réservation fictive, enregistrer un paiement par un tiers puis une arr
 Spark impose des quotas gratuits pour la base, les connexions simultanées et les e-mails. Le site ne nécessite pas de facturation ; un dépassement de quota peut limiter le service. Consulter les limites du projet avant l’événement : https://firebase.google.com/pricing et https://firebase.google.com/docs/auth/limits.
 
 Les tests locaux simulent les parcours et contrôlent les expressions des règles ; ils ne remplacent pas les essais avec le moteur Firebase et de vrais comptes. Aucun déploiement Firebase ni réception d’e-mail n’est confirmé par les tests automatiques.
+
+## Mise à jour de l’éditeur de plan
+
+Publier la nouvelle version de `database.rules.managed-users.json` avant d’utiliser l’éditeur. Elle ajoute `data/layout`, autorise les capacités de 1 à 50 et les identifiants des nouvelles tables, et limite les sièges à la capacité enregistrée. Les règles précédentes ne permettent pas de sauvegarder un plan personnalisé. Aucun nouveau service Firebase et aucun forfait payant ne sont nécessaires.
+
+Tester avec un compte administrateur : ajouter une table, la déplacer, modifier sa capacité puis enregistrer. Vérifier le même plan et les mêmes capacités avec un compte Accueil et un compte Placement. Vérifier le refus d’une suppression de table occupée et d’un siège hors capacité.
