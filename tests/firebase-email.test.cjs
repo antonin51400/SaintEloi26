@@ -68,7 +68,7 @@ async function nameProfile(first,last){
   await nameProfile('Camille','Dupont');
   assert.equal(calls.profiles['events/saint-eloi-2026/profiles/nouveau123'].firstName,'Camille');
   assert.equal(w.inspectEmail.operator,'Camille Dupont');
-  assert.equal(w.inspectEmail.role,'organizer');
+  assert.equal(w.inspectEmail.role,'reservations');
   assert.equal($('appWrapper').style.display,'flex');
   assert.notEqual($('newReservation').style.display,'none');
   assert.equal($('inviteUserButton').hidden,true);
