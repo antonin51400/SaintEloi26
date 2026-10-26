@@ -12,8 +12,21 @@ window.SAINT_ELOI_ACCESS_CODES = {
   '0722': {name:'Accueil des entrées',role:'entry'}
 };
 
+// Identifiants de comptes de service de connexion (PUBLICS, aucun mot de passe ici).
+// Chaque membre tape UN code confidentiel de 12 chiffres : préfixe ci-dessous
+// suivi de 8 chiffres choisis secrètement dans Firebase Authentication > Utilisateurs.
+// Le navigateur utilise automatiquement le bon compte e-mail de connexion.
+window.SAINT_ELOI_PIN_ACCOUNTS = {
+  '2002': {email:'access2002@sainteloi26-371e3.firebaseapp.com',name:'Antonin Blanckaert',role:'organizer'},
+  '9425': {email:'access9425@sainteloi26-371e3.firebaseapp.com',name:'Antonin Bassut',role:'organizer'},
+  '7890': {email:'access7890@sainteloi26-371e3.firebaseapp.com',name:'Placement des invités',role:'placement'},
+  '6930': {email:'access6930@sainteloi26-371e3.firebaseapp.com',name:'Administration',role:'admin'},
+  '1234': {email:'access1234@sainteloi26-371e3.firebaseapp.com',name:'Consultation du plan',role:'view'},
+  '0722': {email:'access0722@sainteloi26-371e3.firebaseapp.com',name:'Accueil des entrées',role:'entry'}
+};
+
 window.SAINT_ELOI_CONFIG = {
-  // RESTER false jusqu'à mise en place d'une sécurité des données côté serveur.
+  // Ne passer à true qu'après création des comptes Firebase et publication des règles adaptées.
   enabled: false,
   eventPath: 'events/saint-eloi-2026',
   firebase: {
