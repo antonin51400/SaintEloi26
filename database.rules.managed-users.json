@@ -64,10 +64,10 @@
                     ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100 && newData.val() % 1 === 0 && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() !== 'reservations' || (data.exists() ? newData.val() === data.val() : newData.val() === 0))"
                   },
                   "arrived": {
-                    ".validate": "newData.isBoolean()"
+                    ".validate": "newData.isBoolean() && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() !== 'reservations' || (data.exists() ? newData.val() === data.val() : newData.val() === false))"
                   },
                   "paid": {
-                    ".validate": "newData.isBoolean()"
+                    ".validate": "newData.isBoolean() && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() !== 'reservations' || (data.exists() ? newData.val() === data.val() : newData.val() === false))"
                   },
                   "arrivedAt": {
                     ".validate": "newData.isString()"
