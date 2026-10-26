@@ -60,6 +60,14 @@ async function login(prefix){
   assert.equal(calls.at(-1).email,'access0722@sainteloi26-371e3.firebaseapp.com');
   assert.equal($('newReservation').style.display,'none');
   assert.ok($('laneChoice'));
+  await $('logoutButton').onclick();
+  await login('3186');
+  assert.equal(calls.at(-1).email,'access3186@sainteloi26-371e3.firebaseapp.com');
+  assert.notEqual($('newReservation').style.display,'none');
+  await $('logoutButton').onclick();
+  await login('4279');
+  assert.equal(calls.at(-1).email,'access4279@sainteloi26-371e3.firebaseapp.com');
+  assert.notEqual($('newReservation').style.display,'none');
   w.close();
   console.log('PASS: Connexion code seul via Firebase masqué, rôles serveur et déconnexion.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
