@@ -52,15 +52,31 @@ En choisissant une autre vue, l'administrateur **ne change pas son accréditatio
 
 Cet aperçu ne remplace pas les tests de sécurité avec de véritables comptes Firebase affectés aux rôles correspondants.
 
+## Tables fixes de six personnes et suivi en couleurs
+
+La salle contient **42 tables de six places**, soit **252 places au total** si toutes sont utilisées. Cette capacité est fixe dans l'application : il n'y a plus de champ pour définir des capacités variables. Les nouvelles réservations ne peuvent pas être placées sur une septième place, et le placement refuse les groupes qui dépassent les places disponibles.
+
+Dès qu'un administrateur se connecte avec une synchronisation active, le site essaie d'enregistrer `capacity: 6` pour les 42 tables dans Realtime Database. Il préserve les réservations et ne lance pas la mise à jour si des invités occupent déjà des numéros de places supérieurs à six : ces cas doivent être corrigés avant migration. Les capacités historiques stockées sont ignorées par le calcul d'affichage qui utilise toujours six.
+
+**Deux légendes distinctes, affichées sur toutes les vues :**
+
+- **Occupation** — gris : table vide (0/6) ; orange : partiellement occupée (1 à 5/6) ; rouge : complète (6/6). Une table en surcapacité est signalée.
+- **Arrivées** — bleu : aucun invité de cette table n'est arrivé ; jaune/orange : seulement une partie des invités est arrivée ; vert : tous les invités placés à cette table sont arrivés. Une table vide indique « Aucun invité ».
+- Dans la vue **Accueil**, six pastilles par table représentent les places : **gris pour une place libre**, **bleu pour un invité attendu**, **vert pour un invité arrivé**. Les nombres d'arrivées et de places restantes sont affichés sans devoir interpréter uniquement les couleurs.
+
+Le panneau de droite de l'Accueil et le plan sont rafraîchis par les données Firebase en temps réel.
+
+La dernière version de [`database.rules.managed-users.json`](./database.rules.managed-users.json) autorise les nouvelles capacités à **six uniquement**, et empêche l'attribution d'une nouvelle place supérieure à six ; elle préserve temporairement les anciens enregistrements inchangés. **Ces règles nécessitent une nouvelle publication manuelle dans Firebase Console** après validation. Un déploiement GitHub Pages ne déploie pas automatiquement les règles.
+
 ## Accréditations et tableaux de bord (mise à jour du 26 octobre 2026)
 
 Cinq vues sont prévues : **Administrateur**, **Inscriptions et réservations**, **Placement**, **Accueil**, **Consultation**. Un rôle `disabled` suspend la lecture des réservations.
 
 - **Administrateur :** toutes les réservations, plan, pointage, export, suivi privé des personnes attendues/arrivées/payées/non placées et accès à « Gestion des utilisateurs ».
 - **Inscriptions :** saisie, acceptation et modification de réservations, sans droit de pointage ni de placement.
-- **Commande « Placer » :** affichée et utilisable **uniquement** pour le rôle `placement` et les administrateurs. Un compte Inscriptions, Accueil ou Consultation ne peut ni placer ni déplacer un invité. La capacité des tables reste modifiable uniquement par les administrateurs.
-- **Placement :** attribution d'une place à un invité à la fois, uniquement sur des tables dont la capacité est définie par un administrateur. **Le contrôle atomique de l'unicité entre plusieurs placeurs n'est pas encore garanti côté serveur** ; éviter plusieurs sessions de placement simultanées avant finalisation.
-- **Accueil :** pointage des invités, en choisissant au préalable **File 1 ou File 2** ; le poste n'affiche pas le plan complet.
+- **Commande « Placer » :** affichée et utilisable **uniquement** pour le rôle `placement` et les administrateurs. Un compte Inscriptions, Accueil ou Consultation ne peut ni placer ni déplacer un invité. **Toutes les tables ont désormais une capacité fixe de six places**, sans réglage manuel.
+- **Placement :** attribution d'une place à un invité à la fois parmi six places fixes par table. **Le contrôle atomique de l'unicité entre plusieurs placeurs n'est pas encore garanti côté serveur** ; éviter plusieurs sessions de placement simultanées avant finalisation.
+- **Accueil :** pointage des invités, en choisissant au préalable **File 1 ou File 2** ; à droite, un panneau donne le taux d'occupation et les arrivées de chacune des 42 tables, sans afficher le plan complet.
 - **Consultation :** suivi et plan en lecture seule, sans modification.
 
 Les comptes créés dans Firebase Authentication sont authentifiés par e-mail. À la première connexion, leur profil prénom et nom est enregistré, puis un rôle `reservations` est créé pour leur UID si aucun autre rôle n'a été préattribué par un administrateur. Les rôles peuvent être changés depuis « Gestion des utilisateurs » avec le **UID** du compte.
