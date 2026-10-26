@@ -642,9 +642,32 @@ function drawTable(){
   return '<div class="seat '+status+'"><strong>Place '+(i+1)+'</strong>'+ (p?esc(p.name)+'<small>'+esc(p.reservedBy)+'</small>'+(allowed('place')?'<button class="secondary" data-action="select" data-rid="'+esc(p.rid)+'" data-pid="'+esc(p.pid)+'">Déplacer</button>':''):'Libre')+'</div>';
  }).join('')+'</div>';
 }
-function showPlacement(tableId){try{requireAccess('place');if(role==='placement'&&!selection?.pid)throw Error('Pour cette accréditation, sélectionnez un invité à la fois.');const people=membersFor(selection);closeTablePopup();$('placementNames').textContent=people.map(p=>p.name).join(', ');$('placementTable').innerHTML='<option value="">Retirer du plan (à placer)</option>'+tableElements.map(el=>`<option value="${el.id}">${esc(tableNames[el.id])} — ${capacity(el.id)?freeSeats(el.id,selection).length+' places disponibles':'capacité à définir'}</option>`).join('');$('placementTable').value=tableId;$('newCapacity').value='';$('placementError').textContent='';updateSeatOptions();$('placementDialog').showModal();}catch(err){notice(err.message);}}
-function updateSeatOptions(){try{const tableId=$('placementTable').value,people=membersFor(selection);$('newCapacityLabel').hidden=!tableId||!!capacity(tableId);const draft=clone(state);if(tableId&&!capacity(tableId)){draft.tables ||= {};draft.tables[tableId]={capacity:Math.min(100,Math.max(0,Math.floor(Number($('newCapacity').value)||0))) };}$('seatLabel').style.display=people.length===1&&tableId?'block':'none';$('placementSeat').innerHTML=tableId?freeSeats(tableId,selection,draft).map(n=>`<option value="${n}">Place ${n}</option>`).join(''):'';const free=tableId?freeSeats(tableId,selection,draft).length:0;$('placementError').textContent=tableId&&!capacity(tableId,draft)?'Indiquez le nombre de places : la table sera configurée en même temps que le placement.':tableId&&free<people.length?`Pas assez de places : ${free} libres pour ${people.length} personnes. Choisissez une autre table ou placez les invités individuellement.`:people.length>1&&tableId?'Le groupe sera affecté aux premières places libres de cette table.':'';}catch(err){$('placementError').textContent=err.message;}}
-$('placementTable').onchange=()=>{$('newCapacity').value='';updateSeatOptions();};$('newCapacity').oninput=updateSeatOptions;
+function showPlacement(tableId){
+ try{
+  requireAccess('place');
+  if(role==='placement'&&!selection?.pid)throw Error('Pour cette accréditation, sélectionnez un invité à la fois.');
+  const people=membersFor(selection);
+  closeTablePopup();
+  $('placementNames').textContent=people.map(p=>p.name).join(', ');
+  $('placementTable').innerHTML='<option value="">Retirer du plan (à placer)</option>'+tableElements.map(el=>'<option value="'+el.id+'">'+esc(tableNames[el.id])+' — '+freeSeats(el.id,selection).length+' places libres sur 6</option>').join('');
+  $('placementTable').value=tableId;
+  $('placementError').textContent='';
+  updateSeatOptions();
+  $('placementDialog').showModal();
+ }catch(error){notice(error.message);}
+}
+function updateSeatOptions(){
+ try{
+  const tableId=$('placementTable').value,people=membersFor(selection);
+  $('seatLabel').style.display=people.length===1&&tableId?'block':'none';
+  $('placementSeat').innerHTML=tableId?freeSeats(tableId,selection).map(n=>'<option value="'+n+'">Place '+n+'</option>').join(''):'';
+  const free=tableId?freeSeats(tableId,selection).length:0;
+  $('placementError').textContent=tableId&&free<people.length
+   ?'Pas assez de places : '+free+' libres sur 6 pour '+people.length+' personnes.'
+   :people.length>1&&tableId?'Le groupe sera affecté aux premières places libres de cette table.':'';
+ }catch(error){$('placementError').textContent=error.message;}
+}
+$('placementTable').onchange=updateSeatOptions;
 async function placeSingleRestricted(sel,tableId,seat){
  if(!ready||!user||!online)throw Error('Connexion indisponible.');
  const reservation=state.reservations?.[sel.rid],expected=reservation?.participants?.[sel.pid];
