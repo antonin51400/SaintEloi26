@@ -20,13 +20,19 @@ const permissions = {
   entry:['arrival','payment'],
   viewer:[],
   disabled:[],
-  organizer:['reserve','place','arrival','payment','export']
+  organizer:['reserve','export']
 };
 // L'aperçu est strictement visuel : le rôle authentifié n'est jamais modifié.
 let previewRole=null;
 const shownRole=()=>role==='admin'&&previewRole?previewRole:role;
 const inRolePreview=()=>role==='admin'&&previewRole!==null;
-const allowed=permission=>!!permissions[shownRole()]?.includes(permission);
+// Le placement est une accréditation à part : ni Inscriptions, ni Accueil,
+// ni Consultation ne peuvent placer ou déplacer des personnes.
+const allowed=permission=>{
+ const visible=shownRole();
+ if(permission==='place')return visible==='admin'||visible==='placement';
+ return !!permissions[visible]?.includes(permission);
+};
 function requireAccess(permission){
  if(inRolePreview())throw Error('Mode aperçu : aucune modification possible. Reviens à la vue Administrateur.');
  if(!allowed(permission))throw Error('Cette accréditation ne permet pas cette opération.');
