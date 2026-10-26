@@ -11,30 +11,29 @@ let state = {reservations:{},tables:{}};
 let user = null, operator = '', role = 'none', lane = '', demo = false, online = false, ready = false, busy = false, loginBusy = false;
 let db = null, auth = null, eventRef = null, dataRef = null, memberRef = null, pendingRequestRef = null;
 let filter = 'all', editing = null, editVersion = 0, selection = null, popupTable = null;
+const ROOT_ADMIN_UIDS=['nCNc0JdWznOZ6j4B4GjfvQqWX4K2','KpFkapZExKcToBcy52YCo6rdwuh2'];
+const ROLE_LABELS={admin:'Administrateur',reservations:'Inscriptions et réservations',placement:'Placement des tables',entry:'Accueil des entrées',viewer:'Consultation',disabled:'Suspendu'};
 const permissions = {
-  organizer: ['reserve','place','arrival','payment','export'],
-  admin: ['reserve','place','arrival','payment','export'],
-  placement: ['reserve','place'],
-  entry: ['arrival','payment'],
-  view: []
+  admin:['reserve','place','arrival','payment','export','users','dashboard'],
+  reservations:['reserve','export'],
+  placement:['place'],
+  entry:['arrival','payment'],
+  viewer:[],
+  disabled:[],
+  organizer:['reserve','place','arrival','payment','export']
 };
-const allowed = permission => {
-  if(!permissions[role]?.includes(permission))return false;
-  // Le placement partagé nécessite encore une transaction atomique entre
-  // les réservations : ne pas exposer des boutons qui écriraient sans droit.
-  if(!demo && role==='placement' && (permission==='reserve'||permission==='place'))return false;
-  return true;
-};
-function requireAccess(permission) { if (!allowed(permission)) throw Error('Ce code ne permet pas cette opération.'); }
+const allowed = permission => !!permissions[role]?.includes(permission);
+function requireAccess(permission){if(!allowed(permission))throw Error('Cette accréditation ne permet pas cette opération.');}
+const rootAdmin=()=>!!user&&ROOT_ADMIN_UIDS.includes(user.uid);
 function selectEntryLane() {
   document.getElementById('laneChoice')?.remove();
   if (role !== 'entry') return;
   const panel = document.createElement('section');
   panel.id='laneChoice'; panel.className='lane-modal';
-  panel.innerHTML='<h2>Quel poste occupez-vous ?</h2><div class="lane-buttons"><button type="button" class="lane-btn left" data-lane="left"><span class="lane-icon">◀️</span>File Gauche<span class="lane-sub">Entrée côté gauche</span></button><button type="button" class="lane-btn right" data-lane="right"><span class="lane-icon">▶️</span>File Droite<span class="lane-sub">Entrée côté droit</span></button></div>';
+  panel.innerHTML='<h2>Quel poste occupez-vous ?</h2><div class="lane-buttons"><button type="button" class="lane-btn left" data-lane="left"><span class="lane-icon">◀️</span>File 1<span class="lane-sub">Poste 1</span></button><button type="button" class="lane-btn right" data-lane="right"><span class="lane-icon">▶️</span>File 2<span class="lane-sub">Poste 2</span></button></div>';
   panel.querySelectorAll('[data-lane]').forEach(btn => btn.onclick=()=>{
     lane=btn.dataset.lane;
-    $('sessionBadge').textContent=lane==='left'?'◀ File Gauche':'▶ File Droite';
+    $('sessionBadge').textContent=lane==='left'?'◀ File 1':'▶ File 2';
     $('sessionBadge').className='lane-badge '+lane;
     panel.remove();
   });
@@ -71,7 +70,7 @@ function validateData(data) {
 function updated(r) { r.version=(r.version||0)+1; r.updatedBy=operator; r.updatedAt=new Date().toISOString(); }
 async function mutate(change) {
   if (busy) throw Error('Un enregistrement est déjà en cours.');
-  if (!demo && !['organizer','admin'].includes(role)) throw Error('Cette opération nécessite un accès d’écriture autorisé.');
+  if (!demo && !['reservations','placement','admin','organizer'].includes(role)) throw Error('Cette opération nécessite un accès d’écriture autorisé.');
   if (!ready || !user || (!demo&&!online)) throw Error('Connexion indisponible : aucune modification enregistrée.');
   busy=true; document.querySelectorAll('button[type="submit"]').forEach(b=>b.disabled=true);
   try {
@@ -89,11 +88,15 @@ async function mutate(change) {
 }
 function showApp(){
   $('loginPanel').style.display='none';$('appWrapper').style.display='flex';
-  $('sessionBadge').textContent=lane?(lane==='left'?'◀ File Gauche':'▶ File Droite'):operator;
+  $('sessionBadge').textContent=lane?(lane==='left'?'◀ File 1':'▶ File 2'):operator;
   $('sessionBadge').className='lane-badge'+(lane?' '+lane:'');
   $('newReservation').style.display=allowed('reserve')?'':'none';
   $('exportButton').style.display=allowed('export')?'':'none';
-  $('inviteUserButton').hidden=demo||!user||user.uid!==PRIMARY_ADMIN_UID;
+  $('inviteUserButton').hidden=demo||!allowed('users');
+  $('usersManagerButton').hidden=demo||!allowed('users');
+  $('adminDashboardButton').hidden=demo||!allowed('dashboard');
+  $('exportButton').hidden=!allowed('export');
+  $('sessionBadge').title=ROLE_LABELS[role]||role;
   $('sessionBadge').onclick=()=>{if(role==='entry')selectEntryLane();};
   render();if(role==='entry'&&!lane)selectEntryLane();
 }
@@ -200,7 +203,7 @@ async function startEmailSession(email,password){
     if(!account||account.email?.trim().toLowerCase()!==email)throw Error('Identifiants non reconnus.');
     user=account;eventRef=db.ref(config.eventPath);
     // Les comptes historiques comme les nouveaux passent par le même profil nominatif.
-    role=account.uid===GLOBAL_ADMIN_UID||account.uid===PRIMARY_ADMIN_UID?'admin':'organizer';
+    role=rootAdmin()?'admin':'reservations';
     $('loginMessage').textContent='Bienvenue ! Vérification du profil…';
     const ownProfile=eventRef.child('profiles').child(account.uid);
     const saved=(await ownProfile.once('value')).val();
@@ -264,14 +267,14 @@ $('firstAccessForm').onsubmit=async e=>{
   }
 };
 $('inviteUserButton').onclick=()=>{
-  if(demo||!user||user.uid!==PRIMARY_ADMIN_UID)return;
+  if(demo||!allowed('users'))return;
   $('inviteUserForm').reset();
   $('inviteUserMessage').textContent='';
   $('inviteUserDialog').showModal();
 };
 $('inviteUserForm').onsubmit=async e=>{
   e.preventDefault();
-  if(demo||!user||user.uid!==PRIMARY_ADMIN_UID)return;
+  if(demo||!allowed('users'))return;
   const email=$('inviteEmail').value.trim().toLowerCase();
   if(!$('inviteEmail').checkValidity())return;
   $('sendInviteButton').disabled=true;
