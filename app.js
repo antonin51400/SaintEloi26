@@ -115,7 +115,8 @@ $('pairDeviceButton').onclick=async()=>{
     const current=auth.currentUser||(await auth.signInAnonymously()).user;
     if(!current?.uid)throw Error('Aucun identifiant obtenu.');
     showDeviceUid(current.uid);
-    $('loginMessage').textContent='Appareil identifié. Copiez son UID, puis autorisez cet appareil dans les données de Firebase. Aucune réservation réelle n’est encore accessible.';
+    $('accessOptions').open=true;
+    $('loginMessage').textContent='Identifiant affiché dans les options. La base partagée reste protégée.';
   }catch(error){
     $('loginMessage').textContent='Impossible d’identifier cet appareil : '+(error?.message||'réessayez.');
   }finally{
@@ -135,13 +136,16 @@ $('copyDeviceUid').onclick=async()=>{
 };
 function showDeviceUid(uid){
   $('deviceUid').textContent=uid;
-  $('pairingPanel').hidden=false;
+  $('deviceUid').hidden=false;
+  $('copyDeviceUid').hidden=false;
 }
-async function startSession(profile, applicantName){
+async function startSession(profile){
   if(loginBusy)return;
   loginBusy=true;
   $('loginButton').disabled=true;
   $('pairingPanel').hidden=true;
+  $('requestAccessForm').hidden=true;
+  $('requestAccessForm').onsubmit=null;
   stopListeners();
   role='none';operator='';lane='';ready=false;demo=false;
   try {
@@ -170,6 +174,8 @@ async function startSession(profile, applicantName){
         return false;
       }
       if(dataRef)return true;
+      $('pairingPanel').hidden=true;
+      $('requestAccessForm').hidden=true;
       role=member.role;operator=member.name;
       dataRef=eventRef.child('data');
       dataRef.on('value',snapshot=>{
@@ -191,31 +197,57 @@ async function startSession(profile, applicantName){
       return;
     }
 
-    // Chaque compte anonyme dépose au plus une demande. Le code n'est jamais stocké.
-    // Le rôle demandé provient du formulaire ; seul l'approbateur décide de l'accès réel.
+    // Le code à quatre chiffres suffit à lancer la connexion. Le nom n'est
+    // demandé que lors de la toute première demande d'autorisation d'un appareil.
     const existing=(await requestRef.once('value')).val();
+    $('pairingPanel').hidden=false;
     if(existing&&existing.requestedRole!==profile.role){
-      $('loginMessage').textContent='Une demande avec un autre rôle existe déjà pour cet appareil. Contactez l’organisateur.';
+      $('accessRequestStatus').textContent='Cet appareil a déjà demandé un autre rôle. Contactez l’organisateur.';
+      $('loginMessage').textContent='Demande existante pour un autre rôle.';
       return;
     }
-    if(!existing){
-      const cleanName=String(applicantName||'').trim().replace(/\s+/g,' ');
-      if(cleanName.length<3||cleanName.length>100)throw Error('Indiquez votre prénom et votre nom pour la demande d’accès.');
-      await requestRef.set({
-        name:cleanName,
-        requestedRole:profile.role,
-        requestedOperator:profile.name,
-        requestedAt:firebase.database.ServerValue.TIMESTAMP,
-        status:'pending'
-      });
-    }
-    const request=(await requestRef.once('value')).val();
-    $('accessRequestStatus').textContent=request?.status==='rejected'
-      ? 'Votre demande a été refusée. Contactez l’organisateur.'
-      : 'Demande envoyée. Votre accès reste bloqué tant que l’organisateur ne l’a pas approuvée.';
-    $('loginMessage').textContent=request?.status==='rejected'
-      ? 'Demande refusée. Aucun accès aux réservations.'
-      : 'Demande d’accès enregistrée dans Firebase. En attente de validation par l’organisateur.';
+    const reflectStatus=request=>{
+      if(!request){
+        $('accessRequestStatus').textContent='Première utilisation : indiquez votre nom pour que l’organisateur puisse autoriser cet appareil.';
+        $('requestAccessForm').hidden=false;
+        $('loginMessage').textContent='L’organisateur doit valider cet appareil avant l’accès aux réservations.';
+      }else{
+        $('requestAccessForm').hidden=true;
+        const rejected=request.status==='rejected';
+        $('accessRequestStatus').textContent=rejected
+          ? 'La demande a été refusée. Contactez l’organisateur.'
+          : 'Demande enregistrée : en attente de la validation de l’organisateur.';
+        $('loginMessage').textContent=rejected?'Accès refusé.':'En attente de validation. Tu peux revenir plus tard avec le même code.';
+      }
+    };
+    reflectStatus(existing);
+    $('requestAccessForm').onsubmit=async e=>{
+      e.preventDefault();
+      if(loginBusy)return;
+      const name=$('requestName').value.trim().replace(/\\s+/g,' ');
+      if(name.length<3||name.length>100){
+        $('loginMessage').textContent='Entre ton prénom et ton nom pour demander un accès.';
+        return;
+      }
+      loginBusy=true;
+      $('sendRequestButton').disabled=true;
+      try{
+        await requestRef.set({
+          name,
+          requestedRole:profile.role,
+          requestedOperator:profile.name,
+          requestedAt:firebase.database.ServerValue.TIMESTAMP,
+          status:'pending'
+        });
+        $('requestName').value='';
+        reflectStatus((await requestRef.once('value')).val());
+      }catch(error){
+        $('loginMessage').textContent='Demande impossible : '+(error?.message||'vérifiez les règles de la base Firebase.');
+      }finally{
+        loginBusy=false;
+        $('sendRequestButton').disabled=false;
+      }
+    };
     // Lorsque le propriétaire valide la demande, l'accès est ouvert sans nouvelle saisie.
     memberRef=membershipRef;
     memberRef.on('value',snapshot=>{
@@ -227,10 +259,7 @@ async function startSession(profile, applicantName){
     pendingRequestRef.on('value',snapshot=>{
       const req=snapshot.val();
       if(!req||dataRef)return;
-      if(req.status==='rejected'){
-        $('accessRequestStatus').textContent='Demande refusée par l’organisateur.';
-        $('loginMessage').textContent='Votre demande a été refusée.';
-      }
+      reflectStatus(req);
     });
   }catch(error){
     const forbidden=String(error?.code||'').toLowerCase().includes('permission_denied')
@@ -250,23 +279,18 @@ $('accessForm').onsubmit=async e=>{
   if(!profile||!permissions[profile.role]){
     $('loginMessage').textContent='Code non reconnu.';return;
   }
-  const applicantName=$('requestName').value.trim();
-  if(config.enabled&&(applicantName.length<3||applicantName.length>100)){
-    $('loginMessage').textContent='Indiquez votre prénom et votre nom pour que l’organisateur sache qui demande l’accès.';
-    return;
-  }
   $('accessCode').value='';
-  await startSession(profile,applicantName);
+  await startSession(profile);
 };
 $('demoButton').onclick=()=>{
-  stopListeners();$('pairingPanel').hidden=true;
+  stopListeners();$('pairingPanel').hidden=true;$('requestAccessForm').hidden=true;
   role='admin';operator='Démonstration';lane='';user={uid:'demo'};
   demo=true;ready=true;online=true;state={reservations:{},tables:{}};showApp();
 };
 $('logoutButton').onclick=async()=>{
   if(busy)return;
   if(demo&&!confirm('Quitter la démonstration ? Les données de cet onglet seront perdues.'))return;
-  demo=false;user=null;role='none';lane='';$('pairingPanel').hidden=true;
+  demo=false;user=null;role='none';lane='';$('pairingPanel').hidden=true;$('requestAccessForm').hidden=true;
   // Conserver la session Firebase anonyme pour conserver le même UID d'appareil.
   lock('Vous êtes déconnecté de l’interface. Votre identifiant d’appareil est conservé.');
 };
