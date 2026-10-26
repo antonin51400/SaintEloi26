@@ -6,7 +6,7 @@
 
 ## Nouveau : approbation des appareils par e-mail
 
-Le formulaire peut désormais recueillir le **nom du demandeur et son code**, puis déposer une demande Firebase. Le rôle souhaité correspond au code choisi ; **seul le responsable peut accorder le rôle effectif**. Le système de notification gratuit (Google Apps Script, envoi par MailApp toutes les 5 minutes) et le lien **Autoriser / Refuser** sont préparés dans :
+L'écran de garde demande désormais **uniquement un code à quatre chiffres et un clic sur « Entrer »**. Les boutons techniques et la démonstration sont regroupés dans la petite roue dentée ⚙. Si le partage Firebase est activé plus tard, le site identifie silencieusement l'appareil ; **seul un nouvel appareil non autorisé** voit alors apparaître un formulaire pour communiquer son prénom et nom et demander validation. Le rôle souhaité correspond au code choisi ; **seul le responsable peut accorder le rôle effectif**. Le système de notification gratuit (Google Apps Script, envoi par MailApp toutes les 5 minutes) et le lien **Autoriser / Refuser** sont préparés dans :
 
 - [Code du service e-mail et approbation](./access-approval/Code.gs)
 - [Instructions de configuration du service](./access-approval/README.md)
