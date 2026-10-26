@@ -1,81 +1,92 @@
-# Saint Éloi 2026 — réservations et accueil
+# Saint Éloi 2026 — réservations, placement et accueil
 
-**Site :** https://antonin51400.github.io/SaintEloi26/  
-**Projet Firebase :** `sainteloi26-371e3` — Realtime Database `europe-west1`, forfait Spark gratuit.  
-**Base dédiée :** `events/saint-eloi-2026` (aucune donnée importée du Bal Savoyard).
+Site : **https://antonin51400.github.io/SaintEloi26/**
 
-## Nouveau : approbation des appareils par e-mail
+## Connexion simplifiée par code — fonctionnement cible
 
-L'écran de garde demande désormais **uniquement un code à quatre chiffres et un clic sur « Entrer »**. Les boutons techniques et la démonstration sont regroupés dans la petite roue dentée ⚙. Si le partage Firebase est activé plus tard, le site identifie silencieusement l'appareil ; **seul un nouvel appareil non autorisé** voit alors apparaître un formulaire pour communiquer son prénom et nom et demander validation. Le rôle souhaité correspond au code choisi ; **seul le responsable peut accorder le rôle effectif**. Le système de notification gratuit (Google Apps Script, envoi par MailApp toutes les 5 minutes) et le lien **Autoriser / Refuser** sont préparés dans :
+L'utilisateur voit **un seul champ « Ton code d'accès » et un bouton « Entrer »**. Il ne saisit jamais d'e-mail, ne voit aucun écran Firebase et n'a pas à approuver un appareil. Les données sont partagées par la Realtime Database de Firebase, et le **code confidentiel est vérifié par Firebase Authentication en arrière-plan**.
 
-- [Code du service e-mail et approbation](./access-approval/Code.gs)
-- [Instructions de configuration du service](./access-approval/README.md)
+Les quatre chiffres des anciens codes sont déjà visibles publiquement dans le dépôt GitHub. Ils **ne suffisent donc pas à protéger** les noms, téléphones, plans de table et paiements. En mode réel, chaque code confidentiel contient **12 chiffres** : les 4 chiffres de son profil + 8 chiffres secrets choisis lors de la configuration dans Firebase. N'enregistrez **jamais** les codes secrets dans GitHub.
 
-**Ce service n'est pas encore déployé : aucun e-mail automatique n'est envoyé pour le moment.** Il faut installer les règles Realtime Database, renseigner les propriétés privées du script (notamment l'adresse e-mail de l'approbateur), déployer l'Apps Script, puis activer le mode réel dans `config.js`. Ne jamais mettre de clé privée dans GitHub ou dans une conversation.
-
-## État de déploiement
-
-1. Configuration Web Firebase et adresse Realtime Database renseignées dans `config.js`.
-2. La méthode **Firebase Authentication anonyme** a été activée par le propriétaire du projet dans la console.
-3. Le site comporte désormais un bouton **Identifier cet appareil avec Firebase** : il génère et affiche son UID anonyme, persistant dans le navigateur.
-4. Les règles de contrôle des accès sont préparées dans `database.rules.json`, mais **leur publication dans la console Firebase reste à faire**.
-5. `config.js` garde **`enabled: false`** : les saisies par codes et la démonstration fonctionnent localement uniquement ; aucune réservation réelle n'est sauvegardée ni synchronisée.
-6. Une fois les règles publiées et les appareils approuvés, modifier `enabled` à `true`, puis tester sur deux appareils. Ne pas activer prématurément.
-
-### Installation sécurisée : mode gratuit Spark
-
-**Étape A — Règles (propriétaire Firebase seulement)**
-
-1. Ouvrir Firebase Console > projet `sainteloi26-371e3` > Realtime Database > onglet **Règles**.
-2. Copier **tout** le contenu de `database.rules.json` dans le dépôt GitHub et le coller dans l'éditeur de règles de cette base **seulement**.
-3. Vérifier que les règles racine sont `.read:false` et `.write:false`, puis cliquer **Publier**.
-4. Les règles refusent les lectures aux appareils inconnus ; aucun utilisateur ne peut modifier sa propre autorisation `members`.
-
-**Étape B — Identifier chaque appareil**
-
-1. Sur l'appareil choisi, ouvrir la page GitHub Pages et cliquer **Identifier cet appareil avec Firebase**.
-2. Copier l'UID affiché. Cet UID est l'identifiant du compte anonyme Firebase de **ce navigateur**. Il peut changer si les données du site sont effacées.
-3. Depuis la console **Données** de cette base, ajouter manuellement `events/saint-eloi-2026/members/<UID>/name` et `.../role` suivant le tableau ci-dessous. Ne jamais permettre l'écriture publique de `members`.
-4. Répéter pour chaque navigateur autorisé. Utiliser son profil autorisé ; le code ne constitue qu'un choix d'interface et ne peut pas transformer un simple visiteur en organisateur.
-
-| Code visible | Champ name dans members | Champ role |
+| Préfixe de code | Profil | Adresse de connexion technique, invisible |
 |---|---|---|
-| 2002 | Antonin Blanckaert | organizer |
-| 9425 | Antonin Bassut | organizer |
-| 7890 | Placement des invités | placement |
-| 6930 | Administration | admin |
-| 1234 | Consultation du plan | view |
-| 0722 | Accueil des entrées | entry |
+| `2002` | Antonin Blanckaert — organisateur | `access2002@sainteloi26-371e3.firebaseapp.com` |
+| `9425` | Antonin Bassut — organisateur | `access9425@sainteloi26-371e3.firebaseapp.com` |
+| `7890` | Placement | `access7890@sainteloi26-371e3.firebaseapp.com` |
+| `6930` | Administrateur | `access6930@sainteloi26-371e3.firebaseapp.com` |
+| `1234` | Consultation | `access1234@sainteloi26-371e3.firebaseapp.com` |
+| `0722` | Entrée gauche / droite | `access0722@sainteloi26-371e3.firebaseapp.com` |
 
-Exemple d'une entrée : `members/UID_REEL = {"name":"Antonin Blanckaert","role":"organizer"}`.
+Les e-mails ci-dessus sont **des noms de comptes techniques**, pas des boîtes de réception. Ils ne sont pas demandés à l'utilisateur. Si vous perdez le code, remplacez son mot de passe depuis la console Firebase.
 
-**Étape C — Activation après approbation**
+## Mise en service Firebase, une seule fois par l'organisateur
 
-Mettre `enabled:true` dans `config.js` seulement lorsque les règles **sont publiées**, et au moins un UID organisateur est ajouté. Vérifier une vraie réservation, l'affichage sur deux appareils autorisés, et le refus de lecture depuis un appareil inconnu.
+**État actuel :** configuration Firebase connue (`sainteloi26-371e3`, base `europe-west1`) mais **`config.js` garde `enabled: false`**. En attendant la configuration et la publication des règles, le site reste une démonstration locale : ne saisissez pas de vraies réservations.
 
-**Étape D — Accès et limitations de cette première étape**
+### 1. Activer les comptes à mot de passe
 
-- Les profils `organizer` et `admin` ont un accès en lecture/écriture à l'ensemble des données. Le site utilise des transactions afin de préserver l'intégrité des places lorsque ces deux profils placent les invités simultanément.
-- Le profil `entry` peut uniquement modifier les statuts individuels arrivé/payé au niveau d'un invité accepté. Arrivée confirme automatiquement le paiement ; un paiement avant arrivée reste possible.
-- Le profil `view` peut lire la liste et le plan mais pas écrire.
-- Le profil `placement` est préparé comme appareil autorisé en lecture, mais **ses opérations de création/placement partagé sont temporairement désactivées** tant qu'une méthode de transaction sécurisée multi-réservations n'a pas été finalisée. Elles restent testables localement en mode démonstration.
-- Les codes JavaScript dans `config.js` sont publics. **La seule autorisation fiable est celle de l'UID anonyme dans les règles serveur Firebase**. Ne jamais utiliser des règles publiques pour compenser une erreur d'accès.
-- Déconnexion de l'interface n'efface pas l'identité anonyme ; cela évite de devoir réautoriser le même navigateur à chaque accès.
-- Les règles affichées dans GitHub ne sont pas automatiquement déployées dans Firebase. `firebase.json` n'active aucune fonction payante.
+Ouvrir **Firebase Console → Authentication → Sign-in method → Adresse e-mail / Mot de passe**, activer **Adresse e-mail / Mot de passe**. Conserver le forfait Spark gratuit. L'authentification anonyme précédemment activée n'est plus utilisée par le site.
 
-## Fonctionnement de l'événement
+### 2. Créer les deux comptes organisateurs (puis les autres au besoin)
 
-Les réservations commencent à zéro. Chaque réservation comporte la personne réservante, ses invités et **l'organisateur contacté** (distinct de la personne qui effectue la saisie). Accepter les réservations, attribuer tables et places, vérifier les capacités, puis suivre les deux files (gauche et droite), les arrivées et les paiements. Le plan contient les 42 sections issues du Bal Savoyard.
+Dans **Firebase Console → Authentication → Utilisateurs → Ajouter un utilisateur**, créer chacun des comptes ci-dessus, en commençant par `access2002@...` et `access9425@...`.
 
-**Arrivée = payée**, y compris si l'invité ne l'était pas avant d'entrer. Un paiement avant arrivée est permis. Les paiements restent conservés si l'arrivée est annulée.
+Pour chacun : choisir un **mot de passe composé de 12 chiffres**, qui **commence par le préfixe correspondant** (ex. `2002` pour le premier), et se termine par **8 chiffres aléatoires et secrets**. **Ne choisissez jamais l'ancien code à 4 chiffres seul et ne reprenez pas un exemple publié.** Le code complet est celui que l'utilisateur tapera, sans autre identifiant. Ne pas activer une politique Firebase qui exige des lettres ou symboles si vous conservez uniquement des chiffres.
 
-## Développement
+Noter depuis **Authentication → Utilisateurs** le **UID** attribué automatiquement à chaque compte ; ne pas confondre UID et e-mail.
+
+### 3. Autoriser les UID dans Realtime Database
+
+Dans **Realtime Database → Données**, créer pour chaque compte une entrée :
+
+```text
+events
+  saint-eloi-2026
+    members
+      UID_DU_PREMIER_COMPTE
+        name: Antonin Blanckaert
+        role: organizer
+      UID_DU_SECOND_COMPTE
+        name: Antonin Bassut
+        role: organizer
+```
+
+Pour les autres rôles : `placement`, `admin`, `view`, `entry`, en respectant le tableau ci-dessus. Si vous avez besoin d'un poste d'entrée, créez son compte dans Authentication et autorisez son UID avec `role: entry`.
+
+**Cette liste blanche côté serveur est essentielle** : même si un tiers crée un compte Firebase avec un e-mail connu, il ne pourra ni lire ni modifier les données sans un UID ajouté par le propriétaire.
+
+### 4. Publier les règles
+
+Ouvrir **Realtime Database → Règles** et remplacer la totalité des règles par le contenu du fichier [database.rules.json](./database.rules.json), puis **Publier**. Les règles exigent à la fois une connexion à un des comptes autorisés et sa présence dans la liste `members`. La base est fermée aux anonymes et aux comptes inconnus. **Ne jamais publier des règles `.read: true` / `.write: true`**.
+
+### 5. Activer le mode réel
+
+Une fois les deux comptes créés, leurs UID inscrits dans `members` et les règles **publiées**, modifier `config.js` : `enabled: false` → `enabled: true`.
+
+Tester depuis deux navigateurs, en utilisant chacun son code privé à 12 chiffres : une réservation créée avec le premier doit apparaître chez le deuxième. Vérifier également qu'un mauvais code est refusé et qu'un navigateur non autorisé ne lit pas les réservations.
+
+**Le site ne peut pas modifier automatiquement la console Firebase tant que cette opération n'est pas réalisée depuis une connexion administrative autorisée.** Ne pas activer la synchronisation en avance.
+
+## Permissions en mode réel
+
+- Organisateurs `2002` et `9425` : créer, accepter, modifier, annuler et placer les réservations ; suivre l'arrivée et les paiements.
+- Administrateur `6930` : les mêmes droits étendus.
+- Accueil `0722` : choisir la file gauche / droite, marquer arrivé et payé, sans changer les tables.
+- Consultation `1234` : lecture seule.
+- Placement `7890` : lecture en mode réel pour le moment ; ses écritures sont bloquées dans les règles et dans l'interface, en attendant une implémentation de placement à droits limités sûre.
+
+Chaque réservation conserve le nom du réservant, ses invités, l'organisateur **contacté** et la personne ayant saisi la réservation. Une arrivée marque automatiquement payé ; le paiement anticipé d'un absent est possible. Les 42 sections du plan de salle sont conservées.
+
+## Ancien système d'approbation par e-mail
+
+Le dossier `access-approval/` correspond à une piste **abandonnée / non déployée**, conservée à titre d'historique. Le système principal n'utilise ni Google Apps Script, ni e-mail de validation, ni connexion anonyme.
+
+## Tests
 
 ```sh
 npm install
 npm test
 node --check app.js
-python -m http.server 8765
 ```
 
-Les tests sont locaux. Vérification finale de Firebase en conditions réelles à effectuer après déploiement des règles et association des UID.
+Le projet utilise les SDK Firebase via `<script>` et ne nécessite aucun bundler.
