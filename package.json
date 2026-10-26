@@ -2,7 +2,7 @@
   "name": "saint-eloi-2026",
   "private": true,
   "scripts": {
-    "test": "node tests/app.test.cjs && node tests/firebase-pin.test.cjs && node tests/rules-auth.test.cjs"
+    "test": "node tests/app.test.cjs && node tests/firebase-pin.test.cjs && node tests/firebase-email.test.cjs && node tests/rules-auth.test.cjs"
   },
   "devDependencies": {
     "jsdom": "30.1.3"
