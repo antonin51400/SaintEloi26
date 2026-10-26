@@ -22,12 +22,19 @@ const permissions = {
   disabled:[],
   organizer:['reserve','place','arrival','payment','export']
 };
-const allowed = permission => !!permissions[role]?.includes(permission);
-function requireAccess(permission){if(!allowed(permission))throw Error('Cette accréditation ne permet pas cette opération.');}
+// L'aperçu est strictement visuel : le rôle authentifié n'est jamais modifié.
+let previewRole=null;
+const shownRole=()=>role==='admin'&&previewRole?previewRole:role;
+const inRolePreview=()=>role==='admin'&&previewRole!==null;
+const allowed=permission=>!!permissions[shownRole()]?.includes(permission);
+function requireAccess(permission){
+ if(inRolePreview())throw Error('Mode aperçu : aucune modification possible. Reviens à la vue Administrateur.');
+ if(!allowed(permission))throw Error('Cette accréditation ne permet pas cette opération.');
+}
 const rootAdmin=()=>!!user&&ROOT_ADMIN_UIDS.includes(user.uid);
 function selectEntryLane() {
   document.getElementById('laneChoice')?.remove();
-  if (role !== 'entry') return;
+  if (shownRole() !== 'entry') return;
   const panel = document.createElement('section');
   panel.id='laneChoice'; panel.className='lane-modal';
   panel.innerHTML='<h2>Quel poste occupez-vous ?</h2><div class="lane-buttons"><button type="button" class="lane-btn left" data-lane="left"><span class="lane-icon">◀️</span>File 1<span class="lane-sub">Poste 1</span></button><button type="button" class="lane-btn right" data-lane="right"><span class="lane-icon">▶️</span>File 2<span class="lane-sub">Poste 2</span></button></div>';
@@ -115,20 +122,41 @@ async function mutate(change) {
 }
 function showApp(){
   $('loginPanel').style.display='none';$('appWrapper').style.display='flex';
-  $('appWrapper').dataset.role=role;
-  $('sessionBadge').textContent=lane?(lane==='left'?'◀ File 1':'▶ File 2'):operator;
-  $('sessionBadge').className='lane-badge'+(lane?' '+lane:'');
-  if(role==='admin')$('sessionBadge').textContent='★ ADMIN · '+operator;
+  const visibleRole=shownRole();
+  $('appWrapper').dataset.role=visibleRole;
+  $('sessionBadge').textContent=lane&&visibleRole==='entry'?(lane==='left'?'◀ File 1':'▶ File 2'):operator;
+  $('sessionBadge').className='lane-badge'+(lane&&visibleRole==='entry'?' '+lane:'');
+  if(role==='admin')$('sessionBadge').textContent=inRolePreview()?'APERÇU · '+ROLE_LABELS[visibleRole]:'★ ADMIN · '+operator;
   $('newReservation').style.display=allowed('reserve')?'':'none';
   $('exportButton').style.display=allowed('export')?'':'none';
   $('inviteUserButton').hidden=demo||!allowed('users');
   $('usersManagerButton').hidden=demo||!allowed('users');
   $('adminDashboardButton').hidden=demo||!allowed('dashboard');
   $('exportButton').hidden=!allowed('export');
-  $('sessionBadge').title=ROLE_LABELS[role]||role;
-  $('sessionBadge').onclick=()=>{if(role==='entry')selectEntryLane();};
-  render();if(role==='entry'&&!lane)selectEntryLane();
+  $('adminViewControl').hidden=demo||role!=='admin';
+  $('adminRoleView').value=inRolePreview()?previewRole:'admin';
+  $('adminPreviewNotice').hidden=!inRolePreview();
+  $('adminPreviewNotice').textContent=inRolePreview()
+    ? 'Aperçu du rôle « '+ROLE_LABELS[visibleRole]+' » — actions désactivées. Sélectionne Administrateur pour revenir à ton espace.'
+    : '';
+  $('sessionBadge').title=ROLE_LABELS[visibleRole]||visibleRole;
+  $('sessionBadge').onclick=()=>{if(visibleRole==='entry')selectEntryLane();};
+  render();if(visibleRole==='entry'&&!lane)selectEntryLane();
 }
+$('adminRoleView').onchange=()=>{
+ if(role!=='admin'||demo){
+  $('adminRoleView').value='admin';
+  return;
+ }
+ const next=$('adminRoleView').value;
+ if(!['admin','reservations','placement','entry','viewer'].includes(next))return;
+ previewRole=next==='admin'?null:next;
+ lane='';selection=null;
+ document.getElementById('laneChoice')?.remove();
+ document.querySelectorAll('dialog[open]').forEach(d=>d.close());
+ closeTablePopup();
+ showApp();
+};
 function stopListeners(){
   if(dataRef)dataRef.off();
   if(db)db.ref('.info/connected').off();
@@ -170,7 +198,7 @@ function connectLiveData(){
         if(auth)auth.signOut().catch(()=>{});
         return;
       }
-      if(role!==actual){role=actual;if(ready)showApp();}
+      if(role!==actual){role=actual;if(role!=='admin')previewRole=null;if(ready)showApp();}
     },()=>{lock('Impossible de vérifier les droits de ce compte.');});
   }
   $('loginMessage').textContent='Connexion acceptée. Chargement des réservations…';
@@ -251,7 +279,7 @@ async function startEmailSession(email,password){
   }
   loginBusy=true;$('emailLoginButton').disabled=true;
   stopListeners();
-  role='none';operator='';lane='';ready=false;demo=false;
+  role='none';previewRole=null;operator='';lane='';ready=false;demo=false;
   try{
     initFirebaseAuth();
     await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
@@ -391,7 +419,7 @@ $('logoutButton').onclick=async()=>{
   if(busy)return;
   if(demo&&!confirm('Quitter la démonstration ? Les données de cet onglet seront perdues.'))return;
   const exitingDemo=demo;
-  demo=false;user=null;role='none';lane='';
+  demo=false;user=null;role='none';previewRole=null;lane='';
   stopListeners();pendingProfileRef=null;
   if($('firstLoginDialog').open)$('firstLoginDialog').close();
   if(auth&&!exitingDemo)try{await auth.signOut();}catch(error){
@@ -417,7 +445,7 @@ function render(){
   });if(!matching.length)return '';
   return `<section><div class="group-header"><strong>${esc(r.reservedBy)}</strong> · ${parts.length} personne${parts.length>1?'s':''} · ${statuses[r.status]||'À vérifier'}
    <div class="group-note">${esc(r.phone||'')} ${r.phone?' · ':''}Contacté : ${esc(r.contactedOrganizer||'Non renseigné')} · Saisie : ${esc(r.createdBy||'')}${r.notes?'\n'+esc(r.notes):''}</div>
-   <div class="reservation-actions">${allowed('reserve')?`<button class="secondary" data-action="edit" data-rid="${rid}">Modifier</button>`:''}${allowed('reserve')&&r.status==='pending'?`<button class="primary" data-action="accept" data-rid="${rid}">Accepter</button>`:''}${allowed('place')&&role!=='placement'&&r.status==='accepted'?`<button class="secondary" draggable="true" data-action="select" data-rid="${rid}">Placer le groupe →</button>`:''}${allowed('reserve')&&r.status!=='cancelled'?`<button class="secondary" data-action="cancel" data-rid="${rid}">Annuler</button>`:''}</div></div>
+   <div class="reservation-actions">${allowed('reserve')?`<button class="secondary" data-action="edit" data-rid="${rid}">Modifier</button>`:''}${allowed('reserve')&&r.status==='pending'?`<button class="primary" data-action="accept" data-rid="${rid}">Accepter</button>`:''}${allowed('place')&&shownRole()!=='placement'&&r.status==='accepted'?`<button class="secondary" draggable="true" data-action="select" data-rid="${rid}">Placer le groupe →</button>`:''}${allowed('reserve')&&r.status!=='cancelled'?`<button class="secondary" data-action="cancel" data-rid="${rid}">Annuler</button>`:''}</div></div>
    ${matching.map(([pid,p])=>guestCard(rid,pid,p,r)).join('')}</section>`;
  }).join('');
  $('guestList').innerHTML=html||'<div class="empty-state">Aucune réservation pour le moment.<br>Utilisez « + Réservation SMS » pour ajouter un réservant et ses invités.</div>';
