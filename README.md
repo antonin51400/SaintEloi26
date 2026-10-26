@@ -16,6 +16,10 @@ L'accueil propose :
 
 Il n'y a **aucun bouton d'inscription publique**. La création libre de comptes a été désactivée dans Firebase Authentication par le propriétaire le 26 octobre 2026.
 
+## E-mail Saint Éloi personnalisé
+
+Le texte et les réglages de l'e-mail de définition/réinitialisation du mot de passe sont prêts dans [**EMAIL_FIREBASE_BRANDING.md**](./EMAIL_FIREBASE_BRANDING.md). Pour les appliquer à tous les e-mails envoyés par Firebase, les copier dans **Authentication → Modèles → Réinitialisation du mot de passe** dans la console Firebase. Un logo ou un e-mail HTML entièrement personnalisé nécessite un service d'envoi distinct ; ce projet utilise actuellement le modèle natif Firebase.
+
 ## Ajouter un utilisateur (organisateur uniquement)
 
 1. Dans [Firebase Authentication → Utilisateurs](https://console.firebase.google.com/project/sainteloi26-371e3/authentication/users), créer un compte avec **l'adresse e-mail réelle et accessible** de la personne et un **mot de passe provisoire robuste**. Le mot de passe provisoire n'a pas besoin d'être communiqué.
