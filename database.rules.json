@@ -95,6 +95,21 @@
           "$other": {
             ".validate": false
           }
+        },
+        "members": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": false,
+            "name": {
+              ".validate": "newData.isString()"
+            },
+            "role": {
+              ".validate": "newData.isString()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
         }
       }
     }
