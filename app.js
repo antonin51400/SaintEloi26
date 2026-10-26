@@ -22,8 +22,8 @@ function guestTracking(p){
  return arrival+payment;
 }
 const statuses = {pending:'À valider',accepted:'Acceptée',cancelled:'Annulée'};
-const tableElements = [...document.querySelectorAll('.table-block')];
-const tableNames = Object.fromEntries(tableElements.map(el => [el.id, el.dataset.table]));
+let tableElements = [...document.querySelectorAll('.table-block')];
+let tableNames = Object.fromEntries(tableElements.map(el => [el.id, el.dataset.table]));
 let state = {reservations:{},tables:{}};
 let user = null, operator = '', role = 'none', lane = '', demo = false, online = false, ready = false, busy = false, loginBusy = false;
 let sessionGeneration=0;
@@ -34,7 +34,7 @@ let filter = 'all', editing = null, editVersion = 0, selection = null, popupTabl
 const ROOT_ADMIN_UIDS=['nCNc0JdWznOZ6j4B4GjfvQqWX4K2','KpFkapZExKcToBcy52YCo6rdwuh2'];
 const ROLE_LABELS={admin:'Administrateur',reservations:'Inscriptions et réservations',placement:'Placement des tables',entry:'Accueil des entrées',viewer:'Consultation',disabled:'Suspendu'};
 const permissions = {
-  admin:['reserve','place','arrival','payment','export','users','dashboard'],
+  admin:['layout','reserve','place','arrival','payment','export','users','dashboard'],
   reservations:['reserve','export'],
   placement:['place'],
   entry:['arrival','payment'],
@@ -78,8 +78,8 @@ function allGuests(data = state) {
   return Object.entries(data.reservations || {}).flatMap(([rid,r]) => Object.entries(r.participants || {}).map(([pid,p]) => ({...p,rid,pid,reservedBy:r.reservedBy,status:r.status})));
 }
 function accepted(data = state) { return allGuests(data).filter(p => p.status === 'accepted'); }
-const FIXED_TABLE_CAPACITY=6;
-function capacity(tableId){ return tableNames[tableId] ? FIXED_TABLE_CAPACITY : 0; }
+const DEFAULT_TABLE_CAPACITY=6;
+function capacity(tableId,data=state){ return layoutFor(data).tables[tableId] ? Number(data.tables?.[tableId]?.capacity??DEFAULT_TABLE_CAPACITY) : 0; }
 function membersFor(sel, data = state) {
   const r = data.reservations?.[sel.rid];
   if (!r || r.status !== 'accepted') throw Error('Acceptez d’abord cette réservation pour placer ses invités.');
@@ -93,32 +93,25 @@ function freeSeats(tableId, sel, data = state) {
   return Array.from({length:capacity(tableId,data)},(_,i)=>i+1).filter(n=>!used.has(n));
 }
 let tableCapacitySyncRunning=false;
-async function ensureSixPlaceTables(){
+async function ensureTableCapacities(){
  if(!ready||!online||demo||role!=='admin'||!dataRef||tableCapacitySyncRunning)return;
- if(tableElements.every(el=>Number(state.tables?.[el.id]?.capacity)===FIXED_TABLE_CAPACITY))return;
- const outside=accepted().filter(p=>p.tableId&&(!Number.isInteger(p.seat)||p.seat<1||p.seat>FIXED_TABLE_CAPACITY));
- if(outside.length){
-  notice('Certaines réservations occupent déjà une place supérieure à 6. Corrige le placement avant la mise à jour des capacités.');
-  return;
- }
+ if(Object.keys(layoutFor(state).tables).every(id=>state.tables?.[id]?.capacity))return;
  tableCapacitySyncRunning=true;
- try{
-  const result=await dataRef.child('tables').transaction(current=>{
-   const next={...(current||{})};
-   for(const el of tableElements)next[el.id]={capacity:FIXED_TABLE_CAPACITY};
-   return next;
-  },undefined,false);
-  if(!result.committed)throw Error('Transaction non enregistrée.');
- }catch(error){notice('Capacités des tables non synchronisées : '+(error?.message||'vérifie les règles Firebase.'));}
+ try{await dataRef.transaction(current=>{
+  if(!current)return;
+  current.tables ||= {};
+  for(const id of Object.keys(layoutFor(current).tables))if(!current.tables[id])current.tables[id]={capacity:DEFAULT_TABLE_CAPACITY};
+  return current;
+ },undefined,false);}catch(error){notice('Capacités non synchronisées : '+error.message);}
  finally{tableCapacitySyncRunning=false;}
 }
 function tableMetrics(id, guests=accepted()){
  const list=guests.filter(p=>p.tableId===id);
- const total=list.length,arrived=list.filter(p=>p.arrived).length;
+ const total=list.length,arrived=list.filter(p=>p.arrived).length,cap=capacity(id);
  return {
   tableId:id,name:tableNames[id],people:list,total,arrived,
-  capacity:FIXED_TABLE_CAPACITY,free:Math.max(0,FIXED_TABLE_CAPACITY-total),
-  occupancy:total>FIXED_TABLE_CAPACITY?'overflow':total===0?'empty':total===FIXED_TABLE_CAPACITY?'full':'partial',
+  capacity:cap,free:Math.max(0,cap-total),
+  occupancy:total>cap?'overflow':total===0?'empty':total===cap?'full':'partial',
   arrival:total===0?'empty':arrived===0?'waiting':arrived===total?'complete':'partial'
  };
 }
@@ -126,9 +119,9 @@ function renderEntryTables(guests){
  const rows=tableElements.map(el=>tableMetrics(el.id,guests));
  const fullyBooked=rows.filter(t=>t.occupancy==='full').length;
  const fullyArrived=rows.filter(t=>t.arrival==='complete').length;
- $('entryTablesTotals').innerHTML='<span>'+rows.length+' tables · 6 places</span><span>'+fullyBooked+' complètes</span><span>'+fullyArrived+' avec tous les invités arrivés</span>';
+ $('entryTablesTotals').innerHTML='<span>'+rows.length+' tables · '+rows.reduce((sum,t)=>sum+t.capacity,0)+' places</span><span>'+fullyBooked+' complètes</span><span>'+fullyArrived+' avec tous les invités arrivés</span>';
  $('entryTablesGrid').innerHTML=rows.map(t=>{
-  const seats=Array.from({length:FIXED_TABLE_CAPACITY},(_,index)=>{
+  const seats=Array.from({length:t.capacity},(_,index)=>{
    const p=t.people.find(person=>person.seat===index+1);
    return '<span class="entry-seat'+(p?(p.arrived?' seat-arrived':' seat-expected'):'')+'" title="'+(p?esc(p.name+(p.arrived?' · arrivé':' · attendu')):'Place libre')+'" aria-label="'+(p?esc('Place '+(index+1)+' : '+p.name+(p.arrived?', arrivé':', attendu')):'Place '+(index+1)+' libre')+'"></span>';
   }).join('');
@@ -138,10 +131,12 @@ function renderEntryTables(guests){
  }).join('');
 }
 function validateData(data) {
+  validatePlan(layoutFor(data));
+  for(const id of Object.keys(layoutFor(data).tables)){const cap=capacity(id,data);if(!Number.isInteger(cap)||cap<1||cap>50)throw Error('Capacité invalide : 1 à 50 personnes.');}
   const seen = new Set();
   for (const p of accepted(data)) {
     if (!p.tableId) continue;
-    if (!tableNames[p.tableId] || !Number.isInteger(p.seat) || p.seat<1 || p.seat>capacity(p.tableId,data)) throw Error('Placement invalide : vérifiez la capacité de la table.');
+    if (!layoutFor(data).tables[p.tableId] || !Number.isInteger(p.seat) || p.seat<1 || p.seat>capacity(p.tableId,data)) throw Error('Placement invalide : vérifiez la capacité de la table.');
     const key=p.tableId+'/'+p.seat;
     if (seen.has(key)) throw Error('Cette place est déjà occupée. Choisissez une autre place.');
     seen.add(key);
@@ -200,6 +195,7 @@ function showApp(){
   $('sessionBadge').textContent=lane&&visibleRole==='entry'?(lane==='left'?'◀ File 1':'▶ File 2'):operator;
   $('sessionBadge').className='lane-badge'+(lane&&visibleRole==='entry'?' '+lane:'');
   if(role==='admin')$('sessionBadge').textContent=inRolePreview()?'APERÇU · '+ROLE_LABELS[visibleRole]:'★ ADMIN · '+operator;
+  $('editPlanButton').hidden=!allowed('layout')||inRolePreview();
   $('newReservation').style.display=allowed('reserve')?'':'none';
   $('exportButton').style.display=allowed('export')?'':'none';
   $('inviteUserButton').hidden=demo||!allowed('users');
@@ -278,14 +274,14 @@ function connectLiveData(){
   dataRef.on('value',snapshot=>{
     state=snapshot.val()||{reservations:{},tables:{}};
     ready=true;showApp();
-    void ensureSixPlaceTables();
+    void ensureTableCapacities();
   },()=>{
     lock('Accès aux réservations refusé : vérifie que les nouvelles règles Firebase sont publiées et que les inscriptions libres sont désactivées.');
   });
   db.ref('.info/connected').on('value',snapshot=>{
     online=snapshot.val()===true;
     if(ready)render();
-    if(online)void ensureSixPlaceTables();
+    if(online)void ensureTableCapacities();
   });
 }
 // La connexion se fait exclusivement par e-mail/mot de passe Firebase.
@@ -518,6 +514,7 @@ $('logoutButton').onclick=async()=>{
   lock('Déconnecté. Connecte-toi avec ton e-mail pour revenir.');
 };
 function render(){
+ syncPlanFromState();
  const guests=accepted(), rs=Object.entries(state.reservations||{}), query=normal($('search').value);
  const arrived=guests.filter(p=>p.arrived).length;
  $('statTotal').textContent=guests.length;$('statArrived').textContent=arrived;$('statRemaining').textContent=guests.length-arrived;$('statPaid').textContent=guests.filter(p=>p.paid).length;
@@ -553,7 +550,7 @@ function render(){
    const fill=el.querySelector('.t-progress-fill'),label=el.querySelector('.t-progress-label');
    if(fill)fill.style.width=(m.total?m.arrived/m.total*100:0)+'%';
    if(label)label.textContent=m.arrived+'/'+m.total+' arrivés';
-   el.setAttribute('aria-label',m.name+' : '+m.total+' sur 6 places, '+m.arrived+' arrivés');
+   el.setAttribute('aria-label',m.name+' : '+m.total+' sur '+m.capacity+' places, '+m.arrived+' arrivés');
  });
  renderEntryTables(guests);
  if(selection){try{const people=membersFor(selection);$('mapHint').textContent=`${people.length} personne(s) sélectionnée(s) : cliquez sur une table`;$('bannerName').textContent=selection.pid?people[0].name:state.reservations[selection.rid].reservedBy;$('bannerDetail').textContent='Cliquez sur une table, ou glissez la sélection sur le plan.';$('bannerTable').textContent=people.length+' personne(s)';$('guestBanner').classList.add('visible');}catch(e){selection=null;}}
@@ -687,16 +684,17 @@ function choose(sel){requireAccess('place');membersFor(sel);closeTablePopup();se
 function clearSelection(){selection=null;render();}
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-action]');if(!b)return;try{const {action,rid,pid}=b.dataset;if(action==='edit')editReservation(rid);else if(action==='accept')await setStatus(rid,'accepted');else if(action==='cancel')await setStatus(rid,'cancelled');else if(action==='select')choose({rid,pid});else if(action==='payment-note')openPaymentNote(rid,pid);else if(action==='arrived'&&!state.reservations[rid]?.participants[pid]?.arrived&&!lane){requireAccess('arrival');arrivalTarget={rid,pid};$('arrivalLane').value='';$('arrivalError').textContent='';$('arrivalDialog').showModal();}else if(action==='arrived'||action==='paid')await setFlag(rid,pid,action);}catch(err){notice(err.message);}});
 document.addEventListener('dragstart',e=>{if(!allowed('place'))return;const el=e.target.closest('[draggable="true"]');if(!el)return;try{selection={rid:el.dataset.rid,pid:el.dataset.pid};membersFor(selection);e.dataTransfer.setData('text/plain',JSON.stringify(selection));e.dataTransfer.effectAllowed='move';$('mapHint').textContent='Déposez sur la table souhaitée';}catch(err){e.preventDefault();notice(err.message);}});
-tableElements.forEach(el=>{el.setAttribute('role','button');el.tabIndex=0;el.setAttribute('aria-label',el.dataset.table);el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openTablePopup(el.id);}};el.ondragover=e=>{if(selection){e.preventDefault();e.dataTransfer.dropEffect='move';}};el.ondrop=e=>{e.preventDefault();if(selection)showPlacement(el.id);};});
+function bindTableElement(el){el.onclick=()=>openTablePopup(el.id);el.setAttribute('role','button');el.tabIndex=0;el.setAttribute('aria-label',el.dataset.table);el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openTablePopup(el.id);}};el.ondragover=e=>{if(selection){e.preventDefault();e.dataTransfer.dropEffect='move';}};el.ondrop=e=>{e.preventDefault();if(selection)showPlacement(el.id);};}
+tableElements.forEach(bindTableElement);
 function openTablePopup(id){if(selection){requireAccess('place');showPlacement(id);return;}popupTable=id;drawTable();$('tablePopupOverlay').classList.add('visible');}
 function closeTablePopup(e){if(e&&e.target!==$('tablePopupOverlay'))return;popupTable=null;$('tablePopupOverlay').classList.remove('visible');}
 function drawTable(){
- const id=popupTable,m=tableMetrics(id),people=m.people,cap=FIXED_TABLE_CAPACITY;
+ const id=popupTable,m=tableMetrics(id),people=m.people,cap=m.capacity;
  $('popupTitle').textContent=tableNames[id];
- $('popupSubtitle').textContent=m.total+' / 6 places occupées · '+m.free+' libres · '+m.arrived+' arrivés';
+ $('popupSubtitle').textContent=m.total+' / '+cap+' places occupées · '+m.free+' libres · '+m.arrived+' arrivés';
  $('popupProgressFill').style.width=(m.total?100*m.arrived/m.total:0)+'%';
  $('popupProgressLabel').textContent=m.arrived+' / '+m.total+' arrivés';
- $('popupGuestList').innerHTML='<p class="fixed-capacity">6 places par table · bleu : attendu · vert : arrivé</p><div class="seat-grid">'+Array.from({length:cap},(_,i)=>{
+ $('popupGuestList').innerHTML='<p class="fixed-capacity">'+cap+' places à cette table · bleu : attendu · vert : arrivé</p><div class="seat-grid">'+Array.from({length:cap},(_,i)=>{
   const p=people.find(p=>p.seat===i+1);
   const status=p?(p.arrived?'seat-arrived':'seat-expected'):'';
   return '<div class="seat '+status+'"><strong>Place '+(i+1)+'</strong>'+ (p?esc(p.name)+'<small>'+esc(p.reservedBy)+'</small>'+guestTracking(p)+(allowed('place')?'<button class="secondary" data-action="select" data-rid="'+esc(p.rid)+'" data-pid="'+esc(p.pid)+'">Déplacer</button>':''):'Libre')+'</div>';
@@ -709,7 +707,7 @@ function showPlacement(tableId){
   const people=membersFor(selection);
   closeTablePopup();
   $('placementNames').textContent=people.map(p=>p.name).join(', ');
-  $('placementTable').innerHTML='<option value="">Retirer du plan (à placer)</option>'+tableElements.map(el=>'<option value="'+el.id+'">'+esc(tableNames[el.id])+' — '+freeSeats(el.id,selection).length+' places libres sur 6</option>').join('');
+  $('placementTable').innerHTML='<option value="">Retirer du plan (à placer)</option>'+tableElements.map(el=>'<option value="'+el.id+'">'+esc(tableNames[el.id])+' — '+freeSeats(el.id,selection).length+' places libres sur '+capacity(el.id)+'</option>').join('');
   $('placementTable').value=tableId;
   $('placementError').textContent='';
   updateSeatOptions();
@@ -723,7 +721,7 @@ function updateSeatOptions(){
   $('placementSeat').innerHTML=tableId?freeSeats(tableId,selection).map(n=>'<option value="'+n+'">Place '+n+'</option>').join(''):'';
   const free=tableId?freeSeats(tableId,selection).length:0;
   $('placementError').textContent=tableId&&free<people.length
-   ?'Pas assez de places : '+free+' libres sur 6 pour '+people.length+' personnes.'
+   ?'Pas assez de places : '+free+' libres sur '+capacity(tableId)+' pour '+people.length+' personnes.'
    :people.length>1&&tableId?'Le groupe sera affecté aux premières places libres de cette table.':'';
  }catch(error){$('placementError').textContent=error.message;}
 }

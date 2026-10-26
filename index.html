@@ -325,7 +325,7 @@
     background: white;
   }
 
-  .map-header h2 { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--pine); font-weight: 700; }
+  .map-header{flex-wrap:wrap;gap:12px}.map-header h2 { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--pine); font-weight: 700; }
   .map-hint { font-size: 13px; color: var(--muted); font-weight: 500; }
 
   .guest-banner {
@@ -971,7 +971,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 .guest-card .guest-info{flex-basis:100%}.payment-alert{overflow-wrap:anywhere;white-space:pre-wrap;margin-top:6px;padding:9px 12px;border:2px solid #d6a329;border-radius:8px;background:#fff3c4;color:#704600;font-size:13px}.arrival-detail{font-size:12px;color:#2d5442;margin-top:5px}.countdown-box{margin:18px 0;padding:14px;border:1px solid #c9a84c;border-radius:12px;text-align:center}.countdown-box strong{display:block;font-size:24px;font-variant-numeric:tabular-nums}#paymentDialog form,#arrivalDialog form{display:grid;gap:12px}#paymentDialog input,#paymentDialog textarea{width:100%}
 #inviteUserDialog .invite-confirmation{display:flex;align-items:flex-start;gap:10px;font-weight:500}#inviteUserDialog .invite-confirmation input{width:auto;flex:none;margin-top:4px}
 .countdown-units{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}.countdown-unit{padding:12px 6px;border-radius:10px;background:#ffffff0c;border:1px solid #c9a84c66}.countdown-box .countdown-unit strong{font-size:40px;line-height:1.1;letter-spacing:1px;color:#fff}.countdown-unit span{display:block;margin-top:6px;font-size:13px;color:#e8c982}.countdown-box>span{font-size:14px}#countdownFinished{margin:12px 0 0;font-weight:700}@media(max-width:600px){.countdown-box{padding:12px 8px}.countdown-units{gap:6px}.countdown-unit{padding:10px 3px}.countdown-box .countdown-unit strong{font-size:28px}.countdown-unit span{font-size:11px}}
-/* All roles share the administrator room plan; the old entry cards stay hidden. */
+#editPlanButton[hidden]{display:none!important}#planDialog{width:min(1200px,96vw)}.plan-settings{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.plan-settings label{flex:1;min-width:120px}.plan-settings input{max-width:220px}.plan-row-count{display:flex;align-items:center;gap:16px}.plan-row-count label{flex:1}.plan-row-count input{max-width:90px}.plan-editor-scroll{overflow:auto;max-height:58vh;padding:10px;background:#f5efe5;border-radius:12px}#planCanvas{min-width:620px}.plan-scene{padding:14px;background:#ac3026;color:white;text-align:center;border-radius:10px;margin:0 20% 16px}.plan-editor-row{display:grid;grid-template-columns:1fr 36px 1fr;gap:6px;margin:8px 0}.plan-editor-side{display:grid;gap:6px}.plan-editor-side.left{grid-template-columns:repeat(var(--plan-editor-left),minmax(74px,1fr))}.plan-editor-side.right{grid-template-columns:repeat(var(--plan-editor-right),minmax(74px,1fr))}.plan-aisle{writing-mode:vertical-rl;text-align:center;color:#897a65;font-size:11px}.plan-cell{min-height:70px;padding:8px;border:1px solid #b8bfc3;border-radius:9px;background:white;color:#343b3c;cursor:grab}.plan-cell strong,.plan-cell small{display:block;overflow-wrap:anywhere}.plan-cell.empty{border-style:dashed;background:#fbf8f0;color:#a59066;font-size:22px}.plan-cell.selected{outline:3px solid #b23527;background:#fff1d5}.plan-save{position:sticky;bottom:0;background:#fff;border-top:1px solid #e8ddcd;padding:12px 0;z-index:3;display:flex;gap:18px;justify-content:space-between;align-items:center;margin-top:18px;flex-wrap:wrap}#planError{color:#a8231e;font-weight:700}.custom-plan .table-row{display:grid;grid-template-columns:auto 30px auto;justify-content:start;gap:12px}.custom-plan .table-group{display:grid;gap:10px}.custom-plan .table-group.left{grid-template-columns:repeat(var(--plan-left-columns),150px)}.custom-plan .table-group.right{grid-template-columns:repeat(var(--plan-right-columns),150px)}.custom-plan .plan-space{width:150px;min-height:100px}.custom-plan .room-divider{height:100%;width:2px;justify-self:center}.custom-plan .table-block{min-width:0}.room:has(.custom-plan){width:max-content;min-width:100%}#planSelected[hidden]{display:none}
 #entryTablesPanel[hidden]{display:none!important}
 </style>
 </head>
@@ -1065,10 +1065,10 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 <p id="adminPreviewNotice" role="status" hidden></p>
 <div class="summary" id="reservationSummary"></div>
 <section class="table-legend" id="tableLegend" aria-label="Légende des couleurs des tables">
- <div class="legend-group"><strong>Occupation des tables · 6 places chacune</strong>
-  <span><i class="key-dot occupancy-empty"></i>Vide (0/6)</span>
-  <span><i class="key-dot occupancy-partial"></i>Places libres (1–5/6)</span>
-  <span><i class="key-dot occupancy-full"></i>Complète (6/6)</span>
+ <div class="legend-group"><strong>Occupation des tables</strong>
+  <span><i class="key-dot occupancy-empty"></i>Vide</span>
+  <span><i class="key-dot occupancy-partial"></i>Places libres</span>
+  <span><i class="key-dot occupancy-full"></i>Complète</span>
  </div>
  <div class="legend-group"><strong>Arrivées à chaque table</strong>
   <span><i class="key-dot arrivals-waiting"></i>En attente</span>
@@ -1098,7 +1098,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
    <div class="entry-tables-grid" id="entryTablesGrid"></div>
   </aside>
   <div class="panel-right">
-    <div class="map-header">
+    <div class="map-header"><button type="button" class="secondary" id="editPlanButton" hidden>Modifier le plan de table</button>
       <h2>Plan de table</h2>
       <span class="map-hint" id="mapHint">Cliquez sur un invité pour localiser sa table</span>
     </div>
@@ -1450,6 +1450,12 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
     <button class="primary" type="submit" id="saveProfileButton">Enregistrer et accéder aux réservations</button>
   </form>
 </dialog>
+<dialog id="planDialog" aria-labelledby="planTitle"><div class="dialog-heading"><h2 id="planTitle">Modifier le plan de table</h2><button type="button" class="secondary" data-close="planDialog">Annuler</button></div>
+<p>La scène reste en haut, l’allée au centre. Clique sur une table puis sur un emplacement libre pour la déplacer, ou fais-la glisser sur une autre table pour échanger leurs positions. Clique sur « + » sans table sélectionnée pour en ajouter une.</p>
+<div class="plan-settings"><label>Lignes<input id="planRows" type="number" min="1" max="30" value="8"></label><label>Tables à gauche par ligne<input id="planLeft" type="number" min="0" max="12" value="3"></label><label>Tables à droite par ligne<input id="planRight" type="number" min="0" max="12" value="3"></label><label>Places des nouvelles tables<input id="planDefaultCapacity" type="number" min="1" max="50" value="6"></label><button id="planGenerate" type="button" class="secondary">Appliquer à toutes les lignes</button></div>
+<details><summary>Ajuster le nombre de tables ligne par ligne</summary><div id="planRowCounts"></div><button type="button" id="planApplyRows" class="secondary">Appliquer ces lignes</button></details>
+<p id="planSummary"></p><section id="planSelected" hidden><h3 id="planSelectedTitle"></h3><div class="plan-settings"><label>Nom de la table<input id="planTableName" maxlength="80"></label><label>Personnes admissibles<input id="planTableCapacity" type="number" min="1" max="50"></label><button type="button" id="planUpdateTable" class="secondary">Appliquer à cette table</button><button type="button" id="planRemoveTable" class="secondary">Retirer cette table</button></div></section>
+<p id="planError" role="alert"></p><div class="plan-editor-scroll"><div id="planCanvas"></div></div><div class="plan-save"><span>Les modifications ne sont partagées qu’après enregistrement.</span><button type="button" id="planSave" class="primary">Enregistrer le plan</button></div></dialog>
 <dialog id="arrivalDialog"><form id="arrivalForm"><div class="dialog-heading"><h2>Enregistrer l’arrivée</h2><button type="button" class="secondary" data-close="arrivalDialog">Fermer</button></div><label>File d’entrée<select id="arrivalLane" required><option value="">Choisir une file</option><option value="left">File 1</option><option value="right">File 2</option></select></label><p id="arrivalError" role="alert"></p><button type="submit" class="primary">Confirmer l’arrivée</button></form></dialog>
 <dialog id="paymentDialog"><form id="paymentForm"><div class="dialog-heading"><h2>Paiement pour <span id="paymentGuest"></span></h2><button type="button" class="secondary" data-close="paymentDialog">Fermer</button></div><p>Ce paiement sera signalé en évidence pour prévenir l’invité à son arrivée. L’heure et l’opérateur sont enregistrés automatiquement.</p><label>Qui a payé pour cette personne ?<input id="paymentPayer" maxlength="120" required></label><label>Commentaire<textarea id="paymentComment" maxlength="1000" rows="3"></textarea></label><p id="paymentError" role="alert"></p><button type="submit" class="primary">Enregistrer le paiement et le commentaire</button></form></dialog>
 <dialog id="inviteUserDialog" aria-labelledby="inviteUserTitle">
@@ -1487,9 +1493,9 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 <label>Notes (facultatif)<textarea id="reservationNotes" maxlength="2000" rows="2" placeholder="Souhaits de placement, précision reçue par SMS…"></textarea></label>
 <p id="formError" role="alert"></p><button class="primary" type="submit" id="saveReservation">Enregistrer la réservation</button>
 </form></dialog>
-<dialog id="placementDialog"><form id="placementForm"><div class="dialog-heading"><h2>Placer les invités</h2><button type="button" class="secondary" data-close="placementDialog">Fermer</button></div><p id="placementNames"></p><label>Table<select id="placementTable"></select></label><p class="fixed-capacity">Chaque table possède <strong>6 places fixes</strong>. Le placement est limité aux sièges disponibles.</p><label id="seatLabel">Place<select id="placementSeat"></select></label><p id="placementError" role="alert"></p><button class="primary" type="submit">Enregistrer le placement</button></form></dialog>
+<dialog id="placementDialog"><form id="placementForm"><div class="dialog-heading"><h2>Placer les invités</h2><button type="button" class="secondary" data-close="placementDialog">Fermer</button></div><p id="placementNames"></p><label>Table<select id="placementTable"></select></label><p class="fixed-capacity">La capacité de chaque table est définie par l’administrateur. Le placement est limité aux sièges disponibles.</p><label id="seatLabel">Place<select id="placementSeat"></select></label><p id="placementError" role="alert"></p><button class="primary" type="submit">Enregistrer le placement</button></form></dialog>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="config.js"></script><script src="app.js"></script>
+<script src="config.js"></script><script src="plan.js"></script><script src="app.js"></script>
 </body></html>

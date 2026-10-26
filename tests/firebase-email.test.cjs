@@ -39,7 +39,7 @@ w.firebase={apps:[{}],auth:authFn,database:databaseFn};
 w.fetch=async()=>{throw Error('No server endpoint is needed on Spark');};
 const opened=[];w.open=(...args)=>opened.push(args);
 w.eval(fs.readFileSync(path.join(__dirname,'../config.js'),'utf8'));
-w.eval(fs.readFileSync(path.join(__dirname,'../app.js'),'utf8')+
+w.eval(fs.readFileSync(path.join(__dirname,'../plan.js'),'utf8')+'\n'+fs.readFileSync(path.join(__dirname,'../app.js'),'utf8')+
 '\nwindow.inspectEmail={get operator(){return operator;},get role(){return role;},canPlace(){return allowed("place");},guestCard(){return guestCard("reservation-1","guest-1",{name:"Invité Test",tableId:"",seat:0,arrived:false,paid:false},{status:"accepted",reservedBy:"Réservant Test"});}};');
 async function login(email,password){
   $('emailAddress').value=email;

@@ -16,6 +16,7 @@ jobs:
           node-version: '22'
       - run: npm install --no-audit --no-fund
       - run: node --check app.js
+      - run: node --check plan.js
       - run: npm test
       - name: Vérifier règles et configuration Firebase
         run: |
