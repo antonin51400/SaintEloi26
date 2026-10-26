@@ -26,20 +26,13 @@ Il n'y a **aucun bouton d'inscription publique**. La création libre de comptes 
 
 **Important :** le site n'envoie pas un e-mail de création d'un compte inexistant. L'utilisateur doit déjà avoir été créé **dans la console Firebase**, et l'adresse doit être une vraie boîte de réception. Selon les paramètres de protection contre l'énumération, Firebase peut accepter la demande sans confirmer publiquement l'existence du compte.
 
-### Attention aux quatre comptes historiques
+### Les quatre comptes historiques : adresses techniques
 
-Les comptes créés initialement avec des adresses techniques `access2002@sainteloi26-371e3.firebaseapp.com`, `access9425@...`, `access3186@...` et `access4279@...` **ne possèdent pas de boîte e-mail réelle**. Un lien de définition de mot de passe envoyé à ces adresses **ne sera pas reçu**.
+Les anciens comptes avaient des adresses fictives (`access2002@sainteloi26-371e3.firebaseapp.com`, etc.). **Ces adresses ne reçoivent pas d'e-mail**, donc elles ne conviennent pas pour le lien « Première connexion ».
 
-Pour les convertir sans perdre leur historique, **changer l'adresse e-mail du compte Firebase existant** pour une adresse de réception réelle, **en conservant son UID**, plutôt que supprimer/recréer l'utilisateur. Les UID à conserver sont :
+**Méthode la plus simple** : créer dans Firebase Authentication un compte neuf avec une **vraie adresse e-mail personnelle** pour chacune des personnes concernées ; chacune peut utiliser immédiatement « Première connexion » pour définir son mot de passe, saisir son prénom/nom et accéder aux réservations. Les réservations déjà créées ne sont pas effacées : elles restent enregistrées dans Realtime Database. Après un essai réel réussi, les anciens comptes techniques peuvent être désactivés ou supprimés depuis Firebase Authentication.
 
-| Personne | UID |
-|---|---|
-| Antonin Blanckaert | `nCNc0JdWznOZ6j4B4GjfvQqWX4K2` |
-| Antonin Bassut | `oJnhcgxm4KhnKHN3kFa2u6kYoTf2` |
-| Théotime Laloua | `AmCQErej08OtCuGkwvZyC8etGdl1` |
-| Robin Maret | `A5x97smh01XmZEoOZmLg63Nr2Ig1` |
-
-Si la console ne permet pas la modification de l'e-mail pour ce compte, il faut utiliser une opération d'administration Firebase autorisée (Firebase Admin SDK `updateUser(uid, {email: ...})`) : **ne pas recréer le compte** sans d'abord traiter sa liaison UID. Une fois l'e-mail corrigé, il pourra recevoir son lien de réinitialisation.
+**Autre possibilité** : changer l'adresse d'un ancien compte existant tout en conservant son UID (par exemple via l'Admin SDK Firebase). Si tu choisis cette méthode, **publie d'abord la version à jour de `database.rules.managed-users.json`** qui autorise les UID historiques même après changement d'adresse.
 
 ## Sécurité et règles Realtime Database
 
