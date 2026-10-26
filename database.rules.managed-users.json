@@ -1,0 +1,136 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "events": {
+      "saint-eloi-2026": {
+        "data": {
+          ".read": "auth != null && auth.provider === 'password'",
+          ".write": "auth != null && auth.provider === 'password' && auth.token.email.matches(/^(access0722|access1234|access7890)@sainteloi26-371e3[.]firebaseapp[.]com$/) === false",
+          "tables": {
+            "$id": {
+              ".validate": "newData.hasChildren(['capacity'])",
+              "capacity": {
+                ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 100 && newData.val() % 1 === 0"
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          },
+          "reservations": {
+            "$id": {
+              ".validate": "newData.hasChildren(['reservedBy','contactedOrganizer','status','participants','version','createdBy','createdAt','updatedBy','updatedAt'])",
+              "reservedBy": {
+                ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
+              },
+              "phone": {
+                ".validate": "newData.isString() && newData.val().length <= 30"
+              },
+              "contactedOrganizer": {
+                ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 120"
+              },
+              "notes": {
+                ".validate": "newData.isString() && newData.val().length <= 2000"
+              },
+              "status": {
+                ".validate": "newData.val() === 'pending' || newData.val() === 'accepted' || newData.val() === 'cancelled'"
+              },
+              "version": {
+                ".validate": "newData.isNumber() && newData.val() >= 1"
+              },
+              "createdBy": {
+                ".validate": "newData.isString()"
+              },
+              "createdAt": {
+                ".validate": "newData.isString()"
+              },
+              "updatedBy": {
+                ".validate": "newData.isString()"
+              },
+              "updatedAt": {
+                ".validate": "newData.isString()"
+              },
+              "participants": {
+                "$pid": {
+                  ".validate": "newData.hasChildren(['name','tableId','seat','arrived','paid']) && (newData.child('arrived').val() === false || newData.child('paid').val() === true)",
+                  "name": {
+                    ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
+                  },
+                  "tableId": {
+                    ".validate": "newData.isString() && (newData.val() === '' || newData.val().matches(/^t[0-9]+-[123]$/))"
+                  },
+                  "seat": {
+                    ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100 && newData.val() % 1 === 0"
+                  },
+                  "arrived": {
+                    ".validate": "newData.isBoolean()"
+                  },
+                  "paid": {
+                    ".validate": "newData.isBoolean()"
+                  },
+                  "arrivedAt": {
+                    ".validate": "newData.isString()"
+                  },
+                  "paidAt": {
+                    ".validate": "newData.isString()"
+                  },
+                  "arrivedBy": {
+                    ".validate": "newData.isString()"
+                  },
+                  "paidBy": {
+                    ".validate": "newData.isString()"
+                  },
+                  "$other": {
+                    ".validate": false
+                  },
+                  ".write": "auth != null && auth.provider === 'password' && auth.token.email === 'access0722@sainteloi26-371e3.firebaseapp.com' && root.child('events/saint-eloi-2026/data/reservations').child($id).child('status').val() === 'accepted' && data.exists() && newData.exists() && newData.child('name').val() === data.child('name').val() && newData.child('tableId').val() === data.child('tableId').val() && newData.child('seat').val() === data.child('seat').val() && newData.child('arrived').isBoolean() && newData.child('paid').isBoolean() && (newData.child('arrived').val() === false || newData.child('paid').val() === true)"
+                }
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+        "members": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": false,
+            "name": {
+              ".validate": "newData.isString()"
+            },
+            "role": {
+              ".validate": "newData.isString()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "profiles": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid && auth.provider === 'password'",
+            ".write": "auth != null && auth.uid === $uid && auth.provider === 'password' && !data.exists() && newData.exists()",
+            ".validate": "newData.hasChildren(['firstName','lastName','createdAt'])",
+            "firstName": {
+              ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 80"
+            },
+            "lastName": {
+              ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 80"
+            },
+            "createdAt": {
+              ".validate": "newData.isNumber() && newData.val() > 0"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        }
+      }
+    }
+  }
+}
