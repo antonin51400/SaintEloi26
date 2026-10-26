@@ -58,6 +58,7 @@ Cinq vues sont prévues : **Administrateur**, **Inscriptions et réservations**,
 
 - **Administrateur :** toutes les réservations, plan, pointage, export, suivi privé des personnes attendues/arrivées/payées/non placées et accès à « Gestion des utilisateurs ».
 - **Inscriptions :** saisie, acceptation et modification de réservations, sans droit de pointage ni de placement.
+- **Commande « Placer » :** affichée et utilisable **uniquement** pour le rôle `placement` et les administrateurs. Un compte Inscriptions, Accueil ou Consultation ne peut ni placer ni déplacer un invité. La capacité des tables reste modifiable uniquement par les administrateurs.
 - **Placement :** attribution d'une place à un invité à la fois, uniquement sur des tables dont la capacité est définie par un administrateur. **Le contrôle atomique de l'unicité entre plusieurs placeurs n'est pas encore garanti côté serveur** ; éviter plusieurs sessions de placement simultanées avant finalisation.
 - **Accueil :** pointage des invités, en choisissant au préalable **File 1 ou File 2** ; le poste n'affiche pas le plan complet.
 - **Consultation :** suivi et plan en lecture seule, sans modification.
