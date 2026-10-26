@@ -224,7 +224,7 @@ async function startSession(profile){
     $('requestAccessForm').onsubmit=async e=>{
       e.preventDefault();
       if(loginBusy)return;
-      const name=$('requestName').value.trim().replace(/\\s+/g,' ');
+      const name=$('requestName').value.trim().replace(/\s+/g,' ');
       if(name.length<3||name.length>100){
         $('loginMessage').textContent='Entre ton prénom et ton nom pour demander un accès.';
         return;
