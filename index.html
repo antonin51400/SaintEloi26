@@ -908,7 +908,6 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 .admin-row-actions button{padding:7px 11px}
 #usersManagerButton[hidden],#adminDashboardButton[hidden]{display:none!important}
 
-#appWrapper[data-role="entry"] .panel-right{display:none!important}#appWrapper[data-role="entry"] .panel-left{width:100%!important;flex:1!important;max-width:none!important}#appWrapper[data-role="entry"] .main{display:block!important}
 .admin-view-control{display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:rgba(255,250,241,.95);border:1px solid #c9a84c;border-radius:9px;padding:5px 10px;color:#5b2b22;font-weight:700;font-size:12px}
 .admin-view-control select{min-width:190px;max-width:100%;padding:7px 8px;border-radius:7px;border:1px solid #d6b66d;background:#fff;color:#38251e;font-size:13px}
 .admin-view-control[hidden]{display:none!important}
@@ -948,16 +947,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 .entry-seat.seat-expected{background:#528ecb;border-color:#528ecb}
 .entry-seat.seat-arrived{background:#32946f;border-color:#32946f}
 .entry-table-card .entry-card-note{font-size:11px;color:#6a6257}
-#appWrapper[data-role="entry"] .main{display:flex!important}
-#appWrapper[data-role="entry"] .panel-left{width:55%!important;flex:0 0 55%!important;max-width:none!important;min-width:0!important}
-#appWrapper[data-role="entry"] .panel-right{display:none!important}
-#appWrapper[data-role="entry"] .entry-tables-panel{display:flex!important}
-#appWrapper:not([data-role="entry"]) .entry-tables-panel{display:none!important}
 @media(max-width:800px){
- #appWrapper[data-role="entry"] .main{flex-direction:column!important;overflow:auto!important}
- #appWrapper[data-role="entry"] .panel-left{width:100%!important;flex:0 0 auto!important;min-height:300px;max-height:55vh}
- #appWrapper[data-role="entry"] .entry-tables-panel{min-height:320px;overflow:visible}
- #appWrapper[data-role="entry"] .entry-tables-grid{overflow:visible;grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}
  .table-legend{padding:9px 12px}
 }
 
@@ -981,6 +971,8 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 .guest-card .guest-info{flex-basis:100%}.payment-alert{overflow-wrap:anywhere;white-space:pre-wrap;margin-top:6px;padding:9px 12px;border:2px solid #d6a329;border-radius:8px;background:#fff3c4;color:#704600;font-size:13px}.arrival-detail{font-size:12px;color:#2d5442;margin-top:5px}.countdown-box{margin:18px 0;padding:14px;border:1px solid #c9a84c;border-radius:12px;text-align:center}.countdown-box strong{display:block;font-size:24px;font-variant-numeric:tabular-nums}#paymentDialog form,#arrivalDialog form{display:grid;gap:12px}#paymentDialog input,#paymentDialog textarea{width:100%}
 #inviteUserDialog .invite-confirmation{display:flex;align-items:flex-start;gap:10px;font-weight:500}#inviteUserDialog .invite-confirmation input{width:auto;flex:none;margin-top:4px}
 .countdown-units{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}.countdown-unit{padding:12px 6px;border-radius:10px;background:#ffffff0c;border:1px solid #c9a84c66}.countdown-box .countdown-unit strong{font-size:40px;line-height:1.1;letter-spacing:1px;color:#fff}.countdown-unit span{display:block;margin-top:6px;font-size:13px;color:#e8c982}.countdown-box>span{font-size:14px}#countdownFinished{margin:12px 0 0;font-weight:700}@media(max-width:600px){.countdown-box{padding:12px 8px}.countdown-units{gap:6px}.countdown-unit{padding:10px 3px}.countdown-box .countdown-unit strong{font-size:28px}.countdown-unit span{font-size:11px}}
+/* All roles share the administrator room plan; the old entry cards stay hidden. */
+#entryTablesPanel[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -1099,7 +1091,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
     <div class="guest-list" id="guestList"></div>
   </div>
 
-  <aside class="entry-tables-panel" id="entryTablesPanel" aria-label="Occupation et arrivées par table">
+  <aside class="entry-tables-panel" id="entryTablesPanel" hidden aria-label="Occupation et arrivées par table">
    <div class="entry-tables-head"><h2>Suivi des tables</h2><p>Places réservées et invités réellement arrivés, mis à jour en direct.</p>
     <div class="entry-tables-totals" id="entryTablesTotals"></div>
    </div>

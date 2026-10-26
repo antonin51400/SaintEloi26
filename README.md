@@ -48,7 +48,7 @@ Dans la barre d'outils, une liste **« Voir l'interface comme : »** est réserv
 - **Administrateur (vue normale)** : toutes les fonctions et tableaux de bord d'administration
 - **Inscriptions et réservations** : vue des réservataires
 - **Placement des tables** : boutons et plan accessibles aux placeurs
-- **Accueil — File 1 / File 2** : vue plein écran des invités avec choix de file
+- **Accueil — File 1 / File 2** : liste des invités et même plan de salle que l’administrateur, avec choix de file
 - **Consultation** : suivi en lecture seule
 
 En choisissant une autre vue, l'administrateur **ne change pas son accréditation Firebase** : c'est un **aperçu temporaire**. Les boutons de modification sont bloqués pendant l'aperçu et un bandeau visible rappelle ce fonctionnement. Revenir à **Administrateur (vue normale)** restaure immédiatement les fonctionnalités. Le menu reste accessible dans toutes les vues simulées.
@@ -79,7 +79,7 @@ Cinq vues sont prévues : **Administrateur**, **Inscriptions et réservations**,
 - **Inscriptions :** saisie, acceptation et modification de réservations, sans droit de pointage ni de placement.
 - **Commande « Placer » :** affichée et utilisable **uniquement** pour le rôle `placement` et les administrateurs. Un compte Inscriptions, Accueil ou Consultation ne peut ni placer ni déplacer un invité. **Toutes les tables ont désormais une capacité fixe de six places**, sans réglage manuel.
 - **Placement :** attribution d'une place à un invité à la fois parmi six places fixes par table. **Le contrôle atomique de l'unicité entre plusieurs placeurs n'est pas encore garanti côté serveur** ; éviter plusieurs sessions de placement simultanées avant finalisation.
-- **Accueil :** pointage des invités, en choisissant au préalable **File 1 ou File 2** ; à droite, un panneau donne le taux d'occupation et les arrivées de chacune des 42 tables, sans afficher le plan complet.
+- **Accueil :** pointage des invités, en choisissant au préalable **File 1 ou File 2** ; le même plan de salle que la vue Administrateur est affiché, avec la scène, les 42 tables, les couleurs et les jauges d’arrivée.
 - **Consultation :** suivi et plan en lecture seule, sans modification.
 
 Les comptes créés dans Firebase Authentication sont authentifiés par e-mail. À la première connexion, leur profil prénom et nom est enregistré, puis un rôle `reservations` est créé pour leur UID si aucun autre rôle n'a été préattribué par un administrateur. Les rôles peuvent être changés depuis « Gestion des utilisateurs » avec le **UID** du compte.
@@ -119,3 +119,7 @@ Chaque arrivée enregistre `arrivedAt`, `arrivedBy` et `arrivalLane` (`left` = F
 Sur un invité confirmé, **Payé par un tiers / commentaire** permet de saisir le nom du payeur et un commentaire. L’enregistrement marque l’invité payé, conserve l’heure de son paiement initial et horodate le commentaire et son opérateur (`paidForBy`, `paymentComment`, `paymentRecordedAt`, `paymentRecordedBy`). Un encadré jaune « À signaler : payé par… » apparaît dans la liste, le tableau administrateur et le détail de table. Ces champs sont aussi exportés en CSV. L’arrivée conserve ces informations. Une correction du commentaire met à jour son horodatage ; ceci n’est pas un historique complet des modifications.
 
 L’accueil public affiche un décompte vers le **5 décembre 2026 à 20 h, heure de Paris** (19 h UTC). Après cette date, il indique que la soirée a commencé.
+
+## Plan commun à toutes les vues
+
+Administrateur, Inscriptions, Placement, Accueil (File 1 et File 2) et Consultation utilisent le même plan de salle et la même disposition responsive. L’ancien panneau Accueil composé de cartes distinctes est masqué. Le visuel et les données des tables sont communs ; les actions restent limitées aux droits du rôle : seuls Administrateur et Placement peuvent placer ou déplacer les invités.
