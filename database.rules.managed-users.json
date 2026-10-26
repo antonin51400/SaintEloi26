@@ -20,7 +20,7 @@
           },
           "reservations": {
             "$id": {
-              ".validate": "newData.hasChildren(['reservedBy','contactedOrganizer','status','participants','version','createdBy','createdAt','updatedBy','updatedAt']) && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() !== 'placement' || (data.exists() && data.child('status').val() === 'accepted' && newData.child('status').val() === 'accepted' && newData.child('reservedBy').val() === data.child('reservedBy').val() && newData.child('createdBy').val() === data.child('createdBy').val() && newData.child('participants').childrenCount === data.child('participants').childrenCount))",
+              ".validate": "newData.hasChildren(['reservedBy','contactedOrganizer','status','participants','version','createdBy','createdAt','updatedBy','updatedAt']) && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() !== 'placement' || (data.exists() && data.child('status').val() === 'accepted' && newData.child('status').val() === 'accepted' && newData.child('reservedBy').val() === data.child('reservedBy').val() && newData.child('createdBy').val() === data.child('createdBy').val() && newData.child('contactedOrganizer').val() === data.child('contactedOrganizer').val() && newData.child('phone').val() === data.child('phone').val() && newData.child('notes').val() === data.child('notes').val() && newData.child('createdAt').val() === data.child('createdAt').val() && newData.child('participants').childrenCount === data.child('participants').childrenCount))",
               "reservedBy": {
                 ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
               },
