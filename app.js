@@ -71,6 +71,26 @@ function freeSeats(tableId, sel, data = state) {
   const used = new Set(accepted(data).filter(p=>p.tableId===tableId&&!selected.has(p.rid+'/'+p.pid)).map(p=>p.seat));
   return Array.from({length:capacity(tableId,data)},(_,i)=>i+1).filter(n=>!used.has(n));
 }
+let tableCapacitySyncRunning=false;
+async function ensureSixPlaceTables(){
+ if(!ready||!online||demo||role!=='admin'||!dataRef||tableCapacitySyncRunning)return;
+ if(tableElements.every(el=>Number(state.tables?.[el.id]?.capacity)===FIXED_TABLE_CAPACITY))return;
+ const outside=accepted().filter(p=>p.tableId&&(!Number.isInteger(p.seat)||p.seat<1||p.seat>FIXED_TABLE_CAPACITY));
+ if(outside.length){
+  notice('Certaines réservations occupent déjà une place supérieure à 6. Corrige le placement avant la mise à jour des capacités.');
+  return;
+ }
+ tableCapacitySyncRunning=true;
+ try{
+  const result=await dataRef.child('tables').transaction(current=>{
+   const next={...(current||{})};
+   for(const el of tableElements)next[el.id]={capacity:FIXED_TABLE_CAPACITY};
+   return next;
+  },undefined,false);
+  if(!result.committed)throw Error('Transaction non enregistrée.');
+ }catch(error){notice('Capacités des tables non synchronisées : '+(error?.message||'vérifie les règles Firebase.'));}
+ finally{tableCapacitySyncRunning=false;}
+}
 function tableMetrics(id, guests=accepted()){
  const list=guests.filter(p=>p.tableId===id);
  const total=list.length,arrived=list.filter(p=>p.arrived).length;
@@ -237,12 +257,14 @@ function connectLiveData(){
   dataRef.on('value',snapshot=>{
     state=snapshot.val()||{reservations:{},tables:{}};
     ready=true;showApp();
+    void ensureSixPlaceTables();
   },()=>{
     lock('Accès aux réservations refusé : vérifie que les nouvelles règles Firebase sont publiées et que les inscriptions libres sont désactivées.');
   });
   db.ref('.info/connected').on('value',snapshot=>{
     online=snapshot.val()===true;
     if(ready)render();
+    if(online)void ensureSixPlaceTables();
   });
 }
 // La connexion se fait exclusivement par e-mail/mot de passe Firebase.
