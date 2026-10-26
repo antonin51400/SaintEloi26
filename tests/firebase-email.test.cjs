@@ -25,6 +25,7 @@ const makeRef=key=>({
   child:name=>makeRef(key+'/'+name),
   once:async()=>({val:()=>calls.profiles[key]}),
   set:async record=>{calls.profiles[key]={...record};},
+  transaction:async update=>{const record=update(calls.profiles[key]||null);if(record===undefined)return {committed:false};calls.profiles[key]={...record};return {committed:true,snapshot:{val:()=>record}};},
   on:(name,callback)=>{
     if(key==='.info/connected')callback({val:()=>true});
     else if(key.endsWith('/data'))callback({val:()=>({reservations:{},tables:{}})});
@@ -69,6 +70,7 @@ async function nameProfile(first,last){
   assert.equal(calls.profiles['events/saint-eloi-2026/profiles/nouveau123'].firstName,'Camille');
   assert.equal(w.inspectEmail.operator,'Camille Dupont');
   assert.equal(w.inspectEmail.role,'reservations');
+  assert.equal(calls.profiles['events/saint-eloi-2026/members/nouveau123'].role,'reservations');
   assert.equal($('appWrapper').style.display,'flex');
   assert.notEqual($('newReservation').style.display,'none');
   assert.equal($('inviteUserButton').hidden,true);
