@@ -35,7 +35,7 @@ Le dossier `access-approval/` est un ancien essai d'approbation par e-mail **dé
 
 ## Nouveau : invitations par e-mail et premier profil
 
-Cette fonctionnalité est préparée dans le site, mais **n'est pas encore active côté base** : le fichier `database.rules.json` publié reste limité aux **quatre comptes existants**. Le fichier `database.rules.managed-users.json` est la proposition pour l'ouverture aux nouveaux comptes, **à ne publier qu'après avoir désactivé l'inscription libre**.
+Cette fonctionnalité est préparée dans le site, mais **n'est pas encore active côté base** : les dernières règles connues comme publiées restent limitées aux **quatre comptes existants**. Le propriétaire du projet a confirmé le 26 octobre 2026 que **les utilisateurs ne peuvent plus créer de comptes**. La prochaine étape est donc de publier dans Firebase le contenu de [`database.rules.managed-users.json`](./database.rules.managed-users.json), puis de tester avec un nouveau compte. **Ce fichier de règles préparé est distinct de `database.rules.json`, qui contient encore les règles historiques**.
 
 ### Prérequis de sécurité — indispensable
 
