@@ -4,25 +4,9 @@
     ".write": false,
     "events": {
       "saint-eloi-2026": {
-        "members": {
-          "$uid": {
-            ".read": "auth != null && auth.uid === $uid",
-            ".write": false,
-            ".validate": "newData.hasChildren(['name','role']) && newData.child('name').isString() && (newData.child('role').val() === 'organizer' || newData.child('role').val() === 'admin' || newData.child('role').val() === 'placement' || newData.child('role').val() === 'entry' || newData.child('role').val() === 'view')",
-            "name": {
-              ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 120"
-            },
-            "role": {
-              ".validate": "newData.val() === 'organizer' || newData.val() === 'admin' || newData.val() === 'placement' || newData.val() === 'entry' || newData.val() === 'view'"
-            },
-            "$other": {
-              ".validate": false
-            }
-          }
-        },
         "data": {
-          ".read": "auth != null && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'organizer' || root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'admin' || root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'placement' || root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'entry' || root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'view')",
-          ".write": "auth != null && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'organizer' || root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'admin')",
+          ".read": "auth != null && auth.provider === 'password' && (auth.token.email === 'access2002@sainteloi26-371e3.firebaseapp.com' || auth.token.email === 'access9425@sainteloi26-371e3.firebaseapp.com' || auth.token.email === 'access7890@sainteloi26-371e3.firebaseapp.com' || auth.token.email === 'access6930@sainteloi26-371e3.firebaseapp.com' || auth.token.email === 'access1234@sainteloi26-371e3.firebaseapp.com' || auth.token.email === 'access0722@sainteloi26-371e3.firebaseapp.com')",
+          ".write": "auth != null && auth.provider === 'password' && (auth.token.email === 'access2002@sainteloi26-371e3.firebaseapp.com' || auth.token.email === 'access9425@sainteloi26-371e3.firebaseapp.com' || auth.token.email === 'access6930@sainteloi26-371e3.firebaseapp.com')",
           "tables": {
             "$id": {
               ".validate": "newData.hasChildren(['capacity'])",
@@ -100,7 +84,7 @@
                   "$other": {
                     ".validate": false
                   },
-                  ".write": "auth != null && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'entry') && root.child('events/saint-eloi-2026/data/reservations').child($id).child('status').val() === 'accepted' && data.exists() && newData.exists() && newData.child('name').val() === data.child('name').val() && newData.child('tableId').val() === data.child('tableId').val() && newData.child('seat').val() === data.child('seat').val() && newData.child('arrived').isBoolean() && newData.child('paid').isBoolean() && (!newData.child('arrived').val() || newData.child('paid').val() === true)"
+                  ".write": "auth != null && auth.provider === 'password' && (auth.token.email === 'access0722@sainteloi26-371e3.firebaseapp.com') && root.child('events/saint-eloi-2026/data/reservations').child($id).child('status').val() === 'accepted' && data.exists() && newData.exists() && newData.child('name').val() === data.child('name').val() && newData.child('tableId').val() === data.child('tableId').val() && newData.child('seat').val() === data.child('seat').val() && newData.child('arrived').isBoolean() && newData.child('paid').isBoolean() && (!newData.child('arrived').val() || newData.child('paid').val() === true)"
                 }
               },
               "$other": {
@@ -110,31 +94,6 @@
           },
           "$other": {
             ".validate": false
-          }
-        },
-        "accessRequests": {
-          "$uid": {
-            ".read": "auth != null && auth.uid === $uid",
-            ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.exists() && newData.child('status').val() === 'pending'",
-            ".validate": "newData.hasChildren(['name','requestedRole','requestedOperator','requestedAt','status'])",
-            "name": {
-              ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 100"
-            },
-            "requestedRole": {
-              ".validate": "newData.val() === 'organizer' || newData.val() === 'admin' || newData.val() === 'placement' || newData.val() === 'entry' || newData.val() === 'view'"
-            },
-            "requestedOperator": {
-              ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 120"
-            },
-            "requestedAt": {
-              ".validate": "newData.isNumber() && newData.val() > 0"
-            },
-            "status": {
-              ".validate": "newData.val() === 'pending'"
-            },
-            "$other": {
-              ".validate": false
-            }
           }
         }
       }
