@@ -13,7 +13,7 @@ const auth={
   setPersistence:async()=>{},
   signInWithEmailAndPassword:async(email,password)=>{
     calls.login.push({email,password});
-    const uid=email==='ancien@example.fr'?'nCNc0JdWznOZ6j4B4GjfvQqWX4K2':'nouveau123';
+    const uid=email==='ancien@example.fr'?'nCNc0JdWznOZ6j4B4GjfvQqWX4K2':email==='entree@example.fr'?'entreeUID01':email==='lecture@example.fr'?'lectureUID01':'nouveau123';
     return {user:{uid,email}};
   },
   sendPasswordResetEmail:async email=>calls.sent.push(email),
@@ -84,6 +84,12 @@ async function nameProfile(first,last){
   assert.equal($('firstLoginDialog').open,true,'legacy account also gets name form');
   await nameProfile('Antonin','Blanckaert');
   assert.equal($('inviteUserButton').hidden,false,'owner can send invite');
+  assert.equal($('usersManagerButton').hidden,false,'admin sees user permissions manager');
+  assert.equal($('adminDashboardButton').hidden,false,'admin sees private attendance dashboard');
+  $('adminDashboardButton').click();
+  assert.equal($('adminDashboardDialog').open,true);
+  assert.match($('adminKpis').textContent,/Invités attendus/);
+  $('adminDashboardDialog').close();
   $('inviteUserButton').click();
   $('inviteEmail').value='autre@example.fr';
   await $('inviteUserForm').onsubmit({preventDefault(){}});
@@ -93,6 +99,28 @@ async function nameProfile(first,last){
   $('forgotPasswordButton').click();
   assert.equal($('firstAccessForm').hidden,false);
   assert.equal($('firstAccessEmail').value,'nouveau@example.fr');
+  await $('logoutButton').onclick();
+  calls.profiles['events/saint-eloi-2026/profiles/entreeUID01']={firstName:'Agent',lastName:'Accueil'};
+  calls.profiles['events/saint-eloi-2026/members/entreeUID01']={role:'entry',email:'entree@example.fr'};
+  await login('entree@example.fr','secret entrée');
+  assert.equal(w.inspectEmail.role,'entry');
+  assert.equal($('newReservation').style.display,'none');
+  assert.equal($('adminDashboardButton').hidden,true);
+  assert.equal($('usersManagerButton').hidden,true);
+  assert.ok($('laneChoice'),'entry account selects an entrance lane');
+  assert.match($('laneChoice').textContent,/File 1/);
+  assert.match($('laneChoice').textContent,/File 2/);
+  $('laneChoice').querySelector('[data-lane="left"]').click();
+  assert.match($('sessionBadge').textContent,/File 1/);
+  await $('logoutButton').onclick();
+  calls.profiles['events/saint-eloi-2026/profiles/lectureUID01']={firstName:'Vue',lastName:'Consultation'};
+  calls.profiles['events/saint-eloi-2026/members/lectureUID01']={role:'viewer',email:'lecture@example.fr'};
+  await login('lecture@example.fr','secret lecture');
+  assert.equal(w.inspectEmail.role,'viewer');
+  assert.equal($('newReservation').style.display,'none');
+  assert.equal($('adminDashboardButton').hidden,true);
+  assert.equal($('usersManagerButton').hidden,true);
+  assert.equal($('laneChoice'),null);
   w.close();
   console.log('PASS: email-only, first connection reset, named profile, legacy UID and invitations');
 })().catch(err=>{console.error(err);process.exitCode=1;});
