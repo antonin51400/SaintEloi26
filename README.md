@@ -35,14 +35,14 @@ Le dossier `access-approval/` est un ancien essai d'approbation par e-mail **dé
 
 ## Nouveau : invitations par e-mail et premier profil
 
-Cette fonctionnalité est préparée dans le site, mais **n'est pas encore active côté base** : les dernières règles connues comme publiées restent limitées aux **quatre comptes existants**. Le propriétaire du projet a confirmé le 26 octobre 2026 que **les utilisateurs ne peuvent plus créer de comptes**. La prochaine étape est donc de publier dans Firebase le contenu de [`database.rules.managed-users.json`](./database.rules.managed-users.json), puis de tester avec un nouveau compte. **Ce fichier de règles préparé est distinct de `database.rules.json`, qui contient encore les règles historiques**.
+**La création libre de comptes a été désactivée et les nouvelles règles ont été publiées dans Firebase**, selon confirmation du propriétaire le 26 octobre 2026. Elles correspondent à [`database.rules.managed-users.json`](./database.rules.managed-users.json). La configuration [`firebase.json`](./firebase.json) pointe désormais vers ce fichier pour les futurs déploiements. **Le parcours complet doit encore être testé avec un compte réel** : création administrative, envoi du lien de réinitialisation, renseignement du prénom/nom, puis réservation partagée. Le fichier [`database.rules.json`](./database.rules.json) conserve seulement l'ancien état pour référence.
 
 ### Prérequis de sécurité — indispensable
 
 1. Dans [Firebase Authentication](https://console.firebase.google.com/project/sainteloi26-371e3/authentication/users), la méthode **Adresse e-mail / Mot de passe** doit rester activée et le fournisseur **Anonyme** peut rester désactivé.
 2. Dans **Authentication → Paramètres → Actions utilisateur (User actions)**, **désactiver « Autoriser la création de comptes / Enable create (sign-up) »**. Cela empêche la création libre de comptes par API Web ; sans cette restriction, n'importe qui pourrait se créer un compte et demander son propre profil. Cette étape est **différente** de la désactivation du fournisseur anonyme.
 3. Vérifier la liste des comptes déjà présents dans **Utilisateurs** : elle ne doit pas contenir de comptes inconnus (sinon les supprimer).
-4. Quand les points 2 et 3 sont confirmés, copier dans **Realtime Database → Règles** le contenu entier de [`database.rules.managed-users.json`](./database.rules.managed-users.json), puis **Publier**. Ces règles conservent les quatre comptes historiques et ajoutent `events/saint-eloi-2026/profiles/{UID}`.
+4. **Déjà effectué le 26 octobre 2026, selon confirmation du propriétaire :** publication de [`database.rules.managed-users.json`](./database.rules.managed-users.json) dans **Realtime Database → Règles**. Ce fichier conserve les quatre comptes historiques et ajoute `events/saint-eloi-2026/profiles/{UID}`.
 5. Tester avec un **nouveau compte créé manuellement dans la console**, puis contrôler que l'utilisateur arrive sur le formulaire prénom + nom à sa première connexion et sur les réservations à la seconde.
 
 ### Utilisation quotidienne
