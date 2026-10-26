@@ -978,6 +978,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 .seat-grid .seat.seat-expected{background:#e0edf9;border-color:#528ecb}
 .guest-card.arrived{border-left:4px solid #32946f}
 .guest-card:not(.arrived){border-left:4px solid #528ecb}
+.guest-card .guest-info{flex-basis:100%}.payment-alert{overflow-wrap:anywhere;white-space:pre-wrap;margin-top:6px;padding:9px 12px;border:2px solid #d6a329;border-radius:8px;background:#fff3c4;color:#704600;font-size:13px}.arrival-detail{font-size:12px;color:#2d5442;margin-top:5px}.countdown-box{margin:18px 0;padding:14px;border:1px solid #c9a84c;border-radius:12px;text-align:center}.countdown-box strong{display:block;font-size:24px;font-variant-numeric:tabular-nums}#paymentDialog form,#arrivalDialog form{display:grid;gap:12px}#paymentDialog input,#paymentDialog textarea{width:100%}
 </style>
 </head>
 <body>
@@ -994,6 +995,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
       </div>
       <div class="cover-kicker">LES JEUNES AGRICULTEURS PRÉSENTENT</div>
       <h1 class="cover-title">La Saint <em>Éloi</em><span>2026</span></h1>
+      <div class="countdown-box"><span>Saint Éloi · 5 décembre 2026 à 20 h (heure de Paris)</span><strong id="eventCountdown" role="timer"></strong></div>
       <p class="cover-subtitle">Réservations, plan de table et accueil des invités — un espace pour préparer ensemble la soirée.</p>
       <div class="cover-team-label">UNE ORGANISATION SIGNÉE</div>
       <div class="cover-team" aria-label="Organisateurs et partenaires">
@@ -1454,13 +1456,15 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
     <button class="primary" type="submit" id="saveProfileButton">Enregistrer et accéder aux réservations</button>
   </form>
 </dialog>
+<dialog id="arrivalDialog"><form id="arrivalForm"><div class="dialog-heading"><h2>Enregistrer l’arrivée</h2><button type="button" class="secondary" data-close="arrivalDialog">Fermer</button></div><label>File d’entrée<select id="arrivalLane" required><option value="">Choisir une file</option><option value="left">File 1</option><option value="right">File 2</option></select></label><p id="arrivalError" role="alert"></p><button type="submit" class="primary">Confirmer l’arrivée</button></form></dialog>
+<dialog id="paymentDialog"><form id="paymentForm"><div class="dialog-heading"><h2>Paiement pour <span id="paymentGuest"></span></h2><button type="button" class="secondary" data-close="paymentDialog">Fermer</button></div><p>Ce paiement sera signalé en évidence pour prévenir l’invité à son arrivée. L’heure et l’opérateur sont enregistrés automatiquement.</p><label>Qui a payé pour cette personne ?<input id="paymentPayer" maxlength="120" required></label><label>Commentaire<textarea id="paymentComment" maxlength="1000" rows="3"></textarea></label><p id="paymentError" role="alert"></p><button type="submit" class="primary">Enregistrer le paiement et le commentaire</button></form></dialog>
 <dialog id="inviteUserDialog" aria-labelledby="inviteUserTitle">
   <form id="inviteUserForm">
     <div class="dialog-heading">
       <h2 id="inviteUserTitle">Inviter un utilisateur</h2>
       <button type="button" class="secondary" data-close="inviteUserDialog">Fermer</button>
     </div>
-    <p>Crée d'abord le compte avec son adresse e-mail et un mot de passe provisoire dans Firebase Authentication, puis envoie-lui un lien pour choisir son mot de passe.</p>
+    <p>Crée le compte et demande l’envoi d’un lien pour choisir son mot de passe. Un compte existant reçoit un nouveau lien sans modification de ses droits.</p>
     <label for="inviteEmail">Adresse e-mail du nouvel utilisateur
       <input id="inviteEmail" type="email" autocomplete="email" maxlength="254" placeholder="prenom@exemple.fr" required>
     </label>

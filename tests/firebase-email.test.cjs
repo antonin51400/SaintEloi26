@@ -14,7 +14,7 @@ const auth={
   signInWithEmailAndPassword:async(email,password)=>{
     calls.login.push({email,password});
     const uid=email==='ancien@example.fr'?'nCNc0JdWznOZ6j4B4GjfvQqWX4K2':email==='entree@example.fr'?'entreeUID01':email==='lecture@example.fr'?'lectureUID01':email==='place@example.fr'?'placeUID01':'nouveau123';
-    return {user:{uid,email}};
+    return {user:{uid,email,getIdToken:async()=> 'test-token'}};
   },
   sendPasswordResetEmail:async email=>calls.sent.push(email),
   signOut:async()=>{}
@@ -35,6 +35,8 @@ const makeRef=key=>({
 const databaseFn=()=>({ref:makeRef});
 databaseFn.ServerValue={TIMESTAMP:123456789};
 w.firebase={apps:[{}],auth:authFn,database:databaseFn};
+const invitations=[];
+w.fetch=async(url,options)=>{invitations.push({url,options});return {ok:true,json:async()=>({uid:'invited-user',created:true})};};
 w.eval(fs.readFileSync(path.join(__dirname,'../config.js'),'utf8'));
 w.eval(fs.readFileSync(path.join(__dirname,'../app.js'),'utf8')+
 '\nwindow.inspectEmail={get operator(){return operator;},get role(){return role;},canPlace(){return allowed("place");},guestCard(){return guestCard("reservation-1","guest-1",{name:"Invité Test",tableId:"",seat:0,arrived:false,paid:false},{status:"accepted",reservedBy:"Réservant Test"});}};');
@@ -125,6 +127,10 @@ async function nameProfile(first,last){
   $('inviteEmail').value='autre@example.fr';
   await $('inviteUserForm').onsubmit({preventDefault(){}});
   assert.deepEqual(calls.sent,['nouveau@example.fr','autre@example.fr']);
+  assert.equal(invitations.length,1);
+  assert.match(invitations[0].url,/\/inviteUser$/);
+  assert.equal(invitations[0].options.headers.Authorization,'Bearer test-token');
+  assert.deepEqual(JSON.parse(invitations[0].options.body),{email:'autre@example.fr'});
   await $('logoutButton').onclick();
   $('emailAddress').value='nouveau@example.fr';
   $('forgotPasswordButton').click();

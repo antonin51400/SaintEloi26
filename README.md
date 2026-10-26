@@ -22,13 +22,11 @@ Le texte et les réglages de l'e-mail de définition/réinitialisation du mot de
 
 ## Ajouter un utilisateur (organisateur uniquement)
 
-1. Dans [Firebase Authentication → Utilisateurs](https://console.firebase.google.com/project/sainteloi26-371e3/authentication/users), créer un compte avec **l'adresse e-mail réelle et accessible** de la personne et un **mot de passe provisoire robuste**. Le mot de passe provisoire n'a pas besoin d'être communiqué.
-2. Sur le site, le propriétaire de l'UID `nCNc0JdWznOZ6j4B4GjfvQqWX4K2` peut aussi ouvrir **Inviter un utilisateur**, saisir l'e-mail du compte déjà créé, et envoyer son lien de définition du mot de passe.
-3. Autrement, la personne clique elle-même sur **Première connexion ? Activer mon compte**, saisit son e-mail, puis ouvre le lien reçu.
-4. Elle choisit son mot de passe via Firebase, revient sur le site, se connecte et enregistre **prénom + nom**. Cela ouvre l'accès aux réservations.
-5. À la prochaine connexion, le prénom/nom est retrouvé automatiquement et n'est plus demandé.
+Après le déploiement de la fonction serveur `inviteUser`, un administrateur ouvre **Inviter un utilisateur**, saisit une vraie adresse e-mail puis confirme. Le serveur vérifie son identité et son rôle, crée le compte avec un mot de passe aléatoire non communiqué et attribue le rôle Réservations. Le navigateur demande ensuite à Firebase l’envoi du lien pour choisir son mot de passe. Le compte invité n’est jamais connecté dans la session de l’administrateur.
 
-**Important :** le site n'envoie pas un e-mail de création d'un compte inexistant. L'utilisateur doit déjà avoir été créé **dans la console Firebase**, et l'adresse doit être une vraie boîte de réception. Selon les paramètres de protection contre l'énumération, Firebase peut accepter la demande sans confirmer publiquement l'existence du compte.
+Un compte existant reçoit un nouveau lien sans modification de ses droits. Un compte suspendu est refusé. Si l’envoi échoue après la création, le message précise que le compte est prêt et que l’invitation doit être réessayée. La réception de l’e-mail reste à vérifier dans une vraie boîte ; une réponse positive de Firebase ne prouve pas sa délivrance.
+
+La création dans Firebase Authentication reste possible comme solution de secours. Voir [DEPLOIEMENT.md](./DEPLOIEMENT.md) pour les étapes de mise en service obligatoires.
 
 ### Les quatre comptes historiques : adresses techniques
 
@@ -81,7 +79,7 @@ Cinq vues sont prévues : **Administrateur**, **Inscriptions et réservations**,
 
 Les comptes créés dans Firebase Authentication sont authentifiés par e-mail. À la première connexion, leur profil prénom et nom est enregistré, puis un rôle `reservations` est créé pour leur UID si aucun autre rôle n'a été préattribué par un administrateur. Les rôles peuvent être changés depuis « Gestion des utilisateurs » avec le **UID** du compte.
 
-**La création directe des comptes Firebase n'est pas incluse dans le navigateur** : le bouton ouvre **Firebase Authentication → Utilisateurs**, où un administrateur crée le compte. Le site peut ensuite demander l'envoi du lien Firebase de définition du mot de passe.
+**Inviter un utilisateur** crée désormais le compte via une fonction serveur réservée aux administrateurs, puis demande l’e-mail de définition du mot de passe. Cette fonction doit être déployée séparément de GitHub Pages.
 
 **Publication obligatoire :** les règles dans [`database.rules.managed-users.json`](./database.rules.managed-users.json) ont été renforcées pour les cinq rôles **après la dernière publication confirmée par l'organisateur**. Elles ne sont pas automatiquement publiées dans Firebase par un commit GitHub. Tester la syntaxe et les autorisations dans **Realtime Database → Règles**, puis publier cette version actualisée avant d'utiliser les profils Accueil, Placement, Consultation ou Gestion des utilisateurs sur le site réel. Les tests GitHub sont des tests statiques et de simulation JavaScript, pas une simulation complète du moteur de règles Firebase.
 
@@ -108,3 +106,11 @@ node --check app.js
 Les tests GitHub simulent l'interface et Firebase Authentication, mais **ne prouvent pas la délivrabilité d'un e-mail ni la bonne publication de règles en production**. Faire un test réel : créer un utilisateur avec une adresse accessible, demander le lien depuis **Première connexion**, choisir le mot de passe, compléter prénom et nom, créer une réservation fictive et vérifier sa présence avec un deuxième compte. Après le test, supprimer la réservation fictive.
 
 Le mode démonstration est encore accessible dans les options discrètes, sans synchronisation ni sauvegarde.
+
+## Suivi d’accueil et paiements par un tiers
+
+Chaque arrivée enregistre `arrivedAt`, `arrivedBy` et `arrivalLane` (`left` = File 1, `right` = File 2). Le poste Accueil utilise la file choisie ; l’administrateur choisit une file à chaque pointage. Les anciennes arrivées sans file restent affichées comme « file non renseignée ». L’heure est affichée dans le fuseau Europe/Paris.
+
+Sur un invité confirmé, **Payé par un tiers / commentaire** permet de saisir le nom du payeur et un commentaire. L’enregistrement marque l’invité payé, conserve l’heure de son paiement initial et horodate le commentaire et son opérateur (`paidForBy`, `paymentComment`, `paymentRecordedAt`, `paymentRecordedBy`). Un encadré jaune « À signaler : payé par… » apparaît dans la liste, le tableau administrateur et le détail de table. Ces champs sont aussi exportés en CSV. L’arrivée conserve ces informations. Une correction du commentaire met à jour son horodatage ; ceci n’est pas un historique complet des modifications.
+
+L’accueil public affiche un décompte vers le **5 décembre 2026 à 20 h, heure de Paris** (19 h UTC). Après cette date, il indique que la soirée a commencé.
