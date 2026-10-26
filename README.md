@@ -38,6 +38,22 @@ Les anciens comptes avaient des adresses fictives (`access2002@sainteloi26-371e3
 
 **Autre possibilité** : changer l'adresse d'un ancien compte existant tout en conservant son UID (par exemple via l'Admin SDK Firebase). Si tu choisis cette méthode, **publie d'abord la version à jour de `database.rules.managed-users.json`** qui autorise les UID historiques même après changement d'adresse.
 
+## Accréditations et tableaux de bord (mise à jour du 26 octobre 2026)
+
+Cinq vues sont prévues : **Administrateur**, **Inscriptions et réservations**, **Placement**, **Accueil**, **Consultation**. Un rôle `disabled` suspend la lecture des réservations.
+
+- **Administrateur :** toutes les réservations, plan, pointage, export, suivi privé des personnes attendues/arrivées/payées/non placées et accès à « Gestion des utilisateurs ».
+- **Inscriptions :** saisie, acceptation et modification de réservations, sans droit de pointage ni de placement.
+- **Placement :** attribution d'une place à un invité à la fois, uniquement sur des tables dont la capacité est définie par un administrateur. **Le contrôle atomique de l'unicité entre plusieurs placeurs n'est pas encore garanti côté serveur** ; éviter plusieurs sessions de placement simultanées avant finalisation.
+- **Accueil :** pointage des invités, en choisissant au préalable **File 1 ou File 2** ; le poste n'affiche pas le plan complet.
+- **Consultation :** suivi et plan en lecture seule, sans modification.
+
+Les comptes créés dans Firebase Authentication sont authentifiés par e-mail. À la première connexion, leur profil prénom et nom est enregistré, puis un rôle `reservations` est créé pour leur UID si aucun autre rôle n'a été préattribué par un administrateur. Les rôles peuvent être changés depuis « Gestion des utilisateurs » avec le **UID** du compte.
+
+**La création directe des comptes Firebase n'est pas incluse dans le navigateur** : le bouton ouvre **Firebase Authentication → Utilisateurs**, où un administrateur crée le compte. Le site peut ensuite demander l'envoi du lien Firebase de définition du mot de passe.
+
+**Publication obligatoire :** les règles dans [`database.rules.managed-users.json`](./database.rules.managed-users.json) ont été renforcées pour les cinq rôles **après la dernière publication confirmée par l'organisateur**. Elles ne sont pas automatiquement publiées dans Firebase par un commit GitHub. Tester la syntaxe et les autorisations dans **Realtime Database → Règles**, puis publier cette version actualisée avant d'utiliser les profils Accueil, Placement, Consultation ou Gestion des utilisateurs sur le site réel. Les tests GitHub sont des tests statiques et de simulation JavaScript, pas une simulation complète du moteur de règles Firebase.
+
 ## Sécurité et règles Realtime Database
 
 Le propriétaire a confirmé la désactivation de la création libre de comptes et la publication de la version initiale des règles avec profils.
