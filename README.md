@@ -12,6 +12,8 @@ Les quatre chiffres des anciens codes sont déjà visibles publiquement dans le 
 |---|---|---|
 | `2002` | Antonin Blanckaert — organisateur | `access2002@sainteloi26-371e3.firebaseapp.com` |
 | `9425` | Antonin Bassut — organisateur | `access9425@sainteloi26-371e3.firebaseapp.com` |
+| `3186` | Théotime Laloua — réservations et placement | `access3186@sainteloi26-371e3.firebaseapp.com` |
+| `4279` | Robin Maret — réservations et placement | `access4279@sainteloi26-371e3.firebaseapp.com` |
 | `7890` | Placement | `access7890@sainteloi26-371e3.firebaseapp.com` |
 | `6930` | Administrateur | `access6930@sainteloi26-371e3.firebaseapp.com` |
 | `1234` | Consultation | `access1234@sainteloi26-371e3.firebaseapp.com` |
@@ -20,6 +22,8 @@ Les quatre chiffres des anciens codes sont déjà visibles publiquement dans le 
 Les e-mails ci-dessus sont **des noms de comptes techniques**, pas des boîtes de réception. Ils ne sont pas demandés à l'utilisateur. Si vous perdez le code, remplacez son mot de passe depuis la console Firebase.
 
 ## Mise en service Firebase, une seule fois par l'organisateur
+
+**Théotime et Robin :** le compte technique et l'écran de réservation sont préparés. L'accès complet exige la création de leurs comptes Firebase, l'inscription de leurs UID dans `members`, et la publication des règles complétées avec leurs deux adresses, en lecture **et en écriture**. Les règles de lecture dans GitHub ont été mises à jour ; **les droits d'écriture de ces deux comptes ne sont pas encore inclus dans le fichier de règles**. Ne pas annoncer leurs comptes comme actifs avant cette dernière modification et les essais réels.
 
 **État actuel :** configuration Firebase connue (`sainteloi26-371e3`, base `europe-west1`) mais **`config.js` garde `enabled: false`**. En attendant la configuration et la publication des règles, le site reste une démonstration locale : ne saisissez pas de vraies réservations.
 
@@ -48,6 +52,12 @@ events
         role: organizer
       UID_DU_SECOND_COMPTE
         name: Antonin Bassut
+        role: organizer
+      UID_DE_THEOTIME
+        name: Théotime Laloua
+        role: organizer
+      UID_DE_ROBIN
+        name: Robin Maret
         role: organizer
 ```
 
