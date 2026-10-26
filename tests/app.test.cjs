@@ -16,6 +16,10 @@ async function create(by,names,status='accepted',contacted='Antonin Blanckaert')
  assert.equal(app.state.reservations[a].contactedOrganizer,'Antonin Bassut');
  assert.match($('guestList').textContent,/Contacté : Antonin Bassut/);
  $('search').value='Antonin Bassut';$('search').oninput();assert.match($('guestList').textContent,/Famille Test/);$('search').value='';$('search').oninput();
+ assert.match($('tableLegend').textContent,/Occupation des tables/);
+ assert.match($('tableLegend').textContent,/Arrivées à chaque table/);
+ assert.equal($('entryTablesGrid').querySelectorAll('.entry-table-card').length,document.querySelectorAll('.table-block').length);
+ assert.equal($('entryTablesGrid').querySelectorAll('.entry-seat').length,document.querySelectorAll('.table-block').length*6);
  assert.equal($('statTotal').textContent,'0');await app.setStatus(a,'accepted');assert.equal($('statTotal').textContent,'2');
  app.choose({rid:a});app.showPlacement('t1-1');assert.equal($('newCapacity'),null);await $('placementForm').onsubmit(e);assert.equal($('placementDialog').open,false,$('placementError').textContent);assert.match($('popupSubtitle').textContent,/2 \/ 6 places occupées/);app.closeTablePopup();
  const ids=Object.keys(app.state.reservations[a].participants);await app.setFlag(a,ids[0],'arrived');assert.equal($('statPaid').textContent,'1');assert.equal($('statArrived').textContent,'1');await assert.rejects(()=>app.setFlag(a,ids[0],'paid'),/personne arrivée/);await app.setFlag(a,ids[1],'paid');assert.equal($('statPaid').textContent,'2');assert.equal(app.state.reservations[a].participants[ids[1]].arrived,false);
