@@ -28,7 +28,7 @@
                 ".validate": "newData.isString() && newData.val().length <= 30"
               },
               "contactedOrganizer": {
-                ".validate": "newData.val() === 'Antonin Blanckaert' || newData.val() === 'Antonin Bassut'"
+                ".validate": "newData.val() === 'Antonin Blanckaert' || newData.val() === 'Antonin Bassut' || newData.val() === 'Théotime Laloua' || newData.val() === 'Robin Maret'"
               },
               "notes": {
                 ".validate": "newData.isString() && newData.val().length <= 2000"
