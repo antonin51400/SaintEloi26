@@ -40,7 +40,7 @@ function selectEntryLane() {
   panel.innerHTML='<h2>Quel poste occupez-vous ?</h2><div class="lane-buttons"><button type="button" class="lane-btn left" data-lane="left"><span class="lane-icon">◀️</span>File 1<span class="lane-sub">Poste 1</span></button><button type="button" class="lane-btn right" data-lane="right"><span class="lane-icon">▶️</span>File 2<span class="lane-sub">Poste 2</span></button></div>';
   panel.querySelectorAll('[data-lane]').forEach(btn => btn.onclick=()=>{
     lane=btn.dataset.lane;
-    $('sessionBadge').textContent=lane==='left'?'◀ File 1':'▶ File 2';
+    $('sessionBadge').textContent=inRolePreview()?'APERÇU · Accueil · '+(lane==='left'?'File 1':'File 2'):(lane==='left'?'◀ File 1':'▶ File 2');
     $('sessionBadge').className='lane-badge '+lane;
     panel.remove();
   });
