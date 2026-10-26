@@ -33,6 +33,28 @@ Les profils prévus pour le placement (`7890`), l'administration (`6930`), la co
 
 Le dossier `access-approval/` est un ancien essai d'approbation par e-mail **désormais non utilisé** : aucune installation Google Apps Script n'est nécessaire pour le parcours actuel.
 
+## Nouveau : invitations par e-mail et premier profil
+
+Cette fonctionnalité est préparée dans le site, mais **n'est pas encore active côté base** : le fichier `database.rules.json` publié reste limité aux **quatre comptes existants**. Le fichier `database.rules.managed-users.json` est la proposition pour l'ouverture aux nouveaux comptes, **à ne publier qu'après avoir désactivé l'inscription libre**.
+
+### Prérequis de sécurité — indispensable
+
+1. Dans [Firebase Authentication](https://console.firebase.google.com/project/sainteloi26-371e3/authentication/users), la méthode **Adresse e-mail / Mot de passe** doit rester activée et le fournisseur **Anonyme** peut rester désactivé.
+2. Dans **Authentication → Paramètres → Actions utilisateur (User actions)**, **désactiver « Autoriser la création de comptes / Enable create (sign-up) »**. Cela empêche la création libre de comptes par API Web ; sans cette restriction, n'importe qui pourrait se créer un compte et demander son propre profil. Cette étape est **différente** de la désactivation du fournisseur anonyme.
+3. Vérifier la liste des comptes déjà présents dans **Utilisateurs** : elle ne doit pas contenir de comptes inconnus (sinon les supprimer).
+4. Quand les points 2 et 3 sont confirmés, copier dans **Realtime Database → Règles** le contenu entier de [`database.rules.managed-users.json`](./database.rules.managed-users.json), puis **Publier**. Ces règles conservent les quatre comptes historiques et ajoutent `events/saint-eloi-2026/profiles/{UID}`.
+5. Tester avec un **nouveau compte créé manuellement dans la console**, puis contrôler que l'utilisateur arrive sur le formulaire prénom + nom à sa première connexion et sur les réservations à la seconde.
+
+### Utilisation quotidienne
+
+- **Le responsable crée la personne dans Firebase Authentication → Utilisateurs**, avec son adresse e-mail et un **mot de passe provisoire long et aléatoire**. Ne pas communiquer le mot de passe provisoire.
+- Sur le site, le responsable se connecte avec le code `2002…`, clique sur **Inviter un utilisateur**, entre son adresse et clique **Envoyer l'e-mail**. Le navigateur demande à Firebase l'envoi d'un lien de **réinitialisation de mot de passe**. Le lien arrive depuis le système de notification Firebase, pas depuis une boîte Gmail personnelle.
+- La personne choisit un mot de passe depuis ce lien, revient sur le site, sélectionne **E-mail**, puis entre son adresse et son nouveau mot de passe.
+- **À sa première connexion uniquement**, elle renseigne prénom et nom ; le site enregistre un profil dans la base, associé à son UID Firebase. Elle accède aux réservations et au placement avec les droits organisateur.
+- **Aux connexions suivantes**, le profil est retrouvé automatiquement. Les quatre anciens comptes gardent leur connexion par code.
+
+**Note de sécurité :** les nouveaux comptes ont pour l'instant le même niveau de droit que les organisateurs. Ne créez pas de comptes pour des bénévoles auxquels vous voudriez limiter l'accès à l'accueil ou à la consultation. Un système à rôles par utilisateur pourra être ajouté séparément.
+
 ## Données et fonctionnement
 
 Le projet démarre sans réservation importée. Les réservations comportent nom du réservant, invités, téléphone facultatif, personne contactée, statut, date et opérateur créateur. Les tables ont 42 sections. Les placements respectent la capacité et les places occupées ; un arrivé est automatiquement payé et un paiement anticipé reste possible.
