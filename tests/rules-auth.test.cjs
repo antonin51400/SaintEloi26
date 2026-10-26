@@ -43,11 +43,12 @@ assert.match(memberRule['.write'],/auth.uid === \$uid/,'new users can only reque
 assert.match(memberRule['.write'],/reservations/,'self-created member must have reservations role');
 assert.match(event.data['.write'],/admin/,'global writing requires an admin');
 const reservationNode=event.data.reservations['$id'];
-assert.match(reservationNode['.write'],/placement/);
+assert.doesNotMatch(reservationNode['.write'],/placement/,'placeurs must not edit full reservations');
 assert.match(reservationNode['.write'],/reservations/);
 assert.match(reservationNode['.validate'],/contactedOrganizer/,'placement cannot edit the reservation contact');
 const person=reservationNode.participants['$pid'];
 assert.match(person['.write'],/entry/,'check-in is based on entry accreditation');
+assert.match(person['.write'],/placement/,'placement can write a single participant');
 for(const field of ['tableId','seat','arrived','paid'])
   assert.match(person[field]['.validate'],/reservations/,'registrars cannot change '+field);
 assert.match(person['.validate'],/placement/,'placement users cannot change arrival or payment flags');
