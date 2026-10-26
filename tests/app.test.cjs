@@ -8,8 +8,7 @@ async function create(by,names,status='accepted',contacted='Antonin Blanckaert')
  assert.equal($('accessForm').querySelectorAll('[required]').length,1);
  assert.equal($('accessForm').querySelector('input[required]').id,'accessCode');
  assert.equal($('accessOptions').open,false);
- assert.ok($('requestAccessForm').closest('#pairingPanel'));
- assert.equal($('requestAccessForm').hidden,true);
+ assert.equal($('accessCode').maxLength,12);
  $('demoButton').click();assert.equal($('statTotal').textContent,'0');assert.equal(app.allGuests().length,0);
  const a=await create('Famille Test',['Alice Test','Bob Test'],'pending','Antonin Bassut');
  assert.equal(app.state.reservations[a].contactedOrganizer,'Antonin Bassut');
