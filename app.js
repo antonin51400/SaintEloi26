@@ -111,11 +111,9 @@ function lock(message){
   $('loginMessage').textContent=message;render();
 }
 const config=window.SAINT_ELOI_CONFIG||{};
-const codeProfiles=window.SAINT_ELOI_ACCESS_CODES||{};
-const pinAccounts=window.SAINT_ELOI_PIN_ACCOUNTS||{};
 $('loginMessage').textContent=config.enabled
-  ? 'Entre ton code confidentiel pour accéder aux réservations.'
-  : 'Mode démonstration : aucune réservation n’est partagée ni sauvegardée.';
+  ? 'Identifie-toi avec ton e-mail, ou active ton compte lors de ta première connexion.'
+  : 'Le mode démonstration ne sauvegarde pas les réservations.';
 const PRIMARY_ADMIN_UID='nCNc0JdWznOZ6j4B4GjfvQqWX4K2';
 function initFirebaseAuth(){
   if(!window.firebase||!config.firebase?.databaseURL)throw Error('Firebase non disponible.');
@@ -139,58 +137,25 @@ function connectLiveData(){
     if(ready)render();
   });
 }
-async function startSession(profile,pin){
-  if(loginBusy)return;
-  loginBusy=true;$('loginButton').disabled=true;
-  stopListeners();role='none';operator='';lane='';ready=false;demo=false;
-  try{
-    if(!config.enabled){
-      role=profile.role;operator=profile.name;user={uid:'local-'+role};
-      demo=true;ready=true;online=true;state={reservations:{},tables:{}};showApp();return;
-    }
-    if(!window.firebase)throw Error('Connexion indisponible.');
-    if(!config.firebase?.databaseURL)throw Error('Configuration de la base absente.');
-    if(!firebase.apps.length)firebase.initializeApp(config.firebase);
-    auth=firebase.auth();
-    db=firebase.database();
-    // L'utilisateur ne voit jamais de formulaire Firebase. Le code est
-    // vérifié PAR Firebase Authentication et n'est jamais présent sur GitHub.
-    await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
-    const credential=await auth.signInWithEmailAndPassword(profile.email,pin);
-    const account=credential.user;
-    if(!account||account.email?.toLowerCase()!==profile.email){
-      await auth.signOut();throw Error('Compte non reconnu.');
-    }
-    user=account;role=profile.role;operator=profile.name;
-    eventRef=db.ref(config.eventPath);
-    connectLiveData();
-  }catch(error){
-    const code=String(error?.code||'');
-    const invalid=code.startsWith('auth/invalid')||code==='auth/wrong-password'
-      ||code==='auth/user-not-found'||code==='auth/too-many-requests';
-    $('loginMessage').textContent=invalid
-      ? 'Code incorrect ou compte temporairement bloqué. Vérifie ton code.'
-      : 'Connexion impossible : '+(error?.message||'réessaie plus tard.');
-    role='none';operator='';user=null;
-  }finally{
-    loginBusy=false;$('loginButton').disabled=false;
-  }
+// La connexion se fait exclusivement par e-mail/mot de passe Firebase.
+// Aucun code à 4 ou 12 chiffres n'est publié, saisi ou conservé côté client.
+function showFirstAccess(prefill=''){
+  $('emailAccessForm').hidden=true;
+  $('firstAccessForm').hidden=false;
+  $('showFirstAccess').hidden=true;
+  $('firstAccessEmail').value=prefill;
+  $('loginMessage').textContent='';
+  $('firstAccessEmail').focus();
 }
-// Le formulaire à code reste inchangé pour les quatre organisateurs existants.
-// Les nouveaux membres utilisent leur compte e-mail créé dans Firebase Authentication.
-function selectLoginMethod(useEmail){
-  $('accessForm').hidden=useEmail;
-  $('emailAccessForm').hidden=!useEmail;
-  $('usePinButton').classList.toggle('active',!useEmail);
-  $('useEmailButton').classList.toggle('active',useEmail);
-  $('usePinButton').setAttribute('aria-pressed',String(!useEmail));
-  $('useEmailButton').setAttribute('aria-pressed',String(useEmail));
-  $('loginMessage').textContent=useEmail
-    ? 'Connecte-toi avec l’e-mail créé par l’organisateur.'
-    : 'Entre ton code confidentiel.';
+function showEmailLogin(){
+  $('firstAccessForm').hidden=true;
+  $('emailAccessForm').hidden=false;
+  $('showFirstAccess').hidden=false;
+  $('loginMessage').textContent='';
+  $('emailAddress').focus();
 }
-$('usePinButton').onclick=()=>selectLoginMethod(false);
-$('useEmailButton').onclick=()=>selectLoginMethod(true);
+$('showFirstAccess').onclick=()=>showFirstAccess($('emailAddress').value.trim());
+$('backToLogin').onclick=showEmailLogin;
 let pendingProfileRef=null;
 $('firstLoginForm').onsubmit=async e=>{
   e.preventDefault();
@@ -233,14 +198,8 @@ async function startEmailSession(email,password){
     const account=(await auth.signInWithEmailAndPassword(email,password)).user;
     if(!account||account.email?.trim().toLowerCase()!==email)throw Error('Identifiants non reconnus.');
     user=account;eventRef=db.ref(config.eventPath);
-    // Un ancien compte à code reste associé à ses droits historiques.
-    const legacy=Object.values(pinAccounts).find(p=>p.email===email);
-    role=legacy?.role||'organizer';
-    if(legacy){
-      operator=legacy.name;
-      connectLiveData();
-      return;
-    }
+    // Les comptes historiques comme les nouveaux passent par le même profil nominatif.
+    role='organizer';
     $('loginMessage').textContent='Bienvenue ! Vérification du profil…';
     const ownProfile=eventRef.child('profiles').child(account.uid);
     const saved=(await ownProfile.once('value')).val();
@@ -279,20 +238,29 @@ async function sendResetEmail(email){
   initFirebaseAuth();
   await auth.sendPasswordResetEmail(email);
 }
-$('forgotPasswordButton').onclick=async()=>{
+$('forgotPasswordButton').onclick=()=>{
   const email=$('emailAddress').value.trim().toLowerCase();
-  if(!email||!$('emailAddress').checkValidity()){
-    $('loginMessage').textContent='Renseigne d’abord ton adresse e-mail.';
-    $('emailAddress').focus();
+  showFirstAccess(email);
+};
+$('firstAccessForm').onsubmit=async e=>{
+  e.preventDefault();
+  const email=$('firstAccessEmail').value.trim().toLowerCase();
+  if(!email||!$('firstAccessEmail').checkValidity()){
+    $('loginMessage').textContent='Renseigne une adresse e-mail valide.';
     return;
   }
-  $('forgotPasswordButton').disabled=true;
+  $('firstAccessSendButton').disabled=true;
   try{
     await sendResetEmail(email);
-    $('loginMessage').textContent='Si un compte existe pour cette adresse, un e-mail de réinitialisation a été demandé. Vérifie aussi les spams.';
+    $('loginMessage').textContent='Si ton compte existe, un e-mail vient d’être demandé pour choisir ton mot de passe. Vérifie aussi les spams.';
   }catch(error){
-    $('loginMessage').textContent='Demande impossible : '+(error?.message||'réessaie.');
-  }finally{$('forgotPasswordButton').disabled=false;}
+    const code=String(error?.code||'');
+    $('loginMessage').textContent=code==='auth/too-many-requests'
+      ? 'Trop de demandes : réessaie plus tard.'
+      : 'Envoi impossible : '+(error?.message||'réessaie.');
+  }finally{
+    $('firstAccessSendButton').disabled=false;
+  }
 };
 $('inviteUserButton').onclick=()=>{
   if(demo||!user||user.uid!==PRIMARY_ADMIN_UID)return;
@@ -313,25 +281,6 @@ $('inviteUserForm').onsubmit=async e=>{
     $('inviteUserMessage').textContent='Envoi impossible : '+(error?.message||'réessaie.');
   }finally{$('sendInviteButton').disabled=false;}
 };
-$('accessForm').onsubmit=async e=>{
-  e.preventDefault();
-  const pin=$('accessCode').value.trim();
-  let profile;
-  if(config.enabled){
-    if(!/^\d{12}$/.test(pin)){
-      $('loginMessage').textContent='Entre ton code confidentiel à 12 chiffres.';
-      return;
-    }
-    profile=pinAccounts[pin.slice(0,4)];
-  }else{
-    profile=codeProfiles[pin];
-  }
-  if(!profile||!permissions[profile.role]){
-    $('loginMessage').textContent='Code non reconnu.';return;
-  }
-  $('accessCode').value='';
-  await startSession(profile,pin);
-};
 $('demoButton').onclick=()=>{
   stopListeners();
   if(auth)auth.signOut().catch(()=>{});
@@ -348,7 +297,8 @@ $('logoutButton').onclick=async()=>{
   if(auth&&!exitingDemo)try{await auth.signOut();}catch(error){
     lock('Impossible de fermer la session. Fermez également cet onglet.');return;
   }
-  lock('Déconnecté. Entre ton code pour revenir.');
+  showEmailLogin();
+  lock('Déconnecté. Connecte-toi avec ton e-mail pour revenir.');
 };
 function render(){
  const guests=accepted(), rs=Object.entries(state.reservations||{}), query=normal($('search').value);
