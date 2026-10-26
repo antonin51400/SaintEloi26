@@ -133,6 +133,8 @@ function stopListeners(){
   if(dataRef)dataRef.off();
   if(db)db.ref('.info/connected').off();
   if(memberRef)memberRef.off();
+  if(adminMembersRef){adminMembersRef.off();adminMembersRef=null;}
+  $('memberList').replaceChildren();
   dataRef=null;memberRef=null;pendingRequestRef=null;ready=false;online=false;
 }
 function lock(message){
