@@ -960,6 +960,24 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
  #appWrapper[data-role="entry"] .entry-tables-grid{overflow:visible;grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}
  .table-legend{padding:9px 12px}
 }
+
+/* Le bord indique l'occupation, la jauge indique les arrivées. */
+.table-block.capacity-empty{border:2px solid #afb7c1;background:#f3f5f7}
+.table-block.capacity-partial{border:2px solid #e5a13b;background:#fff5df}
+.table-block.capacity-full{border:2px solid #cf4f4d;background:#ffedeb}
+.table-block.capacity-overflow{border:3px solid #9a1c2a;background:#ffe0e1}
+.table-block.arrival-waiting .t-progress-wrap{background:#dceaf7}
+.table-block.arrival-partial .t-progress-wrap{background:#fdf0d0}
+.table-block.arrival-complete .t-progress-wrap{background:#dcefe4}
+.table-block.arrival-partial .t-progress-fill{background:#eaae31}
+.table-block.arrival-complete .t-progress-fill{background:#31976d}
+.table-block.arrival-waiting .t-progress-fill{background:#528ecb}
+.table-block.highlighted{outline:3px solid #345eae;outline-offset:2px}
+.fixed-capacity{font-size:12px;color:#526156;background:#eef4ed;border-radius:7px;padding:9px;margin:8px 0}
+.seat-grid .seat.seat-arrived{background:#dbf1e3;border-color:#32946f}
+.seat-grid .seat.seat-expected{background:#e0edf9;border-color:#528ecb}
+.guest-card.arrived{border-left:4px solid #32946f}
+.guest-card:not(.arrived){border-left:4px solid #528ecb}
 </style>
 </head>
 <body>
