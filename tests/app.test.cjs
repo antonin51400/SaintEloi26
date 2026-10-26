@@ -4,6 +4,12 @@ w.eval(fs.readFileSync(path.join(__dirname,'../app.js'),'utf8')+'\nwindow.testAP
 const app=w.testAPI,$=id=>d.getElementById(id),e={preventDefault(){}};
 async function create(by,names,status='accepted',contacted='Antonin Blanckaert'){app.editReservation();$('reservedBy').value=by;$('contactedOrganizer').value=contacted;$('reservationStatus').value=status;$('participantRows').querySelector('input').value=names[0];for(const name of names.slice(1)){$('addParticipant').click();$('participantRows').lastChild.querySelector('input').value=name;}await $('reservationForm').onsubmit(e);assert.equal($('reservationDialog').open,false,$('formError').textContent);return Object.keys(app.state.reservations).at(-1);}
 (async()=>{
+ // Accueil public : uniquement le code PIN ; les commandes Firebase sont dans les options discrètes.
+ assert.equal($('accessForm').querySelectorAll('[required]').length,1);
+ assert.equal($('accessForm').querySelector('input[required]').id,'accessCode');
+ assert.equal($('accessOptions').open,false);
+ assert.ok($('requestAccessForm').closest('#pairingPanel'));
+ assert.equal($('requestAccessForm').hidden,true);
  $('demoButton').click();assert.equal($('statTotal').textContent,'0');assert.equal(app.allGuests().length,0);
  const a=await create('Famille Test',['Alice Test','Bob Test'],'pending','Antonin Bassut');
  assert.equal(app.state.reservations[a].contactedOrganizer,'Antonin Bassut');
@@ -23,10 +29,10 @@ async function create(by,names,status='accepted',contacted='Antonin Blanckaert')
  const broken=JSON.parse(JSON.stringify(app.state));broken.reservations[a].status='accepted';broken.reservations[a].participants[ids[0]].tableId='t1-2';broken.reservations[a].participants[ids[0]].seat=1;assert.throws(()=>app.validateData(broken),/déjà occupée/);
  await app.setStatus(a,'accepted');app.choose({rid:a,pid:ids[0]});app.showPlacement('t1-1');await $('placementForm').onsubmit(e);assert.equal($('placementDialog').open,false);app.closeTablePopup();app.choose({rid:a,pid:ids[0]});app.showPlacement('t1-1');$('placementTable').value='';$('placementTable').onchange();await $('placementForm').onsubmit(e);assert.equal(app.state.reservations[a].participants[ids[0]].tableId,'');
  // L'accès par code pilote les écrans du mode démonstration, sans constituer une authentification serveur.
-$('logoutButton').click();$('accessCode').value='0722';$('accessForm').onsubmit(e);
+$('logoutButton').click();$('accessCode').value='0722';await $('accessForm').onsubmit(e);
 assert.ok($('laneChoice'));assert.equal($('newReservation').style.display,'none');
 $('laneChoice').querySelector('[data-lane="left"]').click();assert.match($('sessionBadge').textContent,/File Gauche/);
-$('logoutButton').click();$('accessCode').value='7890';$('accessForm').onsubmit(e);
+$('logoutButton').click();$('accessCode').value='7890';await $('accessForm').onsubmit(e);
 assert.equal($('newReservation').style.display,'');assert.equal($('exportButton').style.display,'none');
 console.log('PASS: contacté enregistré et conservé, réservations, placement, arrivée = payé, paiement anticipé, accès et file.');dom.window.close();
 })().catch(e=>{console.error(e);process.exit(1)});
