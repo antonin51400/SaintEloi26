@@ -281,6 +281,23 @@ $('firstAccessForm').onsubmit=async e=>{
     $('firstAccessSendButton').disabled=false;
   }
 };
+let adminMembersRef=null;
+function renderMembers(snapshot){
+ const rows=Object.entries(snapshot.val()||{});
+ $('memberList').innerHTML=rows.length?rows.map(([id,m])=>'<div class="admin-member-row"><strong>'+esc(m.email||id)+'</strong><span>'+esc(ROLE_LABELS[m.role]||'Réservations')+'</span><button class="secondary" data-member-id="'+esc(id)+'">Modifier</button></div>').join(''):'<p class="muted">Aucun accès personnalisé. Par défaut, les nouveaux comptes ont le rôle Réservations.</p>';
+ $('memberList').querySelectorAll('[data-member-id]').forEach(b=>b.onclick=()=>{
+  const id=b.dataset.memberId,m=snapshot.val()[id];
+  $('memberUid').value=id;$('memberEmail').value=m.email||'';$('memberRole').value=m.role||'reservations';
+ });
+}
+$('usersManagerButton').onclick=()=>{
+ requireAccess('users');
+ $('memberForm').reset();$('memberFeedback').textContent='';
+ $('usersManagerDialog').showModal();
+ if(adminMembersRef)adminMembersRef.off();
+ adminMembersRef=eventRef.child('members');
+ adminMembersRef.on('value',renderMembers,()=>{$('memberFeedback').textContent='Liste inaccessible. Vérifier les règles Firebase.';});
+};
 $('inviteUserButton').onclick=()=>{
   if(demo||!allowed('users'))return;
   $('inviteUserForm').reset();
