@@ -104,7 +104,7 @@
               ".validate": "newData.isString()"
             },
             "role": {
-              ".validate": "newData.isString()"
+              ".validate": "newData.val() === 'admin' || newData.val() === 'reservations' || newData.val() === 'placement' || newData.val() === 'entry' || newData.val() === 'viewer' || newData.val() === 'disabled'"
             },
             "$other": {
               ".validate": false
