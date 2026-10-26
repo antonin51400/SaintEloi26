@@ -1,65 +1,59 @@
-# Saint Éloi 2026 — réservations, tables et accueil
+# Saint Éloi 2026 — réservations, plan de table et accueil
 
-[Ouvrir le site](https://antonin51400.github.io/SaintEloi26/) · [Firebase Realtime Database](https://console.firebase.google.com/project/sainteloi26-371e3/database)
+**Site :** https://antonin51400.github.io/SaintEloi26/  
+**Firebase :** projet `sainteloi26-371e3`, base Realtime Database en `europe-west1`.
 
-## Connexion des quatre organisateurs
+## Connexion : e-mail exclusivement
 
-Le site affiche un seul champ de **code confidentiel à 12 chiffres** et le bouton **Entrer**. Aucun formulaire Firebase n'est visible : le site utilise Firebase Authentication en arrière-plan pour vérifier un code gardé privé (le mot de passe du compte technique correspondant). Les premiers quatre chiffres du code identifient le compte ; les huit derniers sont confidentiels, différents pour chaque utilisateur et ne figurent jamais dans GitHub.
+La connexion par code de 4 ou 12 chiffres a été **supprimée**.
 
-| Profil | Préfixe | Compte Firebase |
-|---|---|---|
-| Antonin Blanckaert | `2002` | `access2002@sainteloi26-371e3.firebaseapp.com` |
-| Antonin Bassut | `9425` | `access9425@sainteloi26-371e3.firebaseapp.com` |
-| Théotime Laloua | `3186` | `access3186@sainteloi26-371e3.firebaseapp.com` |
-| Robin Maret | `4279` | `access4279@sainteloi26-371e3.firebaseapp.com` |
+L'accueil propose :
 
-Tous les quatre ont les droits **organisateur** pour créer/modifier/accepter les réservations, attribuer les places, enregistrer les arrivées et les paiements et exporter. Le champ « organisateur contacté » propose ces quatre noms ; la personne qui effectue effectivement la saisie est enregistrée séparément dans `createdBy`.
+- **Se connecter** : adresse e-mail et mot de passe.
+- **Première connexion ? Activer mon compte** : saisir uniquement l'adresse e-mail, puis cliquer « Recevoir mon lien par e-mail ». Firebase envoie un **lien de réinitialisation** pour choisir le premier mot de passe. Retourner ensuite à l'accueil pour se connecter.
+- **Mot de passe oublié ?** : ouvre le même formulaire e-mail seul.
+- **Première connexion réussie** : saisir le prénom et le nom une fois ; ils sont ensuite conservés comme identité de l'opérateur pour les réservations.
 
-## Étape obligatoire dans Firebase pour passer en production
+Il n'y a **aucun bouton d'inscription publique**. La création libre de comptes a été désactivée dans Firebase Authentication par le propriétaire le 26 octobre 2026.
 
-**1.** Les quatre utilisateurs ont été annoncés comme créés dans **Firebase Authentication → Utilisateurs** le 26 octobre 2026. Les règles de sécurité du dépôt intègrent leurs quatre identifiants UID et l'adresse e-mail technique correspondante. Pour Antonin Blanckaert, le fichier utilise l'UID complet communiqué d'abord : `nCNc0JdWznOZ6j4B4GjfvQqWX4K2` (la dernière copie du tableau était tronquée). **Vérifier qu'il correspond bien à la console Firebase avant publication.**
+## Ajouter un utilisateur (organisateur uniquement)
 
-**2.** Dans [Realtime Database → Règles](https://console.firebase.google.com/project/sainteloi26-371e3/database), remplacer intégralement les règles par le contenu de [database.rules.json](./database.rules.json) et cliquer **Publier**. Ces règles sont fermées par défaut et n'autorisent la lecture et l'écriture des réservations **qu'aux quatre couples UID + e-mail exacts** sous Firebase Authentication `password`.
+1. Dans [Firebase Authentication → Utilisateurs](https://console.firebase.google.com/project/sainteloi26-371e3/authentication/users), créer un compte avec **l'adresse e-mail réelle et accessible** de la personne et un **mot de passe provisoire robuste**. Le mot de passe provisoire n'a pas besoin d'être communiqué.
+2. Sur le site, le propriétaire de l'UID `nCNc0JdWznOZ6j4B4GjfvQqWX4K2` peut aussi ouvrir **Inviter un utilisateur**, saisir l'e-mail du compte déjà créé, et envoyer son lien de définition du mot de passe.
+3. Autrement, la personne clique elle-même sur **Première connexion ? Activer mon compte**, saisit son e-mail, puis ouvre le lien reçu.
+4. Elle choisit son mot de passe via Firebase, revient sur le site, se connecte et enregistre **prénom + nom**. Cela ouvre l'accès aux réservations.
+5. À la prochaine connexion, le prénom/nom est retrouvé automatiquement et n'est plus demandé.
 
-**3.** Après confirmation de la publication et vérification des quatre UID, changer dans [config.js](./config.js) `enabled: false` en `enabled: true`. Tant que c'est `false`, les codes à quatre chiffres n'ouvrent qu'une démonstration en mémoire, effacée à l'actualisation. Ne pas enregistrer de vraies réservations dans la démonstration.
+**Important :** le site n'envoie pas un e-mail de création d'un compte inexistant. L'utilisateur doit déjà avoir été créé **dans la console Firebase**, et l'adresse doit être une vraie boîte de réception. Selon les paramètres de protection contre l'énumération, Firebase peut accepter la demande sans confirmer publiquement l'existence du compte.
 
-**4.** Faire un test croisé dans deux navigateurs : ouvrir avec un code complet, enregistrer une réservation fictive, voir la même réservation s'afficher avec un autre compte, puis vérifier qu'un mauvais code est rejeté. Tester la validation, le plan et les accès à plusieurs appareils. Les tests GitHub ne remplacent pas cette vérification en conditions réelles.
+### Attention aux quatre comptes historiques
 
-### Sécurité et autres postes
+Les comptes créés initialement avec des adresses techniques `access2002@sainteloi26-371e3.firebaseapp.com`, `access9425@...`, `access3186@...` et `access4279@...` **ne possèdent pas de boîte e-mail réelle**. Un lien de définition de mot de passe envoyé à ces adresses **ne sera pas reçu**.
 
-Les identifiants UID de compte Firebase sont **publics mais ne sont pas des mots de passe**. Les codes complets ne doivent être communiqués qu'aux intéressés et **jamais publiés dans GitHub**. Ne surtout pas utiliser `.read: true` / `.write: true` pour gagner du temps : noms, numéros et états de paiement deviendraient accessibles sur Internet.
+Pour les convertir sans perdre leur historique, **changer l'adresse e-mail du compte Firebase existant** pour une adresse de réception réelle, **en conservant son UID**, plutôt que supprimer/recréer l'utilisateur. Les UID à conserver sont :
 
-Les profils prévus pour le placement (`7890`), l'administration (`6930`), la consultation (`1234`) et l'accueil (`0722`) sont encore présents dans l'interface, mais **ne sont pas autorisés dans les règles de production actuelles**, faute de comptes et UID approuvés. Ils pourront être ajoutés ultérieurement par rôle, avec des règles spécifiques. Les quatre comptes organisateurs sont les seuls accès de production préparés ici.
+| Personne | UID |
+|---|---|
+| Antonin Blanckaert | `nCNc0JdWznOZ6j4B4GjfvQqWX4K2` |
+| Antonin Bassut | `oJnhcgxm4KhnKHN3kFa2u6kYoTf2` |
+| Théotime Laloua | `AmCQErej08OtCuGkwvZyC8etGdl1` |
+| Robin Maret | `A5x97smh01XmZEoOZmLg63Nr2Ig1` |
 
-Le dossier `access-approval/` est un ancien essai d'approbation par e-mail **désormais non utilisé** : aucune installation Google Apps Script n'est nécessaire pour le parcours actuel.
+Si la console ne permet pas la modification de l'e-mail pour ce compte, il faut utiliser une opération d'administration Firebase autorisée (Firebase Admin SDK `updateUser(uid, {email: ...})`) : **ne pas recréer le compte** sans d'abord traiter sa liaison UID. Une fois l'e-mail corrigé, il pourra recevoir son lien de réinitialisation.
 
-## Nouveau : invitations par e-mail et premier profil
+## Sécurité et règles Realtime Database
 
-**La création libre de comptes a été désactivée et les nouvelles règles ont été publiées dans Firebase**, selon confirmation du propriétaire le 26 octobre 2026. Elles correspondent à [`database.rules.managed-users.json`](./database.rules.managed-users.json). La configuration [`firebase.json`](./firebase.json) pointe désormais vers ce fichier pour les futurs déploiements. **Le parcours complet doit encore être testé avec un compte réel** : création administrative, envoi du lien de réinitialisation, renseignement du prénom/nom, puis réservation partagée. Le fichier [`database.rules.json`](./database.rules.json) conserve seulement l'ancien état pour référence.
+Le propriétaire a confirmé la désactivation de la création libre de comptes et la publication de la version initiale des règles avec profils.
 
-### Prérequis de sécurité — indispensable
+Le fichier [`database.rules.managed-users.json`](./database.rules.managed-users.json) a été mis à jour lors du passage à l'e-mail seul : il reconnaît les **quatre anciens UID indépendamment de leurs anciennes adresses techniques**. Il faut **publier cette version actualisée dans Firebase Realtime Database → Règles avant de changer les e-mails des quatre comptes**.
 
-1. Dans [Firebase Authentication](https://console.firebase.google.com/project/sainteloi26-371e3/authentication/users), la méthode **Adresse e-mail / Mot de passe** doit rester activée et le fournisseur **Anonyme** peut rester désactivé.
-2. Dans **Authentication → Paramètres → Actions utilisateur (User actions)**, **désactiver « Autoriser la création de comptes / Enable create (sign-up) »**. Cela empêche la création libre de comptes par API Web ; sans cette restriction, n'importe qui pourrait se créer un compte et demander son propre profil. Cette étape est **différente** de la désactivation du fournisseur anonyme.
-3. Vérifier la liste des comptes déjà présents dans **Utilisateurs** : elle ne doit pas contenir de comptes inconnus (sinon les supprimer).
-4. **Déjà effectué le 26 octobre 2026, selon confirmation du propriétaire :** publication de [`database.rules.managed-users.json`](./database.rules.managed-users.json) dans **Realtime Database → Règles**. Ce fichier conserve les quatre comptes historiques et ajoute `events/saint-eloi-2026/profiles/{UID}`.
-5. Tester avec un **nouveau compte créé manuellement dans la console**, puis contrôler que l'utilisateur arrive sur le formulaire prénom + nom à sa première connexion et sur les réservations à la seconde.
+[`firebase.json`](./firebase.json) pointe vers ce fichier de règles pour les futurs déploiements.
 
-### Utilisation quotidienne
+Règles principales : refus par défaut au niveau racine ; lecture et écriture des réservations seulement par un compte e-mail/mot de passe déjà créé dans Firebase et disposant soit d'un ancien UID autorisé, soit de son propre profil nominatif sous `events/saint-eloi-2026/profiles/{UID}`. Le profil ne peut être créé que par le compte connecté avec ce même UID et une seule fois. **Les nouvelles personnes disposent des droits de gestion des réservations** : ne créer que des utilisateurs auxquels on souhaite donner cet accès. Les règles conservées dans `database.rules.json` sont les anciennes règles de référence.
 
-- **Le responsable crée la personne dans Firebase Authentication → Utilisateurs**, avec son adresse e-mail et un **mot de passe provisoire long et aléatoire**. Ne pas communiquer le mot de passe provisoire.
-- Sur le site, le responsable se connecte avec le code `2002…`, clique sur **Inviter un utilisateur**, entre son adresse et clique **Envoyer l'e-mail**. Le navigateur demande à Firebase l'envoi d'un lien de **réinitialisation de mot de passe**. Le lien arrive depuis le système de notification Firebase, pas depuis une boîte Gmail personnelle.
-- La personne choisit un mot de passe depuis ce lien, revient sur le site, sélectionne **E-mail**, puis entre son adresse et son nouveau mot de passe.
-- **À sa première connexion uniquement**, elle renseigne prénom et nom ; le site enregistre un profil dans la base, associé à son UID Firebase. Elle accède aux réservations et au placement avec les droits organisateur.
-- **Aux connexions suivantes**, le profil est retrouvé automatiquement. Les quatre anciens comptes gardent leur connexion par code.
+**Ne jamais remplacer les règles par `.read: true` / `.write: true`**. Ne jamais exposer de mot de passe, clé privée ou compte de service dans GitHub.
 
-**Note de sécurité :** les nouveaux comptes ont pour l'instant le même niveau de droit que les organisateurs. Ne créez pas de comptes pour des bénévoles auxquels vous voudriez limiter l'accès à l'accueil ou à la consultation. Un système à rôles par utilisateur pourra être ajouté séparément.
-
-## Données et fonctionnement
-
-Le projet démarre sans réservation importée. Les réservations comportent nom du réservant, invités, téléphone facultatif, personne contactée, statut, date et opérateur créateur. Les tables ont 42 sections. Les placements respectent la capacité et les places occupées ; un arrivé est automatiquement payé et un paiement anticipé reste possible.
-
-## Tests locaux et CI
+## Vérifications et tests
 
 ```sh
 npm install
@@ -67,4 +61,6 @@ npm test
 node --check app.js
 ```
 
-GitHub Actions exécute les tests de l'interface, de la connexion par code en mode Firebase simulé, et des règles UID + e-mail des quatre organisateurs. Ils ne prouvent pas que les règles ont déjà été déployées dans la console Firebase.
+Les tests GitHub simulent l'interface et Firebase Authentication, mais **ne prouvent pas la délivrabilité d'un e-mail ni la bonne publication de règles en production**. Faire un test réel : créer un utilisateur avec une adresse accessible, demander le lien depuis **Première connexion**, choisir le mot de passe, compléter prénom et nom, créer une réservation fictive et vérifier sa présence avec un deuxième compte. Après le test, supprimer la réservation fictive.
+
+Le mode démonstration est encore accessible dans les options discrètes, sans synchronisation ni sauvegarde.
