@@ -31,7 +31,7 @@ window.SAINT_ELOI_PIN_ACCOUNTS = {
 
 window.SAINT_ELOI_CONFIG = {
   // Ne passer à true qu'après création des comptes Firebase et publication des règles adaptées.
-  enabled: false,
+  enabled: true,
   eventPath: 'events/saint-eloi-2026',
   firebase: {
     // Paramètres PUBLICS de l'application Web Firebase (sans mot de passe privé).
