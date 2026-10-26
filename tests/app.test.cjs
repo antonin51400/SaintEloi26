@@ -18,8 +18,8 @@ async function create(by,names,status='accepted',contacted='Antonin Blanckaert')
  $('search').value='Antonin Bassut';$('search').oninput();assert.match($('guestList').textContent,/Famille Test/);$('search').value='';$('search').oninput();
  assert.match($('tableLegend').textContent,/Occupation des tables/);
  assert.match($('tableLegend').textContent,/Arrivées à chaque table/);
- assert.equal($('entryTablesGrid').querySelectorAll('.entry-table-card').length,document.querySelectorAll('.table-block').length);
- assert.equal($('entryTablesGrid').querySelectorAll('.entry-seat').length,document.querySelectorAll('.table-block').length*6);
+ assert.equal($('entryTablesGrid').querySelectorAll('.entry-table-card').length,d.querySelectorAll('.table-block').length);
+ assert.equal($('entryTablesGrid').querySelectorAll('.entry-seat').length,d.querySelectorAll('.table-block').length*6);
  assert.equal($('statTotal').textContent,'0');await app.setStatus(a,'accepted');assert.equal($('statTotal').textContent,'2');
  app.choose({rid:a});app.showPlacement('t1-1');assert.equal($('newCapacity'),null);await $('placementForm').onsubmit(e);assert.equal($('placementDialog').open,false,$('placementError').textContent);assert.match($('popupSubtitle').textContent,/2 \/ 6 places occupées/);app.closeTablePopup();
  assert.equal($('entryTablesGrid').querySelector('.entry-table-card').textContent.includes('2/6 places'),true);
