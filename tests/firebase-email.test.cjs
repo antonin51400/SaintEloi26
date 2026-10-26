@@ -86,6 +86,33 @@ async function nameProfile(first,last){
   assert.equal($('inviteUserButton').hidden,false,'owner can send invite');
   assert.equal($('usersManagerButton').hidden,false,'admin sees user permissions manager');
   assert.equal($('adminDashboardButton').hidden,false,'admin sees private attendance dashboard');
+  assert.equal($('adminViewControl').hidden,false,'admin has access to view selector');
+  assert.equal($('adminRoleView').value,'admin');
+  for(const view of ['reservations','placement','viewer']){
+    $('adminRoleView').value=view;
+    $('adminRoleView').onchange();
+    assert.equal($('appWrapper').dataset.role,view);
+    assert.equal(w.inspectEmail.role,'admin','true Firebase role is not changed');
+    assert.equal($('adminViewControl').hidden,false,'admin selector remains available');
+    assert.equal($('adminDashboardButton').hidden,true,'admin-only functions hidden in preview');
+    assert.equal($('usersManagerButton').hidden,true,'user management hidden in preview');
+    assert.equal($('adminPreviewNotice').hidden,false,'preview has visible warning');
+  }
+  $('adminRoleView').value='entry';
+  $('adminRoleView').onchange();
+  assert.equal($('appWrapper').dataset.role,'entry');
+  assert.ok($('laneChoice'),'preview entry includes the lane chooser');
+  assert.match($('laneChoice').textContent,/File 1/);
+  assert.match($('laneChoice').textContent,/File 2/);
+  $('laneChoice').querySelector('[data-lane="right"]').click();
+  assert.match($('sessionBadge').textContent,/APERÇU/);
+  $('adminRoleView').value='admin';
+  $('adminRoleView').onchange();
+  assert.equal($('appWrapper').dataset.role,'admin');
+  assert.equal($('adminPreviewNotice').hidden,true);
+  assert.equal($('adminDashboardButton').hidden,false);
+  assert.equal($('usersManagerButton').hidden,false);
+
   $('adminDashboardButton').click();
   assert.equal($('adminDashboardDialog').open,true);
   assert.match($('adminKpis').textContent,/Invités attendus/);
@@ -107,6 +134,7 @@ async function nameProfile(first,last){
   assert.equal($('newReservation').style.display,'none');
   assert.equal($('adminDashboardButton').hidden,true);
   assert.equal($('usersManagerButton').hidden,true);
+  assert.equal($('adminViewControl').hidden,true,'staff cannot access admin preview');
   assert.ok($('laneChoice'),'entry account selects an entrance lane');
   assert.match($('laneChoice').textContent,/File 1/);
   assert.match($('laneChoice').textContent,/File 2/);
