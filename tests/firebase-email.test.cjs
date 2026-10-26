@@ -13,10 +13,10 @@ const auth={
   setPersistence:async()=>{},
   signInWithEmailAndPassword:async(email,password)=>{
     calls.login.push({email,password});
-    const uid=email.startsWith('access2002@')?'nCNc0JdWznOZ6j4B4GjfvQqWX4K2':'newMember123';
+    const uid=email==='ancien@example.fr'?'nCNc0JdWznOZ6j4B4GjfvQqWX4K2':'nouveau123';
     return {user:{uid,email}};
   },
-  sendPasswordResetEmail:async email=>{calls.sent.push(email);},
+  sendPasswordResetEmail:async email=>calls.sent.push(email),
   signOut:async()=>{}
 };
 const authFn=()=>auth;
@@ -35,47 +35,62 @@ const databaseFn=()=>({ref:makeRef});
 databaseFn.ServerValue={TIMESTAMP:123456789};
 w.firebase={apps:[{}],auth:authFn,database:databaseFn};
 w.eval(fs.readFileSync(path.join(__dirname,'../config.js'),'utf8'));
-w.SAINT_ELOI_CONFIG.enabled=true;
 w.eval(fs.readFileSync(path.join(__dirname,'../app.js'),'utf8')+
 '\nwindow.inspectEmail={get operator(){return operator;},get role(){return role;}};');
-(async()=>{
-  assert.equal($('emailAccessForm').hidden,true);
-  $('useEmailButton').click();
-  assert.equal($('accessForm').hidden,true);
-  assert.equal($('emailAccessForm').hidden,false);
-  $('emailAddress').value='nouvelle.personne@example.fr';
-  $('emailPassword').value='mot-de-passe-provisoire';
+async function login(email,password){
+  $('emailAddress').value=email;
+  $('emailPassword').value=password;
   await $('emailAccessForm').onsubmit({preventDefault(){}});
-  assert.equal(calls.login.length,1);
-  assert.equal($('firstLoginDialog').open,true,'first connection requires profile');
-  assert.equal($('appWrapper').style.display,'none','no reservation access before profile');
-  $('firstName').value='Camille';
-  $('lastName').value='Dupont';
+}
+async function nameProfile(first,last){
+  $('firstName').value=first;
+  $('lastName').value=last;
   await $('firstLoginForm').onsubmit({preventDefault(){}});
-  assert.equal(calls.profiles['events/saint-eloi-2026/profiles/newMember123'].firstName,'Camille');
+}
+(async()=>{
+  assert.equal($('accessCode'),null,'PIN entry must not exist');
+  assert.equal($('accessForm'),null,'PIN form must not exist');
+  assert.equal($('usePinButton'),null,'PIN toggle must not exist');
+  assert.equal($('emailAccessForm').hidden,false);
+  assert.equal($('firstAccessForm').hidden,true);
+  $('showFirstAccess').click();
+  assert.equal($('emailAccessForm').hidden,true);
+  assert.equal($('firstAccessForm').hidden,false);
+  assert.equal($('firstAccessForm').querySelectorAll('input').length,1);
+  $('firstAccessEmail').value='nouveau@example.fr';
+  await $('firstAccessForm').onsubmit({preventDefault(){}});
+  assert.deepEqual(calls.sent,['nouveau@example.fr']);
+  assert.match($('loginMessage').textContent,/e-mail/);
+  $('backToLogin').click();
+  await login('nouveau@example.fr','secret long');
+  assert.equal($('firstLoginDialog').open,true,'first connection asks for name');
+  assert.equal($('appWrapper').style.display,'none');
+  await nameProfile('Camille','Dupont');
+  assert.equal(calls.profiles['events/saint-eloi-2026/profiles/nouveau123'].firstName,'Camille');
   assert.equal(w.inspectEmail.operator,'Camille Dupont');
   assert.equal(w.inspectEmail.role,'organizer');
   assert.equal($('appWrapper').style.display,'flex');
   assert.notEqual($('newReservation').style.display,'none');
-  assert.equal($('inviteUserButton').hidden,true,'new members cannot use organizer invite panel');
+  assert.equal($('inviteUserButton').hidden,true);
   await $('logoutButton').onclick();
-  $('emailPassword').value='mot-de-passe-provisoire';
-  await $('emailAccessForm').onsubmit({preventDefault(){}});
-  assert.equal($('firstLoginDialog').open,false,'second login reuses existing profile');
+  assert.equal($('firstAccessForm').hidden,true);
+  await login('nouveau@example.fr','secret long');
+  assert.equal($('firstLoginDialog').open,false,'profile reused');
   assert.equal($('appWrapper').style.display,'flex');
   await $('logoutButton').onclick();
-  $('emailAddress').value='camille@example.fr';
-  await $('forgotPasswordButton').onclick();
-  assert.deepEqual(calls.sent,['camille@example.fr']);
-  $('usePinButton').click();
-  $('accessCode').value='2002'+'8'.repeat(8);
-  await $('accessForm').onsubmit({preventDefault(){}});
-  assert.equal($('inviteUserButton').hidden,false);
+  await login('ancien@example.fr','ancien mot de passe');
+  assert.equal($('firstLoginDialog').open,true,'legacy account also gets name form');
+  await nameProfile('Antonin','Blanckaert');
+  assert.equal($('inviteUserButton').hidden,false,'owner can send invite');
   $('inviteUserButton').click();
-  assert.equal($('inviteUserDialog').open,true);
   $('inviteEmail').value='autre@example.fr';
   await $('inviteUserForm').onsubmit({preventDefault(){}});
-  assert.deepEqual(calls.sent,['camille@example.fr','autre@example.fr']);
+  assert.deepEqual(calls.sent,['nouveau@example.fr','autre@example.fr']);
+  await $('logoutButton').onclick();
+  $('emailAddress').value='nouveau@example.fr';
+  $('forgotPasswordButton').click();
+  assert.equal($('firstAccessForm').hidden,false);
+  assert.equal($('firstAccessEmail').value,'nouveau@example.fr');
   w.close();
-  console.log('PASS: Email, first profile, reuse, reset email and admin invitation.');
-})().catch(error=>{console.error(error);process.exitCode=1;});
+  console.log('PASS: email-only, first connection reset, named profile, legacy UID and invitations');
+})().catch(err=>{console.error(err);process.exitCode=1;});
