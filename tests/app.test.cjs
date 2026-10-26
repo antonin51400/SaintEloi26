@@ -1,14 +1,16 @@
 const {JSDOM}=require('jsdom');const path=require('node:path');const fs=require('fs');const assert=require('node:assert/strict');
-const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../index.html'),'utf8'),{url:'http://localhost',runScripts:'outside-only'});const w=dom.window,d=w.document;w.HTMLElement.prototype.scrollIntoView=function(){};w.HTMLDialogElement.prototype.showModal=function(){this.open=true};w.HTMLDialogElement.prototype.close=function(){this.open=false};w.confirm=()=>true;w.SAINT_ELOI_CONFIG={enabled:false};w.SAINT_ELOI_ACCESS_CODES={'0722':{name:'Accueil',role:'entry'},'7890':{name:'Placement',role:'placement'},'2002':{name:'Blanckaert',role:'organizer'}};
+const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../index.html'),'utf8'),{url:'http://localhost',runScripts:'outside-only'});const w=dom.window,d=w.document;w.HTMLElement.prototype.scrollIntoView=function(){};w.HTMLDialogElement.prototype.showModal=function(){this.open=true};w.HTMLDialogElement.prototype.close=function(){this.open=false};w.confirm=()=>true;w.SAINT_ELOI_CONFIG={enabled:false};
 w.eval(fs.readFileSync(path.join(__dirname,'../app.js'),'utf8')+'\nwindow.testAPI={editReservation,choose,showPlacement,openTablePopup,closeTablePopup,clearSelection,setStatus,setFlag,mutate,validateData,render,allGuests,get state(){return state;},set state(v){state=v;},get busy(){return busy;}}');
 const app=w.testAPI,$=id=>d.getElementById(id),e={preventDefault(){}};
 async function create(by,names,status='accepted',contacted='Antonin Blanckaert'){app.editReservation();$('reservedBy').value=by;$('contactedOrganizer').value=contacted;$('reservationStatus').value=status;$('participantRows').querySelector('input').value=names[0];for(const name of names.slice(1)){$('addParticipant').click();$('participantRows').lastChild.querySelector('input').value=name;}await $('reservationForm').onsubmit(e);assert.equal($('reservationDialog').open,false,$('formError').textContent);return Object.keys(app.state.reservations).at(-1);}
 (async()=>{
- // Accueil public : uniquement le code PIN ; les commandes Firebase sont dans les options discrètes.
- assert.equal($('accessForm').querySelectorAll('[required]').length,1);
- assert.equal($('accessForm').querySelector('input[required]').id,'accessCode');
+ // L'accueil ne doit proposer ni code PIN ni inscription publique.
+ assert.equal($('accessForm'),null);
+ assert.equal($('accessCode'),null);
+ assert.equal($('emailAccessForm').querySelectorAll('[required]').length,2);
+ assert.equal($('firstAccessForm').querySelectorAll('[required]').length,1);
+ assert.equal($('firstAccessForm').hidden,true);
  assert.equal($('accessOptions').open,false);
- assert.equal($('accessCode').maxLength,12);
  $('demoButton').click();assert.equal($('statTotal').textContent,'0');assert.equal(app.allGuests().length,0);
  const a=await create('Famille Test',['Alice Test','Bob Test'],'pending','Antonin Bassut');
  assert.equal(app.state.reservations[a].contactedOrganizer,'Antonin Bassut');
@@ -27,11 +29,11 @@ async function create(by,names,status='accepted',contacted='Antonin Blanckaert')
  await app.setStatus(a,'cancelled');assert.equal($('statTotal').textContent,'1');assert.match($('occ-t1-2').textContent,/1 \/ 3 places/);assert.equal(app.state.reservations[a].participants[ids[0]].paid,true);
  const broken=JSON.parse(JSON.stringify(app.state));broken.reservations[a].status='accepted';broken.reservations[a].participants[ids[0]].tableId='t1-2';broken.reservations[a].participants[ids[0]].seat=1;assert.throws(()=>app.validateData(broken),/déjà occupée/);
  await app.setStatus(a,'accepted');app.choose({rid:a,pid:ids[0]});app.showPlacement('t1-1');await $('placementForm').onsubmit(e);assert.equal($('placementDialog').open,false);app.closeTablePopup();app.choose({rid:a,pid:ids[0]});app.showPlacement('t1-1');$('placementTable').value='';$('placementTable').onchange();await $('placementForm').onsubmit(e);assert.equal(app.state.reservations[a].participants[ids[0]].tableId,'');
- // L'accès par code pilote les écrans du mode démonstration, sans constituer une authentification serveur.
-$('logoutButton').click();$('accessCode').value='0722';await $('accessForm').onsubmit(e);
-assert.ok($('laneChoice'));assert.equal($('newReservation').style.display,'none');
-$('laneChoice').querySelector('[data-lane="left"]').click();assert.match($('sessionBadge').textContent,/File Gauche/);
-$('logoutButton').click();$('accessCode').value='7890';await $('accessForm').onsubmit(e);
-assert.equal($('newReservation').style.display,'');assert.equal($('exportButton').style.display,'none');
+ await $('logoutButton').onclick();
+ assert.equal($('loginPanel').style.display,'flex');
+ $('showFirstAccess').click();
+ assert.equal($('firstAccessForm').hidden,false);
+ $('backToLogin').click();
+ assert.equal($('emailAccessForm').hidden,false);
 console.log('PASS: contacté enregistré et conservé, réservations, placement, arrivée = payé, paiement anticipé, accès et file.');dom.window.close();
 })().catch(e=>{console.error(e);process.exit(1)});
