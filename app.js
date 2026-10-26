@@ -298,6 +298,16 @@ $('usersManagerButton').onclick=()=>{
  adminMembersRef=eventRef.child('members');
  adminMembersRef.on('value',renderMembers,()=>{$('memberFeedback').textContent='Liste inaccessible. Vérifier les règles Firebase.';});
 };
+$('memberForm').onsubmit=async e=>{
+ e.preventDefault();requireAccess('users');
+ const id=$('memberUid').value.trim(),email=$('memberEmail').value.trim().toLowerCase(),assigned=$('memberRole').value;
+ if(!/^[A-Za-z0-9_-]{8,128}$/.test(id)||!ROLE_LABELS[assigned]){ $('memberFeedback').textContent='UID ou rôle non valide.';return; }
+ if(ROOT_ADMIN_UIDS.includes(id)&&assigned!=='admin'){ $('memberFeedback').textContent='Les comptes principaux restent administrateurs.';return; }
+ try{
+  await eventRef.child('members').child(id).set({email,role:assigned,updatedBy:user.uid,updatedAt:firebase.database.ServerValue.TIMESTAMP});
+  $('memberFeedback').textContent='Droits enregistrés.';
+ }catch(error){$('memberFeedback').textContent=error.message;}
+};
 $('inviteUserButton').onclick=()=>{
   if(demo||!allowed('users'))return;
   $('inviteUserForm').reset();
