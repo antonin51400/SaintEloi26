@@ -897,30 +897,18 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
     <div class="code-box">
       <div class="eyebrow-code">ESPACE ORGANISATION</div>
       <h2>Bienvenue à la Saint Éloi</h2>
-      <p>Entre ton code à quatre chiffres pour accéder à ton espace.</p>
+      <p>Entre simplement ton code confidentiel pour accéder à ton espace.</p>
       <form id="accessForm" class="access-form">
         <label for="accessCode" class="access-label">Ton code d’accès</label>
-        <input id="accessCode" class="access-input" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" placeholder="••••" required>
+        <input id="accessCode" class="access-input" type="password" inputmode="numeric" pattern="[0-9]{4,12}" maxlength="12" autocomplete="off" placeholder="Code confidentiel" required>
         <button class="primary" type="submit" id="loginButton">Entrer <span aria-hidden="true">→</span></button>
       </form>
       <p id="loginMessage" role="status"></p>
-      <section id="pairingPanel" class="pairing-panel" hidden aria-label="Validation de l’accès">
-        <strong>Validation nécessaire</strong>
-        <p id="accessRequestStatus">Cet appareil doit être approuvé avant d’accéder aux réservations partagées.</p>
-        <form id="requestAccessForm" hidden>
-          <label for="requestName" class="access-label">Prénom et nom de la personne à autoriser</label>
-          <input id="requestName" class="access-input name-input" type="text" maxlength="100" autocomplete="name" placeholder="Prénom et nom" required>
-          <button class="primary" type="submit" id="sendRequestButton">Demander l’accès</button>
-        </form>
-      </section>
       <details id="accessOptions" class="access-options">
-        <summary aria-label="Options et dépannage" title="Options et dépannage"><span aria-hidden="true">⚙</span></summary>
+        <summary aria-label="Options" title="Options"><span aria-hidden="true">⚙</span></summary>
         <div class="access-options-body">
-          <button class="secondary" type="button" id="pairDeviceButton">Afficher l’identifiant de cet appareil</button>
-          <code id="deviceUid" class="device-uid" hidden></code>
-          <button class="secondary" type="button" id="copyDeviceUid" hidden>Copier l’identifiant</button>
           <button class="secondary" type="button" id="demoButton">Essayer le mode démonstration</button>
-          <p class="muted">Mode démonstration : les données ne sont pas sauvegardées ni partagées.</p>
+          <p class="muted">Le mode démonstration n'enregistre pas les réservations.</p>
         </div>
       </details>
     </div>
