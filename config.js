@@ -6,6 +6,8 @@
 window.SAINT_ELOI_ACCESS_CODES = {
   '2002': {name:'Antonin Blanckaert',role:'organizer'},
   '9425': {name:'Antonin Bassut',role:'organizer'},
+  '3186': {name:'Théotime Laloua',role:'organizer'},
+  '4279': {name:'Robin Maret',role:'organizer'},
   '7890': {name:'Placement des invités',role:'placement'},
   '6930': {name:'Administration',role:'admin'},
   '1234': {name:'Consultation du plan',role:'view'},
@@ -19,6 +21,8 @@ window.SAINT_ELOI_ACCESS_CODES = {
 window.SAINT_ELOI_PIN_ACCOUNTS = {
   '2002': {email:'access2002@sainteloi26-371e3.firebaseapp.com',name:'Antonin Blanckaert',role:'organizer'},
   '9425': {email:'access9425@sainteloi26-371e3.firebaseapp.com',name:'Antonin Bassut',role:'organizer'},
+  '3186': {email:'access3186@sainteloi26-371e3.firebaseapp.com',name:'Théotime Laloua',role:'organizer'},
+  '4279': {email:'access4279@sainteloi26-371e3.firebaseapp.com',name:'Robin Maret',role:'organizer'},
   '7890': {email:'access7890@sainteloi26-371e3.firebaseapp.com',name:'Placement des invités',role:'placement'},
   '6930': {email:'access6930@sainteloi26-371e3.firebaseapp.com',name:'Administration',role:'admin'},
   '1234': {email:'access1234@sainteloi26-371e3.firebaseapp.com',name:'Consultation du plan',role:'view'},
