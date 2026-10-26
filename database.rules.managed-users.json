@@ -89,7 +89,8 @@
               },
               "$other": {
                 ".validate": false
-              }
+              },
+              ".write": "auth != null && auth.provider === 'password' && root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'placement'"
             }
           },
           "$other": {
