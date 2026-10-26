@@ -27,8 +27,8 @@ for (const [email, uid] of users) {
 assert.equal(evaluate(data['.read'], null), false);
 assert.equal(evaluate(data['.write'], null), false);
 assert.equal(evaluate(data['.read'], {uid:'stranger',provider:'password',token:{email:'hacker@example.com'}}), false);
-// Le nouveau système e-mail est préparé mais n'est pas publié tant que
-// la création de comptes en libre-service n'a pas été désactivée dans Firebase.
+// Le fichier de règles de production est suivi dans GitHub et doit être publié
+// manuellement dans Firebase après les changements de droits ou de capacité.
 const future=JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'database.rules.managed-users.json'),'utf8'));
 const event=future.rules.events['saint-eloi-2026'];
 assert.equal(future.rules['.read'],false);
@@ -42,11 +42,13 @@ const memberRule=event.members['$uid'];
 assert.match(memberRule['.write'],/auth.uid === \$uid/,'new users can only request rights for their own UID');
 assert.match(memberRule['.write'],/reservations/,'self-created member must have reservations role');
 assert.match(event.data['.write'],/admin/,'global writing requires an admin');
+assert.match(event.data.tables['$id'].capacity['.validate'],/newData\.val\(\) === 6/,'only six-place capacities may be newly assigned');
 const reservationNode=event.data.reservations['$id'];
 assert.doesNotMatch(reservationNode['.write'],/placement/,'placeurs must not edit full reservations');
 assert.match(reservationNode['.write'],/reservations/);
 assert.match(reservationNode['.validate'],/contactedOrganizer/,'placement cannot edit the reservation contact');
 const person=reservationNode.participants['$pid'];
+assert.match(person.seat['.validate'],/newData\.val\(\) <= 6/,'no new seventh seat allowed');
 assert.match(person['.write'],/entry/,'check-in is based on entry accreditation');
 assert.match(person['.write'],/placement/,'placement can write a single participant');
 for(const field of ['tableId','seat','arrived','paid'])
