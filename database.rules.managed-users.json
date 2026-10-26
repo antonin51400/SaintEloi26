@@ -118,7 +118,8 @@
             },
             "updatedBy": {
               ".validate": "newData.isString() && newData.val() === auth.uid"
-            }
+            },
+            ".validate": "newData.hasChildren(['email','role','updatedBy','updatedAt'])"
           },
           ".read": "auth != null && (auth.uid === 'nCNc0JdWznOZ6j4B4GjfvQqWX4K2' || auth.uid === 'KpFkapZExKcToBcy52YCo6rdwuh2' || root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'admin')"
         },
