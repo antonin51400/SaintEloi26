@@ -1355,7 +1355,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
     <button class="primary" id="sendInviteButton" type="submit">Envoyer l'e-mail de création de mot de passe</button>
   </form>
 </dialog>
-<dialog id="reservationDialog"><form id="reservationForm">
+<dialog id="adminDashboardDialog" aria-labelledby="adminDashboardTitle"><div class="dialog-heading"><h2 id="adminDashboardTitle">Pilotage des entrées</h2><button type="button" class="secondary" data-close="adminDashboardDialog">Fermer</button></div><p class="muted">Dashboard privé administrateur — suivi en direct.</p><div id="adminKpis"></div><label>Rechercher<input type="search" id="adminGuestSearch"></label><label>Filtrer<select id="adminGuestFilter"><option value="not-arrived">Attendus</option><option value="arrived">Arrivés</option><option value="unplaced">À placer</option><option value="unpaid">Non payés</option><option value="all">Tous</option></select></label><div id="adminGuestResults"></div></dialog><dialog id="reservationDialog"><form id="reservationForm">
 <div class="dialog-heading"><h2 id="reservationTitle">Nouvelle réservation SMS</h2><button type="button" class="secondary" data-close="reservationDialog">Fermer</button></div>
 <div class="form-grid"><label>Personne qui réserve<input id="reservedBy" maxlength="120" required autocomplete="off"></label><label>Téléphone (facultatif)<input id="phone" type="tel" maxlength="30" autocomplete="off"></label></div>
 <label>Organisateur contacté par le réservant
