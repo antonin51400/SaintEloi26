@@ -34,7 +34,7 @@ const event=future.rules.events['saint-eloi-2026'];
 assert.equal(future.rules['.read'],false);
 assert.equal(future.rules['.write'],false);
 assert.match(event.data['.read'],/profiles/);
-assert.match(event.data['.write'],/profiles/);
+assert.match(event.data['.write'],/role'\)\.val\(\) === 'admin'/);
 assert.match(event.profiles['$uid']['.write'],/auth.uid === \$uid/);
 assert.match(event.profiles['$uid']['.write'],/!data.exists\(\)/);
 assert.equal(event.profiles['$uid'].firstName['.validate'].includes('isString()'),true);
