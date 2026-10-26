@@ -57,7 +57,8 @@ function allGuests(data = state) {
   return Object.entries(data.reservations || {}).flatMap(([rid,r]) => Object.entries(r.participants || {}).map(([pid,p]) => ({...p,rid,pid,reservedBy:r.reservedBy,status:r.status})));
 }
 function accepted(data = state) { return allGuests(data).filter(p => p.status === 'accepted'); }
-function capacity(tableId, data = state) { return Number(data.tables?.[tableId]?.capacity) || 0; }
+const FIXED_TABLE_CAPACITY=6;
+function capacity(tableId){ return tableNames[tableId] ? FIXED_TABLE_CAPACITY : 0; }
 function membersFor(sel, data = state) {
   const r = data.reservations?.[sel.rid];
   if (!r || r.status !== 'accepted') throw Error('Acceptez d’abord cette réservation pour placer ses invités.');
@@ -457,7 +458,7 @@ function render(){
  $('guestList').innerHTML=html||'<div class="empty-state">Aucune réservation pour le moment.<br>Utilisez « + Réservation SMS » pour ajouter un réservant et ses invités.</div>';
  tableElements.forEach(el=>{
    const seated=guests.filter(p=>p.tableId===el.id), cap=capacity(el.id);
-   el.querySelector('.t-guests').textContent=cap?`${seated.length} / ${cap} places · ${cap-seated.length} libres`:'Capacité à définir';
+   el.querySelector('.t-guests').textContent=`${seated.length} / ${cap} places · ${Math.max(0,cap-seated.length)} libres`;
    el.querySelector('.t-name').textContent=seated.length?`${seated.filter(p=>p.arrived).length} arrivé(s) · ${seated.filter(p=>p.paid).length} payé(s)`:'Aucun invité placé';
    el.classList.toggle('full',!!cap&&seated.length===cap);el.classList.toggle('highlighted',!!selection);
  });
