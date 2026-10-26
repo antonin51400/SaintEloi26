@@ -74,14 +74,41 @@ async function mutate(change) {
   if (!ready || !user || (!demo&&!online)) throw Error('Connexion indisponible : aucune modification enregistrée.');
   busy=true; document.querySelectorAll('button[type="submit"]').forEach(b=>b.disabled=true);
   try {
-    if(demo){const next=clone(state);change(next);validateData(next);state=next;render();}
-    else {
+    if(demo){
+      const next=clone(state);change(next);validateData(next);state=next;render();
+    }else if(role==='admin'||role==='organizer'){
+      // Opération globale atomique : seuls les administrateurs peuvent écrire à la racine data.
       let conflict='';
       const result=await dataRef.transaction(current=>{
-        try {const next=current||{reservations:{},tables:{}};next.reservations ||= {};next.tables ||= {};change(next);validateData(next);conflict='';return next;}
-        catch(e){conflict=e.message;return;}
+        try{
+          const next=current||{reservations:{},tables:{}};
+          next.reservations ||= {};next.tables ||= {};
+          change(next);validateData(next);conflict='';return next;
+        }catch(error){conflict=error.message;return;}
       },undefined,false);
-      if(!result.committed) throw Error(conflict||'Enregistrement non effectué. Réessayez.');
+      if(!result.committed)throw Error(conflict||'Enregistrement non effectué.');
+    }else{
+      // Droits limités : transaction sur UNE réservation pour que Firebase
+      // vérifie la modification et non l'ensemble de la base.
+      const draft=clone(state);change(draft);validateData(draft);
+      if(JSON.stringify(draft.tables||{})!==JSON.stringify(state.tables||{}))
+        throw Error('La capacité des tables est réservée aux administrateurs.');
+      const ids=new Set([...Object.keys(state.reservations||{}),...Object.keys(draft.reservations||{})]);
+      const changed=[...ids].filter(id=>JSON.stringify(state.reservations?.[id])!==JSON.stringify(draft.reservations?.[id]));
+      if(changed.length!==1)throw Error('Une seule réservation peut être modifiée à la fois avec ce rôle.');
+      const reservationId=changed[0];
+      let conflict='';
+      const result=await dataRef.child('reservations').child(reservationId).transaction(current=>{
+        try{
+          const live=clone(state);
+          live.reservations ||= {};
+          if(current)live.reservations[reservationId]=current;
+          else delete live.reservations[reservationId];
+          change(live);validateData(live);conflict='';
+          return live.reservations[reservationId]||null;
+        }catch(error){conflict=error.message;return;}
+      },undefined,false);
+      if(!result.committed)throw Error(conflict||'Modification refusée par les droits Firebase.');
     }
     notice(demo?'Modification effectuée en démonstration — non sauvegardée.':'Modification enregistrée et partagée.');
   } finally {busy=false;document.querySelectorAll('button[type="submit"]').forEach(b=>b.disabled=false);}
