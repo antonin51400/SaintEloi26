@@ -59,6 +59,7 @@ w.eval(fs.readFileSync(path.join(__dirname,'../app.js'),'utf8')+
   assert.notEqual($('newReservation').style.display,'none');
   assert.equal($('inviteUserButton').hidden,true,'new members cannot use organizer invite panel');
   await $('logoutButton').onclick();
+  $('emailPassword').value='mot-de-passe-provisoire';
   await $('emailAccessForm').onsubmit({preventDefault(){}});
   assert.equal($('firstLoginDialog').open,false,'second login reuses existing profile');
   assert.equal($('appWrapper').style.display,'flex');
