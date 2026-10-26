@@ -103,6 +103,7 @@ function showApp(){
 function stopListeners(){
   if(dataRef)dataRef.off();
   if(db)db.ref('.info/connected').off();
+  if(memberRef)memberRef.off();
   dataRef=null;memberRef=null;pendingRequestRef=null;ready=false;online=false;
 }
 function lock(message){
@@ -129,6 +130,18 @@ function initFirebaseAuth(){
 function connectLiveData(){
   if(!eventRef||!user)throw Error('Compte Firebase absent.');
   dataRef=eventRef.child('data');
+  if(!demo&&memberRef){
+    memberRef.on('value',snap=>{
+      const next=snap.val()?.role;
+      const actual=rootAdmin()?'admin':ROLE_LABELS[next]?next:'reservations';
+      if(actual==='disabled'){
+        lock('Ton accès a été suspendu par un administrateur.');
+        if(auth)auth.signOut().catch(()=>{});
+        return;
+      }
+      if(role!==actual){role=actual;if(ready)showApp();}
+    },()=>{lock('Impossible de vérifier les droits de ce compte.');});
+  }
   $('loginMessage').textContent='Connexion acceptée. Chargement des réservations…';
   dataRef.on('value',snapshot=>{
     state=snapshot.val()||{reservations:{},tables:{}};
@@ -202,8 +215,10 @@ async function startEmailSession(email,password){
     const account=(await auth.signInWithEmailAndPassword(email,password)).user;
     if(!account||account.email?.trim().toLowerCase()!==email)throw Error('Identifiants non reconnus.');
     user=account;eventRef=db.ref(config.eventPath);
-    // Les comptes historiques comme les nouveaux passent par le même profil nominatif.
-    role=rootAdmin()?'admin':'reservations';
+    memberRef=eventRef.child('members').child(account.uid);
+    const membership=(await memberRef.once('value')).val();
+    role=rootAdmin()?'admin':ROLE_LABELS[membership?.role]?membership.role:'reservations';
+    if(role==='disabled')throw Error('Compte suspendu : contacte un administrateur.');
     $('loginMessage').textContent='Bienvenue ! Vérification du profil…';
     const ownProfile=eventRef.child('profiles').child(account.uid);
     const saved=(await ownProfile.once('value')).val();
