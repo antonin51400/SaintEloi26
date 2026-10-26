@@ -54,4 +54,14 @@ assert.match(person['.write'],/placement/,'placement can write a single particip
 for(const field of ['tableId','seat','arrived','paid'])
   assert.match(person[field]['.validate'],/reservations/,'registrars cannot change '+field);
 assert.match(person['.validate'],/placement/,'placement users cannot change arrival or payment flags');
+const snapshot=value=>({val:()=>value??null,exists:()=>value!=null,child:key=>snapshot(value?.[key]),hasChildren:keys=>keys.every(key=>value?.[key]!=null)});
+const baseline={name:'Invité',tableId:'',seat:0,arrived:false,paid:true,arrivedAt:'',arrivedBy:'',paidAt:'2026-12-05T19:00:00Z',paidBy:'Agent',arrivalLane:'',paidForBy:'Marie',paymentComment:'Prévenir',paymentRecordedAt:'2026-12-05T19:00:00Z',paymentRecordedBy:'Agent'};
+const check=(role,next)=>Function('auth','root','data','newData','return ('+person['.validate']+');')({uid:'staff'}, {child:()=>({child:()=>({child:()=>({val:()=>role})})})},snapshot(baseline),snapshot(next));
+for(const field of ['arrivalLane','paidForBy','paymentComment','paymentRecordedAt','paymentRecordedBy','arrivedAt','paidAt']){
+ for(const role of ['placement','reservations']){
+  assert.equal(check(role,{...baseline,[field]:'changed'}),false,role+' cannot edit '+field);
+  const deleted={...baseline};delete deleted[field];assert.equal(check(role,deleted),false,role+' cannot delete '+field);
+ }
+ assert.equal(check('entry',{...baseline,[field]:'changed'}),true,'entry may edit '+field);
+}
 console.log('PASS: exact four organizer UID and email pairs; unapproved users rejected.');
