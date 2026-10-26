@@ -115,6 +115,7 @@ $('loginMessage').textContent=config.enabled
   ? 'Identifie-toi avec ton e-mail, ou active ton compte lors de ta première connexion.'
   : 'Le mode démonstration ne sauvegarde pas les réservations.';
 const PRIMARY_ADMIN_UID='nCNc0JdWznOZ6j4B4GjfvQqWX4K2';
+const GLOBAL_ADMIN_UID='KpFkapZExKcToBcy52YCo6rdwuh2';
 function initFirebaseAuth(){
   if(!window.firebase||!config.firebase?.databaseURL)throw Error('Firebase non disponible.');
   if(!firebase.apps.length)firebase.initializeApp(config.firebase);
@@ -199,7 +200,7 @@ async function startEmailSession(email,password){
     if(!account||account.email?.trim().toLowerCase()!==email)throw Error('Identifiants non reconnus.');
     user=account;eventRef=db.ref(config.eventPath);
     // Les comptes historiques comme les nouveaux passent par le même profil nominatif.
-    role='organizer';
+    role=account.uid===GLOBAL_ADMIN_UID||account.uid===PRIMARY_ADMIN_UID?'admin':'organizer';
     $('loginMessage').textContent='Bienvenue ! Vérification du profil…';
     const ownProfile=eventRef.child('profiles').child(account.uid);
     const saved=(await ownProfile.once('value')).val();
