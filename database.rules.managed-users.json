@@ -11,7 +11,7 @@
             "$id": {
               ".validate": "newData.hasChildren(['capacity'])",
               "capacity": {
-                ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 100 && newData.val() % 1 === 0"
+                ".validate": "newData.isNumber() && (newData.val() === 6 || (data.exists() && newData.val() === data.val()))"
               },
               "$other": {
                 ".validate": false
@@ -61,7 +61,7 @@
                     ".validate": "newData.isString() && (newData.val() === '' || newData.val().matches(/^t[0-9]+-[123]$/)) && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() !== 'reservations' || (data.exists() ? newData.val() === data.val() : newData.val() === ''))"
                   },
                   "seat": {
-                    ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100 && newData.val() % 1 === 0 && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() !== 'reservations' || (data.exists() ? newData.val() === data.val() : newData.val() === 0))"
+                    ".validate": "newData.isNumber() && newData.val() >= 0 && (newData.val() <= 6 || (data.exists() && newData.val() === data.val())) && newData.val() % 1 === 0 && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() !== 'reservations' || (data.exists() ? newData.val() === data.val() : newData.val() === 0))"
                   },
                   "arrived": {
                     ".validate": "newData.isBoolean() && (root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() !== 'reservations' || (data.exists() ? newData.val() === data.val() : newData.val() === false))"
