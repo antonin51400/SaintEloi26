@@ -482,11 +482,23 @@ function render(){
  }).join('');
  $('guestList').innerHTML=html||'<div class="empty-state">Aucune réservation pour le moment.<br>Utilisez « + Réservation SMS » pour ajouter un réservant et ses invités.</div>';
  tableElements.forEach(el=>{
-   const seated=guests.filter(p=>p.tableId===el.id), cap=capacity(el.id);
-   el.querySelector('.t-guests').textContent=`${seated.length} / ${cap} places · ${Math.max(0,cap-seated.length)} libres`;
-   el.querySelector('.t-name').textContent=seated.length?`${seated.filter(p=>p.arrived).length} arrivé(s) · ${seated.filter(p=>p.paid).length} payé(s)`:'Aucun invité placé';
-   el.classList.toggle('full',!!cap&&seated.length===cap);el.classList.toggle('highlighted',!!selection);
+   const m=tableMetrics(el.id,guests);
+   el.querySelector('.t-guests').textContent=m.total+' / '+m.capacity+' places · '+m.free+' libres';
+   el.querySelector('.t-name').textContent=m.total
+     ? m.arrived+' / '+m.total+' arrivés · '+m.people.filter(p=>p.paid).length+' payé(s)'
+     : 'Aucun invité placé';
+   el.classList.toggle('full',m.occupancy==='full');
+   el.classList.toggle('highlighted',!!selection);
+   for(const status of ['empty','partial','full','overflow'])
+     el.classList.toggle('capacity-'+status,m.occupancy===status);
+   for(const status of ['empty','waiting','partial','complete'])
+     el.classList.toggle('arrival-'+status,m.arrival===status);
+   const fill=el.querySelector('.t-progress-fill'),label=el.querySelector('.t-progress-label');
+   if(fill)fill.style.width=(m.total?m.arrived/m.total*100:0)+'%';
+   if(label)label.textContent=m.arrived+'/'+m.total+' arrivés';
+   el.setAttribute('aria-label',m.name+' : '+m.total+' sur 6 places, '+m.arrived+' arrivés');
  });
+ renderEntryTables(guests);
  if(selection){try{const people=membersFor(selection);$('mapHint').textContent=`${people.length} personne(s) sélectionnée(s) : cliquez sur une table`;$('bannerName').textContent=selection.pid?people[0].name:state.reservations[selection.rid].reservedBy;$('bannerDetail').textContent='Cliquez sur une table, ou glissez la sélection sur le plan.';$('bannerTable').textContent=people.length+' personne(s)';$('guestBanner').classList.add('visible');}catch(e){selection=null;}}
  if(!selection){$('guestBanner').classList.remove('visible');$('mapHint').textContent='Sélectionnez une personne ou un groupe, puis cliquez sur sa table';}
  if(popupTable)drawTable();
