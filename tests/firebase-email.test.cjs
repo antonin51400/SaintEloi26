@@ -31,7 +31,9 @@ const makeRef=key=>({
   },
   off:()=>{}
 });
-w.firebase={apps:[{}],auth:authFn,database:()=>({ref:makeRef,ServerValue:{TIMESTAMP:123456789}})};
+const databaseFn=()=>({ref:makeRef});
+databaseFn.ServerValue={TIMESTAMP:123456789};
+w.firebase={apps:[{}],auth:authFn,database:databaseFn};
 w.eval(fs.readFileSync(path.join(__dirname,'../config.js'),'utf8'));
 w.SAINT_ELOI_CONFIG.enabled=true;
 w.eval(fs.readFileSync(path.join(__dirname,'../app.js'),'utf8')+
