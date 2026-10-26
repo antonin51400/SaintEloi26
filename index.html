@@ -856,6 +856,17 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 #loginPanel #copyDeviceUid{padding:8px;font-size:12px;width:100%;color:#fff;border-color:#b89160;background:rgba(255,255,255,.12)}
 #loginPanel .access-input.name-input{font-size:15px;letter-spacing:normal;text-align:left;padding:12px 14px}
 #loginPanel .access-input.name-input::placeholder{color:rgba(255,255,255,.55)}
+#loginPanel .access-options{margin-top:12px}
+#loginPanel .access-options>summary{list-style:none;cursor:pointer;margin-left:auto;display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.22);color:#e8d6ca;font-size:16px;opacity:.65}
+#loginPanel .access-options>summary::-webkit-details-marker{display:none}
+#loginPanel .access-options[open]>summary{opacity:1;background:rgba(255,255,255,.12)}
+#loginPanel .access-options-body{margin-top:12px;padding:12px;border:1px solid rgba(255,255,255,.18);border-radius:10px}
+#loginPanel .access-options-body button{width:100%;margin:5px 0}
+#loginPanel .access-options-body .device-uid[hidden]{display:none}
+#loginPanel .pairing-panel form[hidden]{display:none}
+#loginPanel .pairing-panel #sendRequestButton{width:100%;margin-top:10px}
+#loginPanel #loginButton{width:100%}
+
 </style>
 </head>
 <body>
@@ -885,25 +896,33 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
     </div>
     <div class="code-box">
       <div class="eyebrow-code">ESPACE ORGANISATION</div>
-      <h2>Accéder à la gestion</h2>
-      <p>Connectez-vous avec votre code à quatre chiffres pour retrouver votre espace de travail.</p>
+      <h2>Bienvenue à la Saint Éloi</h2>
+      <p>Entre ton code à quatre chiffres pour accéder à ton espace.</p>
       <form id="accessForm" class="access-form">
-        <label for="requestName" class="access-label">Votre nom (pour la demande d’accès)</label>
-        <input id="requestName" class="access-input name-input" type="text" maxlength="100" autocomplete="name" placeholder="Prénom et nom" required>
-        <label for="accessCode" class="access-label">Code d’accès</label>
+        <label for="accessCode" class="access-label">Ton code d’accès</label>
         <input id="accessCode" class="access-input" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" placeholder="••••" required>
-        <button class="primary" type="submit" id="loginButton">Accéder à mon espace <span aria-hidden="true">→</span></button>
+        <button class="primary" type="submit" id="loginButton">Entrer <span aria-hidden="true">→</span></button>
       </form>
       <p id="loginMessage" role="status"></p>
-      <section id="pairingPanel" class="pairing-panel" hidden aria-label="Autorisation de cet appareil">
-        <strong>Demande d’accès à valider</strong>
-        <p id="accessRequestStatus">Un organisateur doit approuver cet appareil avant que vous puissiez consulter les réservations.</p>
-        <code id="deviceUid" class="device-uid"></code>
-        <button class="secondary" type="button" id="copyDeviceUid">Copier l’identifiant de cet appareil</button>
+      <section id="pairingPanel" class="pairing-panel" hidden aria-label="Validation de l’accès">
+        <strong>Validation nécessaire</strong>
+        <p id="accessRequestStatus">Cet appareil doit être approuvé avant d’accéder aux réservations partagées.</p>
+        <form id="requestAccessForm" hidden>
+          <label for="requestName" class="access-label">Prénom et nom de la personne à autoriser</label>
+          <input id="requestName" class="access-input name-input" type="text" maxlength="100" autocomplete="name" placeholder="Prénom et nom" required>
+          <button class="primary" type="submit" id="sendRequestButton">Demander l’accès</button>
+        </form>
       </section>
-      <button class="secondary" type="button" id="pairDeviceButton">Identifier cet appareil avec Firebase</button>
-      <button class="secondary" type="button" id="demoButton">Découvrir le mode démonstration</button>
-      <p class="muted">Démonstration : les données ne sont pas sauvegardées ni partagées.</p>
+      <details id="accessOptions" class="access-options">
+        <summary aria-label="Options et dépannage" title="Options et dépannage"><span aria-hidden="true">⚙</span></summary>
+        <div class="access-options-body">
+          <button class="secondary" type="button" id="pairDeviceButton">Afficher l’identifiant de cet appareil</button>
+          <code id="deviceUid" class="device-uid" hidden></code>
+          <button class="secondary" type="button" id="copyDeviceUid" hidden>Copier l’identifiant</button>
+          <button class="secondary" type="button" id="demoButton">Essayer le mode démonstration</button>
+          <p class="muted">Mode démonstration : les données ne sont pas sauvegardées ni partagées.</p>
+        </div>
+      </details>
     </div>
   </div>
 </section>
