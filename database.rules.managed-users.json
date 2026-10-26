@@ -5,8 +5,8 @@
     "events": {
       "saint-eloi-2026": {
         "data": {
-          ".read": "auth != null && auth.provider === 'password'",
-          ".write": "auth != null && auth.provider === 'password' && auth.token.email.matches(/^(access0722|access1234|access7890)@sainteloi26-371e3[.]firebaseapp[.]com$/) === false",
+          ".read": "auth != null && auth.provider === 'password' && (((auth.uid === 'nCNc0JdWznOZ6j4B4GjfvQqWX4K2' && auth.token.email === 'access2002@sainteloi26-371e3.firebaseapp.com') || (auth.uid === 'oJnhcgxm4KhnKHN3kFa2u6kYoTf2' && auth.token.email === 'access9425@sainteloi26-371e3.firebaseapp.com') || (auth.uid === 'AmCQErej08OtCuGkwvZyC8etGdl1' && auth.token.email === 'access3186@sainteloi26-371e3.firebaseapp.com') || (auth.uid === 'A5x97smh01XmZEoOZmLg63Nr2Ig1' && auth.token.email === 'access4279@sainteloi26-371e3.firebaseapp.com')) || root.child('events/saint-eloi-2026/profiles').child(auth.uid).exists())",
+          ".write": "auth != null && auth.provider === 'password' && (((auth.uid === 'nCNc0JdWznOZ6j4B4GjfvQqWX4K2' && auth.token.email === 'access2002@sainteloi26-371e3.firebaseapp.com') || (auth.uid === 'oJnhcgxm4KhnKHN3kFa2u6kYoTf2' && auth.token.email === 'access9425@sainteloi26-371e3.firebaseapp.com') || (auth.uid === 'AmCQErej08OtCuGkwvZyC8etGdl1' && auth.token.email === 'access3186@sainteloi26-371e3.firebaseapp.com') || (auth.uid === 'A5x97smh01XmZEoOZmLg63Nr2Ig1' && auth.token.email === 'access4279@sainteloi26-371e3.firebaseapp.com')) || root.child('events/saint-eloi-2026/profiles').child(auth.uid).exists()) && auth.token.email.matches(/^(access0722|access1234|access7890)@sainteloi26-371e3[.]firebaseapp[.]com$/) === false",
           "tables": {
             "$id": {
               ".validate": "newData.hasChildren(['capacity'])",
