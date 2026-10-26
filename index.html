@@ -915,6 +915,51 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 #adminPreviewNotice:not([hidden]){display:block;background:#f8e8be;color:#6e331c;padding:9px 18px;font-weight:700;font-size:13px;border-bottom:1px solid #dcba72}
 #adminPreviewNotice[hidden]{display:none!important}
 @media(max-width:740px){.admin-view-control{flex:1 1 100%}.admin-view-control select{flex:1 1 180px}}
+
+/* Couleurs distinctes : occupation et arrivée des invités. */
+.table-legend{display:flex;flex-wrap:wrap;gap:12px 28px;padding:12px 20px;background:#fffdf7;border-bottom:1px solid #e3d8c7;font-size:12px}
+.legend-group{display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:#50483e}
+.legend-group strong{font-weight:800;color:#273f35}
+.legend-group span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.key-dot{display:inline-block;width:11px;height:11px;border-radius:50%;flex:0 0 11px;border:1px solid rgba(0,0,0,.12)}
+.occupancy-empty{background:#b0b6bf}.occupancy-partial{background:#efaa38}.occupancy-full{background:#ce4e4e}
+.arrivals-waiting{background:#528ecb}.arrivals-partial{background:#f3b041}.arrivals-complete{background:#32946f}
+.entry-tables-panel{display:none;flex-direction:column;min-width:0;flex:1;background:#fcf9f4;overflow:hidden}
+.entry-tables-head{padding:18px 19px 11px;background:#fff;border-bottom:1px solid #e9dfd3}
+.entry-tables-head h2{font-size:21px;color:#274d40;margin:0 0 4px}
+.entry-tables-head p{font-size:12px;color:#62584e;line-height:1.4;margin:0 0 8px}
+.entry-tables-totals{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;font-weight:700}
+.entry-tables-totals span{padding:4px 9px;background:#f0e9de;border-radius:30px;color:#4c4037}
+.entry-tables-grid{padding:13px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-content:start;overflow-y:auto}
+.entry-table-card{background:#fff;border:1px solid #ded6ce;border-left:5px solid #a7adb6;border-radius:11px;padding:10px 12px;display:grid;gap:6px;min-width:0}
+.entry-table-card.status-empty{border-left-color:#a7adb6}
+.entry-table-card.status-partial{border-left-color:#efaa38}
+.entry-table-card.status-full{border-left-color:#ce4e4e}
+.entry-table-card.status-overflow{border-left-color:#a51b26}
+.entry-table-card .entry-card-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.entry-table-card .entry-card-heading strong{font-size:13px;color:#263b32}
+.entry-table-card .entry-card-heading small{font-size:11px;color:#63594d}
+.entry-table-card .arrival-status{font-size:12px;font-weight:750;display:flex;align-items:center;gap:5px}
+.entry-table-card .arrival-status::before{content:'';width:9px;height:9px;border-radius:50%;background:#528ecb}
+.entry-table-card .arrival-status.arrival-partial::before{background:#f3b041}
+.entry-table-card .arrival-status.arrival-complete::before{background:#32946f}
+.entry-seats{display:flex;gap:5px}
+.entry-seat{width:19px;height:19px;border-radius:50%;border:1px solid #b1bec9;background:#e9edf1}
+.entry-seat.seat-expected{background:#528ecb;border-color:#528ecb}
+.entry-seat.seat-arrived{background:#32946f;border-color:#32946f}
+.entry-table-card .entry-card-note{font-size:11px;color:#6a6257}
+#appWrapper[data-role="entry"] .main{display:flex!important}
+#appWrapper[data-role="entry"] .panel-left{width:55%!important;flex:0 0 55%!important;max-width:none!important;min-width:0!important}
+#appWrapper[data-role="entry"] .panel-right{display:none!important}
+#appWrapper[data-role="entry"] .entry-tables-panel{display:flex!important}
+#appWrapper:not([data-role="entry"]) .entry-tables-panel{display:none!important}
+@media(max-width:800px){
+ #appWrapper[data-role="entry"] .main{flex-direction:column!important;overflow:auto!important}
+ #appWrapper[data-role="entry"] .panel-left{width:100%!important;flex:0 0 auto!important;min-height:300px;max-height:55vh}
+ #appWrapper[data-role="entry"] .entry-tables-panel{min-height:320px;overflow:visible}
+ #appWrapper[data-role="entry"] .entry-tables-grid{overflow:visible;grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}
+ .table-legend{padding:9px 12px}
+}
 </style>
 </head>
 <body>
