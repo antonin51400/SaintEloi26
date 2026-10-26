@@ -308,6 +308,16 @@ $('memberForm').onsubmit=async e=>{
   $('memberFeedback').textContent='Droits enregistrés.';
  }catch(error){$('memberFeedback').textContent=error.message;}
 };
+$('resetMemberPasswordButton').onclick=async()=>{
+ requireAccess('users');
+ const email=$('memberEmail').value.trim().toLowerCase();
+ if(!email||!$('memberEmail').checkValidity()){$('memberFeedback').textContent='Indique une adresse e-mail valide.';return;}
+ $('resetMemberPasswordButton').disabled=true;
+ try{await sendResetEmail(email);$('memberFeedback').textContent='Lien de mot de passe demandé via Firebase.';}
+ catch(error){$('memberFeedback').textContent=error?.message||'Envoi impossible';}
+ finally{$('resetMemberPasswordButton').disabled=false;}
+};
+$('openFirebaseUsersButton').onclick=()=>window.open('https://console.firebase.google.com/project/sainteloi26-371e3/authentication/users','_blank','noopener');
 $('inviteUserButton').onclick=()=>{
   if(demo||!allowed('users'))return;
   $('inviteUserForm').reset();
