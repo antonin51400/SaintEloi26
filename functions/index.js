@@ -6,11 +6,6 @@ const {getAuth} = require('firebase-admin/auth');
 const {getDatabase} = require('firebase-admin/database');
 const {createHash, timingSafeEqual} = require('node:crypto');
 initializeApp();
-const {inviteUserHandler}=require('./invite-user');
-const {randomBytes}=require('node:crypto');
-exports.inviteUser=onRequest({region:'europe-west1',cors:['https://antonin51400.github.io'],maxInstances:3},inviteUserHandler({
-  auth:getAuth(),database:getDatabase(),randomPassword:()=>randomBytes(32).toString('base64url')
-}));
 const blanckaertCode = defineSecret('BLANCKAERT_ACCESS_CODE');
 const bassutCode = defineSecret('BASSUT_ACCESS_CODE');
 function equal(a,b){const left=Buffer.from(a),right=Buffer.from(b);return left.length===right.length&&timingSafeEqual(left,right);}

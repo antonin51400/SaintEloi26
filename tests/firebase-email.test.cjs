@@ -35,8 +35,8 @@ const makeRef=key=>({
 const databaseFn=()=>({ref:makeRef});
 databaseFn.ServerValue={TIMESTAMP:123456789};
 w.firebase={apps:[{}],auth:authFn,database:databaseFn};
-const invitations=[];
-w.fetch=async(url,options)=>{invitations.push({url,options});return {ok:true,json:async()=>({uid:'invited-user',created:true})};};
+w.fetch=async()=>{throw Error('No server endpoint is needed on Spark');};
+const opened=[];w.open=(...args)=>opened.push(args);
 w.eval(fs.readFileSync(path.join(__dirname,'../config.js'),'utf8'));
 w.eval(fs.readFileSync(path.join(__dirname,'../app.js'),'utf8')+
 '\nwindow.inspectEmail={get operator(){return operator;},get role(){return role;},canPlace(){return allowed("place");},guestCard(){return guestCard("reservation-1","guest-1",{name:"Invité Test",tableId:"",seat:0,arrived:false,paid:false},{status:"accepted",reservedBy:"Réservant Test"});}};');
@@ -124,13 +124,22 @@ async function nameProfile(first,last){
   assert.match($('adminKpis').textContent,/Invités attendus/);
   $('adminDashboardDialog').close();
   $('inviteUserButton').click();
+  $('createInviteAccountButton').click();
+  assert.equal(opened.length,1);
+  assert.match(opened[0][0],/authentication\/users$/);
+  assert.equal(opened[0][2],'noopener');
   $('inviteEmail').value='autre@example.fr';
   await $('inviteUserForm').onsubmit({preventDefault(){}});
+  assert.deepEqual(calls.sent,['nouveau@example.fr'],'no mail request before account confirmation');
+  assert.match($('inviteUserMessage').textContent,/Crée d’abord/);
+  $('inviteAccountCreated').checked=true;
+  await $('inviteUserForm').onsubmit({preventDefault(){}});
   assert.deepEqual(calls.sent,['nouveau@example.fr','autre@example.fr']);
-  assert.equal(invitations.length,1);
-  assert.match(invitations[0].url,/\/inviteUser$/);
-  assert.equal(invitations[0].options.headers.Authorization,'Bearer test-token');
-  assert.deepEqual(JSON.parse(invitations[0].options.body),{email:'autre@example.fr'});
+  assert.match($('inviteUserMessage').textContent,/Demande de lien transmise/);
+  assert.match($('inviteUserMessage').textContent,/doit déjà exister/);
+  $('inviteUserButton').click();
+  assert.equal($('inviteAccountCreated').checked,false,'new invitation requires a new confirmation');
+  $('inviteUserDialog').close();
   await $('logoutButton').onclick();
   $('emailAddress').value='nouveau@example.fr';
   $('forgotPasswordButton').click();

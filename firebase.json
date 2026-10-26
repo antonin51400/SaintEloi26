@@ -1,5 +1,4 @@
 {
-  "functions": [{"source":"functions","codebase":"default"}],
   "database": {
     "rules": "database.rules.managed-users.json"
   }

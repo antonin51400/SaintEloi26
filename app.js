@@ -463,24 +463,18 @@ $('inviteUserButton').onclick=()=>{
   $('inviteUserMessage').textContent='';
   $('inviteUserDialog').showModal();
 };
+$('createInviteAccountButton').onclick=()=>{requireAccess('users');window.open('https://console.firebase.google.com/project/sainteloi26-371e3/authentication/users','_blank','noopener');};
 $('inviteUserForm').onsubmit=async e=>{
   e.preventDefault();
   if(demo||!allowed('users'))return;
   const email=$('inviteEmail').value.trim().toLowerCase();
   if(!$('inviteEmail').checkValidity())return;
+  if(!$('inviteAccountCreated').checked){$('inviteUserMessage').textContent='Crée d’abord le compte dans Firebase, puis coche la confirmation.';return;}
   $('sendInviteButton').disabled=true;
   try{
     requireAccess('users');
-    const token=await user.getIdToken();
-    let response;
-    try{response=await fetch(config.inviteUserUrl,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({email})});}
-    catch{throw Error('Service d’invitation inaccessible. Vérifie que la fonction Firebase inviteUser est déployée.');}
-    let result;
-    try{result=await response.json();}catch{throw Error('Service d’invitation indisponible. Vérifie le déploiement de la fonction Firebase inviteUser.');}
-    if(!response.ok)throw Error(result.error||'Service d’invitation indisponible.');
-    try{await sendResetEmail(email);}
-    catch(error){throw Error('Compte prêt, mais e-mail non envoyé. Réessaie cette invitation : '+error.message);}
-    $('inviteUserMessage').textContent='Compte prêt. E-mail de choix du mot de passe demandé ; vérifier la réception et les spams.';
+    await sendResetEmail(email);
+    $('inviteUserMessage').textContent='Demande de lien transmise à Firebase. Le compte doit déjà exister avec cette adresse ; vérifier la réception et les spams. Firebase ne confirme pas publiquement l’existence du compte.';
   }catch(error){
     $('inviteUserMessage').textContent='Envoi impossible : '+(error?.message||'réessaie.');
   }finally{$('sendInviteButton').disabled=false;}
