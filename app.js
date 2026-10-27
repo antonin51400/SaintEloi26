@@ -17,6 +17,7 @@ function updateCountdown(now=Date.now()){
 updateCountdown();setInterval(updateCountdown,1000);
 const displayTime=value=>{const date=new Date(value);return value&&!Number.isNaN(date.getTime())?new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(date):'';};
 function guestTracking(p){
+ if(!['admin','entry','viewer'].includes(shownRole()))return '';
  const arrival=p.arrived?'<div class="arrival-detail">Entrée '+esc(displayTime(p.arrivedAt)||'heure non renseignée')+' · '+esc(p.arrivalLane==='left'?'File 1':p.arrivalLane==='right'?'File 2':'file non renseignée')+'</div>':'';
  const payment=p.paid&&p.paidForBy?'<div class="payment-alert"><strong>À signaler : payé par '+esc(p.paidForBy)+'</strong><div>Paiement : '+esc(displayTime(p.paidAt)||'heure non renseignée')+'</div><div>Commentaire du '+esc(displayTime(p.paymentRecordedAt||p.paidAt))+(p.paymentComment?' · '+esc(p.paymentComment):'')+'</div></div>':'';
  return arrival+payment;
@@ -32,32 +33,35 @@ function forgetEntryLane(){try{if(user)sessionStorage.removeItem(laneKey(user.ui
 let db = null, auth = null, eventRef = null, dataRef = null, memberRef = null, pendingRequestRef = null;
 let filter = 'all', editing = null, editVersion = 0, selection = null, popupTable = null;
 const ROOT_ADMIN_UIDS=['nCNc0JdWznOZ6j4B4GjfvQqWX4K2','KpFkapZExKcToBcy52YCo6rdwuh2'];
-const ROLE_LABELS={admin:'Administrateur',reservations:'Inscriptions et réservations',placement:'Placement des tables',entry:'Accueil des entrées',viewer:'Consultation',disabled:'Suspendu'};
-const permissions = {
-  admin:['layout','reserve','place','arrival','payment','export','users','dashboard'],
-  reservations:['reserve','export'],
-  placement:['place'],
-  entry:['arrival','payment'],
-  viewer:[],
-  disabled:[],
-  organizer:['reserve','export']
+const ROLE_LABELS={admin:'Administrateur',reservations:'Réservations',placement:'Placement',entry:'Entrées',viewer:'Consultation',disabled:'Suspendu'};
+const VIEW_ROLES=['reservations','placement','entry','viewer'];
+const permissions={
+ admin:['layout','reserve','place','arrival','payment','export','users','dashboard'],
+ reservations:['reserve','export'],placement:['place'],entry:['arrival','payment'],viewer:[],disabled:[]
 };
-// L'aperçu est strictement visuel : le rôle authentifié n'est jamais modifié.
-let previewRole=null;
-const shownRole=()=>role==='admin'&&previewRole?previewRole:role;
-const inRolePreview=()=>role==='admin'&&previewRole!==null;
-// Le placement est une accréditation à part : ni Inscriptions, ni Accueil,
-// ni Consultation ne peuvent placer ou déplacer des personnes.
-const allowed=permission=>{
- const visible=shownRole();
- if(permission==='place')return visible==='admin'||visible==='placement';
- return !!permissions[visible]?.includes(permission);
-};
+let grantedRoles=[],activeView='none';
+const rootAdmin=()=>!!user&&ROOT_ADMIN_UIDS.includes(user.uid);
+function normalizeRoles(member){
+ if(rootAdmin())return ['admin'];
+ if(!member||member.role==='disabled')return [];
+ const raw=member.roles&&typeof member.roles==='object'
+ ?Object.keys(member.roles).filter(key=>member.roles[key]===true)
+ :ROLE_LABELS[member.role]?[member.role]:[];
+ return [...new Set(raw)].filter(key=>key!=='disabled'&&Object.prototype.hasOwnProperty.call(permissions,key));
+}
+const hasRole=key=>grantedRoles.includes('admin')||grantedRoles.includes(key);
+const availableViews=()=>hasRole('admin')?['admin',...VIEW_ROLES]:VIEW_ROLES.filter(v=>grantedRoles.includes(v));
+const shownRole=()=>availableViews().includes(activeView)?activeView:(availableViews()[0]||'none');
+const allowed=permission=>availableViews().includes(shownRole())&&!!permissions[shownRole()]?.includes(permission);
 function requireAccess(permission){
- if(inRolePreview())throw Error('Mode aperçu : aucune modification possible. Reviens à la vue Administrateur.');
  if(!allowed(permission))throw Error('Cette accréditation ne permet pas cette opération.');
 }
-const rootAdmin=()=>!!user&&ROOT_ADMIN_UIDS.includes(user.uid);
+function adoptMembership(member){
+ const next=normalizeRoles(member);
+ if(!next.length)throw Error('Aucun accès actif : contacte un administrateur.');
+ grantedRoles=next;role=hasRole('admin')?'admin':grantedRoles[0];
+ if(!availableViews().includes(activeView))activeView=availableViews()[0];
+}
 function selectEntryLane() {
   document.getElementById('laneChoice')?.remove();
   if (shownRole() !== 'entry') return;
@@ -66,8 +70,8 @@ function selectEntryLane() {
   panel.innerHTML='<h2>Quel poste occupez-vous ?</h2><div class="lane-buttons"><button type="button" class="lane-btn left" data-lane="left"><span class="lane-icon">◀️</span>File 1<span class="lane-sub">Poste 1</span></button><button type="button" class="lane-btn right" data-lane="right"><span class="lane-icon">▶️</span>File 2<span class="lane-sub">Poste 2</span></button></div>';
   panel.querySelectorAll('[data-lane]').forEach(btn => btn.onclick=()=>{
     lane=btn.dataset.lane;
-    if(!demo&&!inRolePreview()&&user)try{sessionStorage.setItem(laneKey(user.uid),lane);}catch{}
-    $('sessionBadge').textContent=inRolePreview()?'APERÇU · Accueil · '+(lane==='left'?'File 1':'File 2'):(lane==='left'?'◀ File 1':'▶ File 2');
+    if(!demo&&user)try{sessionStorage.setItem(laneKey(user.uid),lane);}catch{}
+    $('sessionBadge').textContent=lane==='left'?'◀ File 1':'▶ File 2';
     $('sessionBadge').className='lane-badge '+lane;
     panel.remove();
   });
@@ -94,7 +98,7 @@ function freeSeats(tableId, sel, data = state) {
 }
 let tableCapacitySyncRunning=false;
 async function ensureTableCapacities(){
- if(!ready||!online||demo||role!=='admin'||!dataRef||tableCapacitySyncRunning)return;
+ if(!ready||!online||demo||!hasRole('admin')||shownRole()!=='admin'||!dataRef||tableCapacitySyncRunning)return;
  if(Object.keys(layoutFor(state).tables).every(id=>state.tables?.[id]?.capacity))return;
  tableCapacitySyncRunning=true;
  try{await dataRef.transaction(current=>{
@@ -145,13 +149,13 @@ function validateData(data) {
 function updated(r) { r.version=(r.version||0)+1; r.updatedBy=operator; r.updatedAt=new Date().toISOString(); }
 async function mutate(change) {
   if (busy) throw Error('Un enregistrement est déjà en cours.');
-  if (!demo && !['reservations','placement','admin','organizer'].includes(role)) throw Error('Cette opération nécessite un accès d’écriture autorisé.');
+  if (!demo && !hasRole('admin') && !['reservations','placement'].includes(shownRole())) throw Error('Cette opération nécessite un accès d’écriture autorisé.');
   if (!ready || !user || (!demo&&!online)) throw Error('Connexion indisponible : aucune modification enregistrée.');
   busy=true; document.querySelectorAll('button[type="submit"]').forEach(b=>b.disabled=true);
   try {
     if(demo){
       const next=clone(state);change(next);validateData(next);state=next;render();
-    }else if(role==='admin'||role==='organizer'){
+    }else if(hasRole('admin')){
       // Opération globale atomique : seuls les administrateurs peuvent écrire à la racine data.
       let conflict='';
       const result=await dataRef.transaction(current=>{
@@ -189,42 +193,50 @@ async function mutate(change) {
   } finally {busy=false;document.querySelectorAll('button[type="submit"]').forEach(b=>b.disabled=false);}
 }
 function showApp(){
-  $('loginPanel').style.display='none';$('appWrapper').style.display='flex';
-  const visibleRole=shownRole();
-  $('appWrapper').dataset.role=visibleRole;
-  $('sessionBadge').textContent=lane&&visibleRole==='entry'?(lane==='left'?'◀ File 1':'▶ File 2'):operator;
-  $('sessionBadge').className='lane-badge'+(lane&&visibleRole==='entry'?' '+lane:'');
-  if(role==='admin')$('sessionBadge').textContent=inRolePreview()?'APERÇU · '+ROLE_LABELS[visibleRole]:'★ ADMIN · '+operator;
-  $('editPlanButton').hidden=!allowed('layout')||inRolePreview();
-  $('newReservation').style.display=allowed('reserve')?'':'none';
-  $('exportButton').style.display=allowed('export')?'':'none';
-  $('inviteUserButton').hidden=demo||!allowed('users');
-  $('usersManagerButton').hidden=demo||!allowed('users');
-  $('adminDashboardButton').hidden=demo||!allowed('dashboard');
-  $('exportButton').hidden=!allowed('export');
-  $('adminViewControl').hidden=demo||role!=='admin';
-  $('adminRoleView').value=inRolePreview()?previewRole:'admin';
-  $('adminPreviewNotice').hidden=!inRolePreview();
-  $('adminPreviewNotice').textContent=inRolePreview()
-    ? 'Aperçu du rôle « '+ROLE_LABELS[visibleRole]+' » — actions désactivées. Sélectionne Administrateur pour revenir à ton espace.'
-    : '';
-  $('sessionBadge').title=ROLE_LABELS[visibleRole]||visibleRole;
-  $('sessionBadge').onclick=()=>{if(visibleRole==='entry')selectEntryLane();};
-  render();if(visibleRole==='entry'&&!lane)selectEntryLane();
+ $('loginPanel').style.display='none';$('appWrapper').style.display='flex';
+ const view=shownRole(),views=availableViews();
+ $('appWrapper').dataset.role=view;
+ $('sessionBadge').textContent=view==='admin'?'★ ADMIN · '+operator:
+   view==='entry'&&lane?(lane==='left'?'◀ File 1':'▶ File 2'):operator;
+ $('sessionBadge').className='lane-badge'+(lane&&view==='entry'?' '+lane:'');
+ $('editPlanButton').hidden=!allowed('layout');
+ $('newReservation').style.display=allowed('reserve')?'':'none';
+ $('exportButton').hidden=!allowed('export');
+ $('inviteUserButton').hidden=demo||!allowed('users');
+ $('usersManagerButton').hidden=demo||!allowed('users');
+ $('adminDashboardButton').hidden=demo||!allowed('dashboard');
+ $('adminViewControl').hidden=views.length<2;
+ $('adminRoleView').innerHTML=views.map(v=>'<option value="'+v+'">'+(v==='admin'?'★ ':'')+ROLE_LABELS[v]+'</option>').join('');
+ $('adminRoleView').value=view;
+ $('adminPreviewNotice').hidden=view==='admin'||views.length<2;
+ $('adminPreviewNotice').textContent=view==='admin'?'':'Espace '+ROLE_LABELS[view]+' actif : modifications enregistrées et synchronisées.';
+ $('entryTablesPanel').hidden=view!=='entry';
+ $('tableLegend').hidden=view==='reservations';
+ $('tableLegend').querySelectorAll('.legend-group').forEach((el,i)=>el.hidden=view==='placement'&&i===1);
+ $('statPaid').parentElement.hidden=!['admin','entry','viewer'].includes(view);
+ ['statArrived','statRemaining'].forEach(id=>$(id).parentElement.hidden=['placement','reservations'].includes(view));
+ const eligible={
+  admin:['all','pending','accepted','unplaced','arrived','unpaid','cancelled'],
+  reservations:['all','pending','accepted','cancelled'],
+  placement:['all','accepted','unplaced'],
+  entry:['all','accepted','arrived','unpaid'],
+  viewer:['all','accepted','unplaced','arrived','unpaid']
+ };
+ const filters=eligible[view]||['all'];
+ document.querySelectorAll('.filter-btn').forEach(btn=>btn.hidden=!filters.includes(btn.dataset.filter));
+ if(!filters.includes(filter))filter='all';
+ document.querySelectorAll('.filter-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.filter===filter));
+ $('sessionBadge').title=ROLE_LABELS[view]||view;
+ $('sessionBadge').onclick=()=>{if(view==='entry')selectEntryLane();};
+ render();if(view==='entry'&&!lane)selectEntryLane();
 }
 $('adminRoleView').onchange=()=>{
- if(role!=='admin'||demo){
-  $('adminRoleView').value='admin';
-  return;
- }
- const next=$('adminRoleView').value;
- if(!['admin','reservations','placement','entry','viewer'].includes(next))return;
- previewRole=next==='admin'?null:next;
- lane='';selection=null;
+ const target=$('adminRoleView').value;
+ if(!availableViews().includes(target)){$('adminRoleView').value=shownRole();return;}
+ activeView=target;selection=null;
  document.getElementById('laneChoice')?.remove();
  document.querySelectorAll('dialog[open]').forEach(d=>d.close());
- closeTablePopup();
- showApp();
+ closeTablePopup();showApp();
 };
 function stopListeners(){
   if(dataRef)dataRef.off();
@@ -259,16 +271,13 @@ function connectLiveData(){
   if(!eventRef||!user)throw Error('Compte Firebase absent.');
   dataRef=eventRef.child('data');
   if(!demo&&memberRef){
-    memberRef.on('value',snap=>{
-      const next=snap.val()?.role;
-      const actual=rootAdmin()?'admin':ROLE_LABELS[next]?next:'reservations';
-      if(actual==='disabled'){
-        lock('Ton accès a été suspendu par un administrateur.');
-        if(auth)auth.signOut().catch(()=>{});
-        return;
-      }
-      if(role!==actual){role=actual;if(role!=='admin')previewRole=null;if(ready)showApp();}
-    },()=>{lock('Impossible de vérifier les droits de ce compte.');});
+   memberRef.on('value',snap=>{
+    try{
+     const before=shownRole();adoptMembership(snap.val());
+     if(before!==shownRole())lane='';
+     if(ready)showApp();
+    }catch(error){lock('Accès retiré ou suspendu.');if(auth)auth.signOut().catch(()=>{});}
+   },()=>lock('Impossible de vérifier les droits de ce compte.'));
   }
   $('loginMessage').textContent='Connexion acceptée. Chargement des réservations…';
   dataRef.on('value',snapshot=>{
@@ -304,15 +313,9 @@ function showEmailLogin(){
 $('showFirstAccess').onclick=()=>showFirstAccess($('emailAddress').value.trim());
 $('backToLogin').onclick=showEmailLogin;
 async function ensureDefaultMembership(){
- if(!memberRef||rootAdmin()||demo)return;
- const existing=await memberRef.once('value');
- if(existing.val())return;
- const result=await memberRef.transaction(current=>current||{
-  email:user.email,role:'reservations',updatedBy:user.uid,
-  updatedAt:firebase.database.ServerValue.TIMESTAMP
- },undefined,false);
- if(!result.committed)throw Error('Impossible d’activer les accès de ce compte.');
- role=result.snapshot?.val()?.role||'reservations';
+ if(rootAdmin()||demo)return;
+ const member=(await memberRef.once('value')).val();
+ if(!member||!normalizeRoles(member).length)throw Error('Accès non attribué : contacte un administrateur.');
 }
 let pendingProfileRef=null;
 $('firstLoginForm').onsubmit=async e=>{
@@ -352,7 +355,7 @@ async function startEmailSession(email,password,restoredAccount=null){
   const attempt=++sessionGeneration;
   const checkAttempt=()=>{if(attempt!==sessionGeneration)throw Error('Connexion interrompue.');};
   stopListeners();
-  role='none';previewRole=null;operator='';lane='';ready=false;demo=false;
+  role='none';grantedRoles=[];activeView='none';operator='';lane='';ready=false;demo=false;
   try{
     initFirebaseAuth();
     await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
@@ -364,9 +367,8 @@ async function startEmailSession(email,password,restoredAccount=null){
     memberRef=eventRef.child('members').child(account.uid);
     const membership=(await memberRef.once('value')).val();
     checkAttempt();
-    role=rootAdmin()?'admin':ROLE_LABELS[membership?.role]?membership.role:'reservations';
-    if(role==='disabled')throw Error('Compte suspendu : contacte un administrateur.');
-    if(role==='entry')try{const savedLane=sessionStorage.getItem(laneKey(account.uid));if(['left','right'].includes(savedLane))lane=savedLane;}catch{}
+    adoptMembership(membership);
+    if(hasRole('entry'))try{const savedLane=sessionStorage.getItem(laneKey(account.uid));if(['left','right'].includes(savedLane))lane=savedLane;}catch{}
     $('loginMessage').textContent='Bienvenue ! Vérification du profil…';
     const ownProfile=eventRef.child('profiles').child(account.uid);
     const saved=(await ownProfile.once('value')).val();
@@ -390,7 +392,7 @@ async function startEmailSession(email,password,restoredAccount=null){
     $('loginMessage').textContent=err.startsWith('auth/invalid')||err==='auth/wrong-password'||err==='auth/user-not-found'
       ? 'Adresse e-mail ou mot de passe incorrect.'
       : 'Connexion impossible : '+(error?.message||'vérifie les règles Firebase.');
-    role='none';operator='';user=null;
+    role='none';grantedRoles=[];activeView='none';operator='';user=null;
     if(auth)try{await auth.signOut();}catch(_){}
   }finally{
     loginBusy=false;$('emailLoginButton').disabled=false;
@@ -434,12 +436,29 @@ $('firstAccessForm').onsubmit=async e=>{
   }
 };
 let adminMembersRef=null;
+function selectedRoles(container){
+ return [...document.querySelectorAll(container+' input[data-access-role]:checked')].map(el=>el.value);
+}
+function markRoles(container,roles){
+ document.querySelectorAll(container+' input[data-access-role]').forEach(el=>el.checked=roles.includes(el.value));
+}
+function memberRoles(member){
+ const assigned=member.roles&&typeof member.roles==='object'
+  ?Object.keys(member.roles).filter(key=>member.roles[key]===true)
+  :member.role?[member.role]:[];
+ return [...new Set(assigned)].filter(x=>ROLE_LABELS[x]);
+}
 function renderMembers(snapshot){
- const rows=Object.entries(snapshot.val()||{});
- $('memberList').innerHTML=rows.length?rows.map(([id,m])=>'<div class="admin-member-row"><strong>'+esc(m.email||id)+'</strong><span>'+esc(ROLE_LABELS[m.role]||'Réservations')+'</span><button class="secondary" data-member-id="'+esc(id)+'">Modifier</button></div>').join(''):'<p class="muted">Aucun accès personnalisé. Par défaut, les nouveaux comptes ont le rôle Réservations.</p>';
- $('memberList').querySelectorAll('[data-member-id]').forEach(b=>b.onclick=()=>{
-  const id=b.dataset.memberId,m=snapshot.val()[id];
-  $('memberUid').value=id;$('memberEmail').value=m.email||'';$('memberRole').value=m.role||'reservations';
+ const members=snapshot.val()||{},rows=Object.entries(members);
+ $('memberList').innerHTML=rows.length?rows.map(([id,m])=>
+  '<div class="admin-member-row"><strong>'+esc(m.email||id)+'</strong><span>'+
+   esc(memberRoles(m).map(x=>ROLE_LABELS[x]).join(' · ')||'Aucun accès')+
+   '</span><button class="secondary" data-member-id="'+esc(id)+'">Modifier</button></div>').join('')
+  :'<p class="muted">Aucun utilisateur accrédité. Ajoutez un compte dans Firebase puis attribuez ses droits.</p>';
+ $('memberList').querySelectorAll('[data-member-id]').forEach(button=>button.onclick=()=>{
+  const id=button.dataset.memberId,m=members[id];
+  $('memberUid').value=id;$('memberEmail').value=m.email||'';
+  markRoles('#memberForm',memberRoles(m));
  });
 }
 $('usersManagerButton').onclick=()=>{
@@ -450,14 +469,26 @@ $('usersManagerButton').onclick=()=>{
  adminMembersRef=eventRef.child('members');
  adminMembersRef.on('value',renderMembers,()=>{$('memberFeedback').textContent='Liste inaccessible. Vérifier les règles Firebase.';});
 };
+async function writeMembership(id,email,roles){
+ requireAccess('users');
+ if(!/^[A-Za-z0-9_-]{8,128}$/.test(id)||!email||!roles.length||
+   roles.some(x=>!ROLE_LABELS[x]||x==='disabled'))
+   throw Error('UID, adresse e-mail ou droits invalides.');
+ if(roles.includes('admin')&&roles.length>1)throw Error('Administrateur inclut déjà toutes les vues. Cochez uniquement Administrateur.');
+ if(ROOT_ADMIN_UIDS.includes(id)&&!roles.includes('admin'))throw Error('Le compte administrateur principal ne peut pas être rétrogradé.');
+ const current=(await eventRef.child('members').child(id).once('value')).val();
+ if(current?.email&&current.email!==email)throw Error('Cet UID est associé à un autre e-mail : vérifiez le compte Firebase.');
+ await eventRef.child('members').child(id).set({
+  email,role:roles.includes('admin')?'admin':roles[0],
+  roles:Object.fromEntries(roles.map(x=>[x,true])),
+  updatedBy:user.uid,updatedAt:firebase.database.ServerValue.TIMESTAMP
+ });
+}
 $('memberForm').onsubmit=async e=>{
- e.preventDefault();requireAccess('users');
- const id=$('memberUid').value.trim(),email=$('memberEmail').value.trim().toLowerCase(),assigned=$('memberRole').value;
- if(!/^[A-Za-z0-9_-]{8,128}$/.test(id)||!ROLE_LABELS[assigned]){ $('memberFeedback').textContent='UID ou rôle non valide.';return; }
- if(ROOT_ADMIN_UIDS.includes(id)&&assigned!=='admin'){ $('memberFeedback').textContent='Les comptes principaux restent administrateurs.';return; }
+ e.preventDefault();
  try{
-  await eventRef.child('members').child(id).set({email,role:assigned,updatedBy:user.uid,updatedAt:firebase.database.ServerValue.TIMESTAMP});
-  $('memberFeedback').textContent='Droits enregistrés.';
+  await writeMembership($('memberUid').value.trim(),$('memberEmail').value.trim().toLowerCase(),selectedRoles('#memberForm'));
+  $('memberFeedback').textContent='Droits enregistrés. Les vues disponibles se mettent à jour automatiquement.';
  }catch(error){$('memberFeedback').textContent=error.message;}
 };
 $('resetMemberPasswordButton').onclick=async()=>{
@@ -480,14 +511,17 @@ $('createInviteAccountButton').onclick=()=>{requireAccess('users');window.open('
 $('inviteUserForm').onsubmit=async e=>{
   e.preventDefault();
   if(demo||!allowed('users'))return;
-  const email=$('inviteEmail').value.trim().toLowerCase();
+  const email=$('inviteEmail').value.trim().toLowerCase(),inviteUid=$('inviteUid').value.trim(),inviteRoles=selectedRoles('#inviteUserForm');
   if(!$('inviteEmail').checkValidity())return;
   if(!$('inviteAccountCreated').checked){$('inviteUserMessage').textContent='Crée d’abord le compte dans Firebase, puis coche la confirmation.';return;}
   $('sendInviteButton').disabled=true;
   try{
     requireAccess('users');
-    await sendResetEmail(email);
-    $('inviteUserMessage').textContent='Demande de lien transmise à Firebase. Le compte doit déjà exister avec cette adresse ; vérifier la réception et les spams. Firebase ne confirme pas publiquement l’existence du compte.';
+    await writeMembership(inviteUid,email,inviteRoles);
+    try{
+      await sendResetEmail(email);
+      $('inviteUserMessage').textContent='Accès attribués. Lien de création de mot de passe demandé : vérifie la boîte e-mail et les spams.';
+    }catch(mailError){$('inviteUserMessage').textContent='Accès enregistrés, mais lien e-mail non envoyé : '+mailError.message;}
   }catch(error){
     $('inviteUserMessage').textContent='Envoi impossible : '+(error?.message||'réessaie.');
   }finally{$('sendInviteButton').disabled=false;}
@@ -496,7 +530,7 @@ $('demoButton').onclick=()=>{
   sessionGeneration++;forgetEntryLane();
   stopListeners();
   if(auth)auth.signOut().catch(()=>{});
-  role='admin';operator='Démonstration';lane='';user={uid:'demo'};
+  role='admin';grantedRoles=['admin'];activeView='admin';operator='Démonstration';lane='';user={uid:'demo'};
   demo=true;ready=true;online=true;state={reservations:{},tables:{}};showApp();
 };
 $('logoutButton').onclick=async()=>{
@@ -504,7 +538,7 @@ $('logoutButton').onclick=async()=>{
   if(demo&&!confirm('Quitter la démonstration ? Les données de cet onglet seront perdues.'))return;
   const exitingDemo=demo;
   sessionGeneration++;forgetEntryLane();
-  demo=false;user=null;role='none';previewRole=null;lane='';
+  demo=false;user=null;role='none';grantedRoles=[];activeView='none';lane='';
   stopListeners();pendingProfileRef=null;
   if($('firstLoginDialog').open)$('firstLoginDialog').close();
   if(auth&&!exitingDemo)try{await auth.signOut();}catch(error){
@@ -519,9 +553,19 @@ function render(){
  const arrived=guests.filter(p=>p.arrived).length;
  $('statTotal').textContent=guests.length;$('statArrived').textContent=arrived;$('statRemaining').textContent=guests.length-arrived;$('statPaid').textContent=guests.filter(p=>p.paid).length;
  $('progressFill').style.width=(guests.length?100*arrived/guests.length:0)+'%';
- $('reservationSummary').innerHTML=`<span><strong>${rs.filter(([,r])=>r.status==='pending').length}</strong> réservations à valider</span><span><strong>${guests.filter(p=>!p.tableId).length}</strong> invités à placer</span><span><strong>${guests.filter(p=>!p.paid).length}</strong> invités non payés</span>`;
+ const pending=rs.filter(([,r])=>r.status==='pending').length;
+ const view=shownRole(),unplaced=guests.filter(p=>!p.tableId).length,unpaid=guests.filter(p=>!p.paid).length;
+ const summary={
+  reservations:'<span><strong>'+pending+'</strong> réservations à valider</span><span><strong>'+rs.length+'</strong> dossiers</span>',
+  placement:'<span><strong>'+unplaced+'</strong> invités à placer</span><span><strong>'+(guests.length-unplaced)+'</strong> placés</span>',
+  entry:'<span><strong>'+(guests.length-arrived)+'</strong> invités attendus</span><span><strong>'+unpaid+'</strong> non payés</span>',
+  viewer:'<span><strong>'+(guests.length-arrived)+'</strong> attendus</span><span><strong>'+arrived+'</strong> arrivés</span>',
+  admin:'<span><strong>'+pending+'</strong> réservations à valider</span><span><strong>'+unplaced+'</strong> invités à placer</span><span><strong>'+unpaid+'</strong> invités non payés</span>'
+ };
+ $('reservationSummary').innerHTML=summary[view]||'';
  $('connectionStatus').textContent=demo?'DÉMONSTRATION · rien n’est sauvegardé':ready?(online?'Synchronisation active':'Hors connexion · modifications bloquées'):'Connexion en cours…';
  const html=rs.sort((a,b)=>(a[1].createdAt||'').localeCompare(b[1].createdAt||'')).map(([rid,r])=>{
+  if(['placement','entry','viewer'].includes(view)&&r.status!=='accepted')return '';
   const parts=Object.entries(r.participants||{});
   const matching=parts.filter(([pid,p])=>{
    if(filter==='pending'&&r.status!=='pending'||filter==='accepted'&&r.status!=='accepted'||filter==='cancelled'&&r.status!=='cancelled')return false;
@@ -534,13 +578,13 @@ function render(){
    <div class="reservation-actions">${allowed('reserve')?`<button class="secondary" data-action="edit" data-rid="${rid}">Modifier</button>`:''}${allowed('reserve')&&r.status==='pending'?`<button class="primary" data-action="accept" data-rid="${rid}">Accepter</button>`:''}${allowed('place')&&shownRole()!=='placement'&&r.status==='accepted'?`<button class="secondary" draggable="true" data-action="select" data-rid="${rid}">Placer le groupe →</button>`:''}${allowed('reserve')&&r.status!=='cancelled'?`<button class="secondary" data-action="cancel" data-rid="${rid}">Annuler</button>`:''}</div></div>
    ${matching.map(([pid,p])=>guestCard(rid,pid,p,r)).join('')}</section>`;
  }).join('');
- $('guestList').innerHTML=html||'<div class="empty-state">Aucune réservation pour le moment.<br>Utilisez « + Réservation SMS » pour ajouter un réservant et ses invités.</div>';
+ $('guestList').innerHTML=html||'<div class="empty-state">Aucun invité dans cette vue ou ce filtre.</div>';
  tableElements.forEach(el=>{
    const m=tableMetrics(el.id,guests);
    el.querySelector('.t-guests').textContent=m.total+' / '+m.capacity+' places · '+m.free+' libres';
    el.querySelector('.t-name').textContent=m.total
-     ? m.arrived+' / '+m.total+' arrivés · '+m.people.filter(p=>p.paid).length+' payé(s)'
-     : 'Aucun invité placé';
+    ? view==='placement'?m.total+' invité(s) placés':m.arrived+' / '+m.total+' arrivés'+(view==='admin'?' · '+m.people.filter(p=>p.paid).length+' payé(s)':'')
+    : 'Aucun invité placé';
    el.classList.toggle('full',m.occupancy==='full');
    el.classList.toggle('highlighted',!!selection);
    for(const status of ['empty','partial','full','overflow'])
@@ -549,12 +593,12 @@ function render(){
      el.classList.toggle('arrival-'+status,m.arrival===status);
    const fill=el.querySelector('.t-progress-fill'),label=el.querySelector('.t-progress-label');
    if(fill)fill.style.width=(m.total?m.arrived/m.total*100:0)+'%';
-   if(label)label.textContent=m.arrived+'/'+m.total+' arrivés';
-   el.setAttribute('aria-label',m.name+' : '+m.total+' sur '+m.capacity+' places, '+m.arrived+' arrivés');
+   if(label)label.textContent=view==='placement'?'':m.arrived+'/'+m.total+' arrivés';
+   el.setAttribute('aria-label',m.name+' : '+m.total+' sur '+m.capacity+' places'+(view==='placement'?'':', '+m.arrived+' arrivés'));
  });
  renderEntryTables(guests);
  if(selection){try{const people=membersFor(selection);$('mapHint').textContent=`${people.length} personne(s) sélectionnée(s) : cliquez sur une table`;$('bannerName').textContent=selection.pid?people[0].name:state.reservations[selection.rid].reservedBy;$('bannerDetail').textContent='Cliquez sur une table, ou glissez la sélection sur le plan.';$('bannerTable').textContent=people.length+' personne(s)';$('guestBanner').classList.add('visible');}catch(e){selection=null;}}
- if(!selection){$('guestBanner').classList.remove('visible');$('mapHint').textContent='Sélectionnez une personne ou un groupe, puis cliquez sur sa table';}
+ if(!selection){$('guestBanner').classList.remove('visible');$('mapHint').textContent=view==='viewer'?'Plan en consultation':view==='placement'?'Sélectionnez un invité puis une table':'Sélectionnez une personne ou un groupe, puis cliquez sur sa table';}
  if(popupTable)drawTable();
  if($('adminDashboardDialog').open)renderAdminDashboard();
 }
@@ -597,22 +641,24 @@ $('adminGuestResults').onclick=async e=>{
  }catch(error){notice(error.message);}
 };
 function guestCard(rid,pid,p,r){
-  const active=r.status==='accepted';
-  const place=active&&allowed('place');
-  const check=active&&allowed('arrival');
-  const pay=active&&allowed('payment');
-  return `<div class="guest-card ${p.arrived?'arrived':''}" ${place?'draggable="true"':''} data-rid="${rid}" data-pid="${pid}">
-    <div class="guest-info"><div class="guest-name">${esc(p.name)}</div><div class="guest-meta">${p.tableId?esc(tableNames[p.tableId])+' · Place '+p.seat:'À placer'} · ${p.arrived?'✓ Arrivé':'Non arrivé'} · ${p.paid?'✓ Payé':'Non payé'}</div>${guestTracking(p)}</div>
-    ${place?`<button class="place" data-action="select" data-rid="${rid}" data-pid="${pid}">Placer →</button>`:''}
-    ${check?`<button class="${p.arrived?'on':''}" aria-pressed="${!!p.arrived}" data-action="arrived" data-rid="${rid}" data-pid="${pid}">${p.arrived?'✓ Arrivé':'Arrivée'}</button>`:''}
-    ${pay?`<button class="secondary" data-action="payment-note" data-rid="${rid}" data-pid="${pid}">${p.paidForBy?'Modifier le commentaire':'Payé par un tiers / commentaire'}</button>`:''}
-    ${pay?`<button class="money ${p.paid?'on':''}" aria-pressed="${!!p.paid}" data-action="paid" data-rid="${rid}" data-pid="${pid}" ${p.arrived?'disabled title="Une personne arrivée reste payée"':''}>${p.paid?'✓ Payé':'Paiement'}</button>`:''}
-  </div>`;
+ const view=shownRole(),active=r.status==='accepted';
+ const place=active&&allowed('place'),check=active&&allowed('arrival'),pay=active&&allowed('payment');
+ const table=p.tableId?esc(tableNames[p.tableId])+' · Place '+p.seat:'À placer';
+ const meta=['admin','entry','viewer'].includes(view)
+  ?table+' · '+(p.arrived?'✓ Arrivé':'Non arrivé')+' · '+(p.paid?'✓ Payé':'Non payé')
+  :table;
+ return `<div class="guest-card ${view!=='placement'&&p.arrived?'arrived':''}" ${place?'draggable="true"':''} data-rid="${rid}" data-pid="${pid}">
+  <div class="guest-info"><div class="guest-name">${esc(p.name)}</div><div class="guest-meta">${meta}</div>${guestTracking(p)}</div>
+  ${place?`<button class="place" data-action="select" data-rid="${rid}" data-pid="${pid}">Placer →</button>`:''}
+  ${check?`<button class="${p.arrived?'on':''}" aria-pressed="${!!p.arrived}" data-action="arrived" data-rid="${rid}" data-pid="${pid}">${p.arrived?'✓ Arrivé':'Arrivée'}</button>`:''}
+  ${pay?`<button class="secondary" data-action="payment-note" data-rid="${rid}" data-pid="${pid}">${p.paidForBy?'Modifier le commentaire':'Payé par un tiers / commentaire'}</button>`:''}
+  ${pay?`<button class="money ${p.paid?'on':''}" aria-pressed="${!!p.paid}" data-action="paid" data-rid="${rid}" data-pid="${pid}" ${p.arrived?'disabled title="Une personne arrivée reste payée"':''}>${p.paid?'✓ Payé':'Paiement'}</button>`:''}
+ </div>`;
 }
 $('search').oninput=render;
 document.querySelectorAll('.filter-btn').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;document.querySelectorAll('.filter-btn').forEach(x=>x.classList.toggle('active',x===b));render();});
 function addParticipant(p={}){const row=document.createElement('div');row.className='participant-row';row.dataset.pid=p.pid||uid();const input=document.createElement('input');input.required=true;input.maxLength=120;input.placeholder='Nom et prénom de l’invité';input.setAttribute('aria-label','Nom du participant');input.value=p.name||'';const remove=document.createElement('button');remove.type='button';remove.className='secondary';remove.textContent='Retirer';remove.onclick=()=>row.remove();row.append(input,remove);$('participantRows').append(row);return input;}
-function editReservation(rid=null){requireAccess('reserve');editing=rid;const r=state.reservations?.[rid];editVersion=r?.version||0;$('reservationForm').reset();$('participantRows').replaceChildren();$('formError').textContent='';$('reservationTitle').textContent=rid?'Modifier la réservation':'Nouvelle réservation SMS';$('reservedBy').value=r?.reservedBy||'';$('phone').value=r?.phone||'';$('contactedOrganizer').value=r?.contactedOrganizer||(role==='organizer'||role==='reservations'||role==='admin'?operator:'');$('reservationNotes').value=r?.notes||'';$('reservationStatus').value=r?.status||'pending';if(r)Object.entries(r.participants||{}).forEach(([pid,p])=>addParticipant({...p,pid}));else addParticipant();$('reservationDialog').showModal();$('reservedBy').focus();}
+function editReservation(rid=null){requireAccess('reserve');editing=rid;const r=state.reservations?.[rid];editVersion=r?.version||0;$('reservationForm').reset();$('participantRows').replaceChildren();$('formError').textContent='';$('reservationTitle').textContent=rid?'Modifier la réservation':'Nouvelle réservation SMS';$('reservedBy').value=r?.reservedBy||'';$('phone').value=r?.phone||'';$('contactedOrganizer').value=r?.contactedOrganizer||(allowed('reserve')?operator:'');$('reservationNotes').value=r?.notes||'';$('reservationStatus').value=r?.status||'pending';if(r)Object.entries(r.participants||{}).forEach(([pid,p])=>addParticipant({...p,pid}));else addParticipant();$('reservationDialog').showModal();$('reservedBy').focus();}
 $('newReservation').onclick=()=>{requireAccess('reserve');editReservation();};$('addParticipant').onclick=()=>addParticipant().focus();
 $('reservedBy').addEventListener('change',()=>{const rows=$('participantRows').children;if(!editing&&rows.length===1&&!rows[0].querySelector('input').value)rows[0].querySelector('input').value=$('reservedBy').value.trim();});
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{if(!busy)$(b.dataset.close).close();});
@@ -635,7 +681,7 @@ $('reservationForm').onsubmit=async e=>{
 async function setStatus(rid,status){requireAccess('reserve');if(status==='cancelled'&&!confirm('Annuler cette réservation et libérer ses places ? Les informations de paiement seront conservées.'))return;await mutate(data=>{const r=data.reservations[rid];if(!r)throw Error('Réservation introuvable.');r.status=status;if(status!=='accepted')Object.values(r.participants||{}).forEach(p=>{p.tableId='';p.seat=0;p.arrived=false;});updated(r);});}
 async function setFlag(rid,pid,flag,arrivalLane=lane){
   requireAccess(flag==='arrived'?'arrival':'payment');
-  if(role==='entry'&&!lane)throw Error('Sélectionne d’abord la File 1 ou la File 2.');
+  if(shownRole()==='entry'&&!lane)throw Error('Sélectionne d’abord la File 1 ou la File 2.');
   if(!ready||!user||(!demo&&!online))throw Error('Connexion indisponible.');
   const expected=!!state.reservations[rid]?.participants?.[pid]?.[flag];
   const applyFlag=p=>{
@@ -654,7 +700,7 @@ async function setFlag(rid,pid,flag,arrivalLane=lane){
     }
     return p;
   };
-  if(!demo&&role==='entry'){
+  if(!demo&&!hasRole('admin')){
     // Une écriture directe sous l'invité permet aux règles Firebase d'autoriser
     // uniquement l'arrivée et le paiement, et rien d'autre.
     if(state.reservations[rid]?.status!=='accepted')throw Error('Réservation non acceptée.');
@@ -691,19 +737,19 @@ function closeTablePopup(e){if(e&&e.target!==$('tablePopupOverlay'))return;popup
 function drawTable(){
  const id=popupTable,m=tableMetrics(id),people=m.people,cap=m.capacity;
  $('popupTitle').textContent=tableNames[id];
- $('popupSubtitle').textContent=m.total+' / '+cap+' places occupées · '+m.free+' libres · '+m.arrived+' arrivés';
+ $('popupSubtitle').textContent=m.total+' / '+cap+' places occupées · '+m.free+' libres'+(shownRole()==='placement'?'':' · '+m.arrived+' arrivés');
  $('popupProgressFill').style.width=(m.total?100*m.arrived/m.total:0)+'%';
- $('popupProgressLabel').textContent=m.arrived+' / '+m.total+' arrivés';
- $('popupGuestList').innerHTML='<p class="fixed-capacity">'+cap+' places à cette table · bleu : attendu · vert : arrivé</p><div class="seat-grid">'+Array.from({length:cap},(_,i)=>{
+ $('popupProgressLabel').textContent=shownRole()==='placement'?'':m.arrived+' / '+m.total+' arrivés';
+ $('popupGuestList').innerHTML='<p class="fixed-capacity">'+cap+' places à cette table'+(shownRole()==='placement'?'':' · bleu : attendu · vert : arrivé')+'</p><div class="seat-grid">'+Array.from({length:cap},(_,i)=>{
   const p=people.find(p=>p.seat===i+1);
-  const status=p?(p.arrived?'seat-arrived':'seat-expected'):'';
-  return '<div class="seat '+status+'"><strong>Place '+(i+1)+'</strong>'+ (p?esc(p.name)+'<small>'+esc(p.reservedBy)+'</small>'+guestTracking(p)+(allowed('place')?'<button class="secondary" data-action="select" data-rid="'+esc(p.rid)+'" data-pid="'+esc(p.pid)+'">Déplacer</button>':''):'Libre')+'</div>';
+  const status=p&&shownRole()!=='placement'?(p.arrived?'seat-arrived':'seat-expected'):'';
+  return '<div class="seat '+status+'"><strong>Place '+(i+1)+'</strong>'+ (p?esc(p.name)+'<small>'+esc(p.reservedBy)+'</small>'+(shownRole()==='placement'?'':guestTracking(p))+(allowed('place')?'<button class="secondary" data-action="select" data-rid="'+esc(p.rid)+'" data-pid="'+esc(p.pid)+'">Déplacer</button>':''):'Libre')+'</div>';
  }).join('')+'</div>';
 }
 function showPlacement(tableId){
  try{
   requireAccess('place');
-  if(role==='placement'&&!selection?.pid)throw Error('Pour cette accréditation, sélectionnez un invité à la fois.');
+  if(shownRole()==='placement'&&!selection?.pid)throw Error('Pour cette accréditation, sélectionnez un invité à la fois.');
   const people=membersFor(selection);
   closeTablePopup();
   $('placementNames').textContent=people.map(p=>p.name).join(', ');
@@ -746,7 +792,7 @@ async function placeSingleRestricted(sel,tableId,seat){
  }finally{busy=false;}
 }
 $('placementForm').onsubmit=async e=>{e.preventDefault();requireAccess('place');const sel={...selection},tableId=$('placementTable').value,seat=Number($('placementSeat').value);try{
- if(!demo&&role==='placement'){
+ if(!demo&&!hasRole('admin')){
   if(!sel.pid)throw Error('Sélectionne un invité.');
   await placeSingleRestricted(sel,tableId,seat);
   selection=null;$('placementDialog').close();render();
@@ -782,7 +828,7 @@ $('paymentForm').onsubmit=async e=>{
    const now=new Date().toISOString();
    return {...p,paid:true,paidAt:p.paidAt||now,paidBy:p.paidBy||operator,paidForBy:payer,paymentComment:comment,paymentRecordedAt:now,paymentRecordedBy:operator};
   };
-  if(!demo&&role==='entry'){
+  if(!demo&&!hasRole('admin')){
    if(busy)throw Error('Un enregistrement est déjà en cours.');busy=true;
    try{
     let conflict='';const result=await dataRef.child('reservations').child(rid).child('participants').child(pid).transaction(current=>{
@@ -805,7 +851,7 @@ if(config.enabled){
    if(account){
     if(user?.uid!==account.uid)void startEmailSession(account.email||'','',account);
    }else if(user){
-    sessionGeneration++;forgetEntryLane();user=null;role='none';previewRole=null;operator='';lane='';pendingProfileRef=null;
+    sessionGeneration++;forgetEntryLane();user=null;role='none';grantedRoles=[];activeView='none';operator='';lane='';pendingProfileRef=null;
     lock('Session terminée. Connecte-toi pour revenir.');
    }
   },()=>{if(!demo)lock('Impossible de restaurer la session. Reconnecte-toi.');});
