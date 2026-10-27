@@ -375,7 +375,7 @@ async function startEmailSession(email,password,restoredAccount=null){
     $('loginMessage').textContent=err.startsWith('auth/invalid')||err==='auth/wrong-password'||err==='auth/user-not-found'
       ? 'Adresse e-mail ou mot de passe incorrect.'
       : 'Connexion impossible : '+(error?.message||'vérifie les règles Firebase.');
-    role='none';operator='';user=null;
+    role='none';grantedRoles=[];activeView='none';operator='';user=null;
     if(auth)try{await auth.signOut();}catch(_){}
   }finally{
     loginBusy=false;$('emailLoginButton').disabled=false;
@@ -494,14 +494,17 @@ $('createInviteAccountButton').onclick=()=>{requireAccess('users');window.open('
 $('inviteUserForm').onsubmit=async e=>{
   e.preventDefault();
   if(demo||!allowed('users'))return;
-  const email=$('inviteEmail').value.trim().toLowerCase();
+  const email=$('inviteEmail').value.trim().toLowerCase(),inviteUid=$('inviteUid').value.trim(),inviteRoles=selectedRoles('#inviteUserForm');
   if(!$('inviteEmail').checkValidity())return;
   if(!$('inviteAccountCreated').checked){$('inviteUserMessage').textContent='Crée d’abord le compte dans Firebase, puis coche la confirmation.';return;}
   $('sendInviteButton').disabled=true;
   try{
     requireAccess('users');
-    await sendResetEmail(email);
-    $('inviteUserMessage').textContent='Demande de lien transmise à Firebase. Le compte doit déjà exister avec cette adresse ; vérifier la réception et les spams. Firebase ne confirme pas publiquement l’existence du compte.';
+    await writeMembership(inviteUid,email,inviteRoles);
+    try{
+      await sendResetEmail(email);
+      $('inviteUserMessage').textContent='Accès attribués. Lien de création de mot de passe demandé : vérifie la boîte e-mail et les spams.';
+    }catch(mailError){$('inviteUserMessage').textContent='Accès enregistrés, mais lien e-mail non envoyé : '+mailError.message;}
   }catch(error){
     $('inviteUserMessage').textContent='Envoi impossible : '+(error?.message||'réessaie.');
   }finally{$('sendInviteButton').disabled=false;}
@@ -796,7 +799,7 @@ $('paymentForm').onsubmit=async e=>{
    const now=new Date().toISOString();
    return {...p,paid:true,paidAt:p.paidAt||now,paidBy:p.paidBy||operator,paidForBy:payer,paymentComment:comment,paymentRecordedAt:now,paymentRecordedBy:operator};
   };
-  if(!demo&&role==='entry'){
+  if(!demo&&!hasRole('admin')){
    if(busy)throw Error('Un enregistrement est déjà en cours.');busy=true;
    try{
     let conflict='';const result=await dataRef.child('reservations').child(rid).child('participants').child(pid).transaction(current=>{
