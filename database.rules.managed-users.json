@@ -106,9 +106,8 @@
               "$other": {
                 ".validate": false
               },
-              ".write": "auth != null && auth.provider === 'password' && root.child('events/saint-eloi-2026/members').child(auth.uid).child('role').val() === 'reservations' && newData.exists()"
-            },
-            ".write": "(auth != null && auth.uid != null && auth.provider === 'password') && (root.child('events/saint-eloi-2026/members/' + auth.uid + '/roles/reservations').val() === true || root.child('events/saint-eloi-2026/members/' + auth.uid + '/role').val() === 'reservations') && newData.exists()"
+              ".write": "(auth != null && auth.uid != null && auth.provider === 'password') && (root.child('events/saint-eloi-2026/members/' + auth.uid + '/roles/reservations').val() === true || root.child('events/saint-eloi-2026/members/' + auth.uid + '/role').val() === 'reservations') && newData.exists()"
+            }
           },
           "$other": {
             ".validate": false
