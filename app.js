@@ -17,6 +17,7 @@ function updateCountdown(now=Date.now()){
 updateCountdown();setInterval(updateCountdown,1000);
 const displayTime=value=>{const date=new Date(value);return value&&!Number.isNaN(date.getTime())?new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(date):'';};
 function guestTracking(p){
+ if(!['admin','entry','viewer'].includes(shownRole()))return '';
  const arrival=p.arrived?'<div class="arrival-detail">Entrée '+esc(displayTime(p.arrivedAt)||'heure non renseignée')+' · '+esc(p.arrivalLane==='left'?'File 1':p.arrivalLane==='right'?'File 2':'file non renseignée')+'</div>':'';
  const payment=p.paid&&p.paidForBy?'<div class="payment-alert"><strong>À signaler : payé par '+esc(p.paidForBy)+'</strong><div>Paiement : '+esc(displayTime(p.paidAt)||'heure non renseignée')+'</div><div>Commentaire du '+esc(displayTime(p.paymentRecordedAt||p.paidAt))+(p.paymentComment?' · '+esc(p.paymentComment):'')+'</div></div>':'';
  return arrival+payment;
@@ -209,6 +210,22 @@ function showApp(){
  $('adminRoleView').value=view;
  $('adminPreviewNotice').hidden=view==='admin'||views.length<2;
  $('adminPreviewNotice').textContent=view==='admin'?'':'Espace '+ROLE_LABELS[view]+' actif : modifications enregistrées et synchronisées.';
+ $('entryTablesPanel').hidden=view!=='entry';
+ $('tableLegend').hidden=view==='reservations';
+ $('tableLegend').querySelectorAll('.legend-group').forEach((el,i)=>el.hidden=view==='placement'&&i===1);
+ $('statPaid').parentElement.hidden=!['admin','entry','viewer'].includes(view);
+ ['statArrived','statRemaining'].forEach(id=>$(id).parentElement.hidden=['placement','reservations'].includes(view));
+ const eligible={
+  admin:['all','pending','accepted','unplaced','arrived','unpaid','cancelled'],
+  reservations:['all','pending','accepted','cancelled'],
+  placement:['all','accepted','unplaced'],
+  entry:['all','accepted','arrived','unpaid'],
+  viewer:['all','accepted','unplaced','arrived','unpaid']
+ };
+ const filters=eligible[view]||['all'];
+ document.querySelectorAll('.filter-btn').forEach(btn=>btn.hidden=!filters.includes(btn.dataset.filter));
+ if(!filters.includes(filter))filter='all';
+ document.querySelectorAll('.filter-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.filter===filter));
  $('sessionBadge').title=ROLE_LABELS[view]||view;
  $('sessionBadge').onclick=()=>{if(view==='entry')selectEntryLane();};
  render();if(view==='entry'&&!lane)selectEntryLane();
