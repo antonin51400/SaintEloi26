@@ -419,12 +419,29 @@ $('firstAccessForm').onsubmit=async e=>{
   }
 };
 let adminMembersRef=null;
+function selectedRoles(container){
+ return [...document.querySelectorAll(container+' input[data-access-role]:checked')].map(el=>el.value);
+}
+function markRoles(container,roles){
+ document.querySelectorAll(container+' input[data-access-role]').forEach(el=>el.checked=roles.includes(el.value));
+}
+function memberRoles(member){
+ const assigned=member.roles&&typeof member.roles==='object'
+  ?Object.keys(member.roles).filter(key=>member.roles[key]===true)
+  :member.role?[member.role]:[];
+ return [...new Set(assigned)].filter(x=>ROLE_LABELS[x]);
+}
 function renderMembers(snapshot){
- const rows=Object.entries(snapshot.val()||{});
- $('memberList').innerHTML=rows.length?rows.map(([id,m])=>'<div class="admin-member-row"><strong>'+esc(m.email||id)+'</strong><span>'+esc(ROLE_LABELS[m.role]||'Réservations')+'</span><button class="secondary" data-member-id="'+esc(id)+'">Modifier</button></div>').join(''):'<p class="muted">Aucun accès personnalisé. Par défaut, les nouveaux comptes ont le rôle Réservations.</p>';
- $('memberList').querySelectorAll('[data-member-id]').forEach(b=>b.onclick=()=>{
-  const id=b.dataset.memberId,m=snapshot.val()[id];
-  $('memberUid').value=id;$('memberEmail').value=m.email||'';$('memberRole').value=m.role||'reservations';
+ const members=snapshot.val()||{},rows=Object.entries(members);
+ $('memberList').innerHTML=rows.length?rows.map(([id,m])=>
+  '<div class="admin-member-row"><strong>'+esc(m.email||id)+'</strong><span>'+
+   esc(memberRoles(m).map(x=>ROLE_LABELS[x]).join(' · ')||'Aucun accès')+
+   '</span><button class="secondary" data-member-id="'+esc(id)+'">Modifier</button></div>').join('')
+  :'<p class="muted">Aucun utilisateur accrédité. Ajoutez un compte dans Firebase puis attribuez ses droits.</p>';
+ $('memberList').querySelectorAll('[data-member-id]').forEach(button=>button.onclick=()=>{
+  const id=button.dataset.memberId,m=members[id];
+  $('memberUid').value=id;$('memberEmail').value=m.email||'';
+  markRoles('#memberForm',memberRoles(m));
  });
 }
 $('usersManagerButton').onclick=()=>{
@@ -435,14 +452,26 @@ $('usersManagerButton').onclick=()=>{
  adminMembersRef=eventRef.child('members');
  adminMembersRef.on('value',renderMembers,()=>{$('memberFeedback').textContent='Liste inaccessible. Vérifier les règles Firebase.';});
 };
+async function writeMembership(id,email,roles){
+ requireAccess('users');
+ if(!/^[A-Za-z0-9_-]{8,128}$/.test(id)||!email||!roles.length||
+   roles.some(x=>!ROLE_LABELS[x]||x==='disabled'))
+   throw Error('UID, adresse e-mail ou droits invalides.');
+ if(roles.includes('admin')&&roles.length>1)throw Error('Administrateur inclut déjà toutes les vues. Cochez uniquement Administrateur.');
+ if(ROOT_ADMIN_UIDS.includes(id)&&!roles.includes('admin'))throw Error('Le compte administrateur principal ne peut pas être rétrogradé.');
+ const current=(await eventRef.child('members').child(id).once('value')).val();
+ if(current?.email&&current.email!==email)throw Error('Cet UID est associé à un autre e-mail : vérifiez le compte Firebase.');
+ await eventRef.child('members').child(id).set({
+  email,role:roles.includes('admin')?'admin':roles[0],
+  roles:Object.fromEntries(roles.map(x=>[x,true])),
+  updatedBy:user.uid,updatedAt:firebase.database.ServerValue.TIMESTAMP
+ });
+}
 $('memberForm').onsubmit=async e=>{
- e.preventDefault();requireAccess('users');
- const id=$('memberUid').value.trim(),email=$('memberEmail').value.trim().toLowerCase(),assigned=$('memberRole').value;
- if(!/^[A-Za-z0-9_-]{8,128}$/.test(id)||!ROLE_LABELS[assigned]){ $('memberFeedback').textContent='UID ou rôle non valide.';return; }
- if(ROOT_ADMIN_UIDS.includes(id)&&assigned!=='admin'){ $('memberFeedback').textContent='Les comptes principaux restent administrateurs.';return; }
+ e.preventDefault();
  try{
-  await eventRef.child('members').child(id).set({email,role:assigned,updatedBy:user.uid,updatedAt:firebase.database.ServerValue.TIMESTAMP});
-  $('memberFeedback').textContent='Droits enregistrés.';
+  await writeMembership($('memberUid').value.trim(),$('memberEmail').value.trim().toLowerCase(),selectedRoles('#memberForm'));
+  $('memberFeedback').textContent='Droits enregistrés. Les vues disponibles se mettent à jour automatiquement.';
  }catch(error){$('memberFeedback').textContent=error.message;}
 };
 $('resetMemberPasswordButton').onclick=async()=>{
