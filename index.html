@@ -1067,8 +1067,8 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 }
 @media(prefers-reduced-motion:reduce){.viewer-arrival-fill{transition:none}}
 
-/* Alerte commune à tous les comptes connectés : réservations proches de la capacité. */
-.capacity-notice[hidden],#adminReservationButton[hidden]{display:none!important}
+/* Alertes limitées à l’espace de saisie des réservations. */
+.capacity-notice[hidden]{display:none!important}
 .capacity-notice{display:flex;gap:13px;align-items:center;padding:14px 24px;background:#fff5db;border-top:1px solid #e7c987;border-bottom:1px solid #e7c987;color:#6e4313}
 .capacity-notice strong{font-weight:800;font-size:16px}
 .capacity-notice p{margin:4px 0 0;font-size:13px}
@@ -1089,6 +1089,26 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 .capacity-table span{font-size:13px;font-weight:650}
 .capacity-table strong{font-size:13px;color:#4b5748;white-space:nowrap}
 @media(max-width:600px){.capacity-notice{padding:12px 14px}.capacity-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Capacité : visible UNIQUEMENT dans l'interface Réservations. */
+#reservationCapacityOverview[hidden],#reservationCapacityNotice[hidden]{display:none!important}
+.reservation-capacity-overview{padding:18px 18px 14px;background:linear-gradient(145deg,#fffefa,#f7f0e5);border-bottom:1px solid #e5d8c8}
+.reservation-capacity-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.reservation-capacity-kicker{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#9d4c2a;font-weight:800}
+.reservation-capacity-heading h2{font-family:'Playfair Display',serif;font-size:20px;line-height:1.2;margin:3px 0 0;color:#483128}
+.reservation-capacity-numbers{text-align:right;display:flex;flex-direction:column;flex-shrink:0;color:#4b3a2f}
+.reservation-capacity-numbers strong{font-size:32px;line-height:1;color:#416848}
+.reservation-capacity-numbers span{font-size:11px;font-weight:650}
+.reservation-capacity-overview.is-warning .reservation-capacity-numbers strong{color:#a46e20}
+.reservation-capacity-overview.is-critical .reservation-capacity-numbers strong{color:#bb3028}
+.reservation-capacity-overview .capacity-progress{height:13px;margin-top:12px}
+.reservation-capacity-stats{display:flex;flex-wrap:wrap;gap:5px 14px;margin-top:11px;font-size:12px;color:#625548}
+.reservation-capacity-stats strong{color:#442b22}
+.reservation-capacity-footnote{color:#6c6158;font-size:11px;line-height:1.5;margin:9px 0 0}
+.reservation-capacity-overview .capacity-notice{margin-top:10px;padding:10px 12px;border:1px solid #e7c987;border-radius:10px}
+.reservation-form-capacity{margin:0 0 12px;border-radius:9px;background:#f2f0e5;color:#55462f;padding:9px 12px;font-size:13px;font-weight:700}
+.reservation-form-capacity.is-critical{background:#fff0ed;color:#98291c}
+@media(max-width:600px){.reservation-capacity-overview{padding:14px 12px}.reservation-capacity-heading h2{font-size:17px}.reservation-capacity-numbers strong{font-size:26px}}
 </style>
 </head>
 <body>
@@ -1184,8 +1204,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
   </div>
 </header>
 
-<section id="reservationCapacityNotice" class="capacity-notice" role="status" aria-live="polite" aria-atomic="true" hidden><span class="capacity-notice-icon" aria-hidden="true">⚠️</span><div><strong id="reservationCapacityNoticeTitle">Places limitées</strong><p id="reservationCapacityNoticeText"></p></div></section>
-<div class="toolbar"><button class="primary" id="newReservation">+ Réservation SMS</button><button class="secondary" id="exportButton">Exporter la liste CSV</button><button class="secondary" id="inviteUserButton" type="button" hidden>Inviter un utilisateur</button><button class="primary" id="usersManagerButton" type="button" hidden>Gestion des utilisateurs</button><button class="primary" id="adminDashboardButton" type="button" hidden>Tableau de bord des entrées</button><button class="primary" id="adminReservationButton" type="button" hidden>Suivi des réservations et capacité</button><label id="adminViewControl" class="admin-view-control" hidden for="adminRoleView">Espace actif :
+<div class="toolbar"><button class="primary" id="newReservation">+ Réservation SMS</button><button class="secondary" id="exportButton">Exporter la liste CSV</button><button class="secondary" id="inviteUserButton" type="button" hidden>Inviter un utilisateur</button><button class="primary" id="usersManagerButton" type="button" hidden>Gestion des utilisateurs</button><button class="primary" id="adminDashboardButton" type="button" hidden>Tableau de bord des entrées</button><label id="adminViewControl" class="admin-view-control" hidden for="adminRoleView">Espace actif :
 <select id="adminRoleView" aria-label="Choisir la vue de travail">
 <option value="admin">★ Administrateur</option>
 <option value="reservations">Inscriptions et réservations</option>
@@ -1211,6 +1230,26 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 <div class="main">
 
   <div class="panel-left">
+<section class="reservation-capacity-overview" id="reservationCapacityOverview" aria-label="Suivi de la capacité des réservations" hidden>
+ <div class="reservation-capacity-heading">
+   <div><span class="reservation-capacity-kicker">Suivi des inscriptions</span><h2>Capacité des réservations</h2></div>
+   <div class="reservation-capacity-numbers"><strong id="capacityRemaining">0</strong><span>places disponibles</span></div>
+ </div>
+ <div id="reservationCapacityNotice" class="capacity-notice" role="status" aria-live="polite" aria-atomic="true" hidden>
+   <span class="capacity-notice-icon" aria-hidden="true">⚠️</span>
+   <div><strong id="reservationCapacityNoticeTitle">Places limitées</strong><p id="reservationCapacityNoticeText"></p></div>
+ </div>
+ <div id="reservationCapacityProgress" class="capacity-progress" role="progressbar" aria-label="Places réservées sur la capacité de la salle" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+  <div id="reservationCapacityProgressFill" class="capacity-progress-fill" style="width:0%"></div>
+ </div>
+ <div class="reservation-capacity-stats">
+   <span><strong id="capacityBooked">0</strong> places réservées</span>
+   <span><strong id="capacityPending">0</strong> à valider</span>
+   <span><strong id="capacityAccepted">0</strong> acceptées</span>
+   <span><strong id="capacityTotal">0</strong> places au total</span>
+ </div>
+ <p class="reservation-capacity-footnote">Les réservations à valider et acceptées comptent dans la capacité ; les annulations libèrent leurs places.</p>
+</section>
     <div class="search-section">
       <div class="search-wrapper">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -1623,17 +1662,9 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 <label><input type="checkbox" data-access-role value="entry"> Entrées et paiements</label>
 <label><input type="checkbox" data-access-role value="viewer"> Consultation (lecture seule)</label>
 <label><input type="checkbox" data-access-role value="admin"> Administrateur (toutes les vues)</label>
-</fieldset><div class="admin-actions"><button class="primary" type="submit" id="saveMemberButton">Enregistrer les droits</button><button type="button" class="secondary" id="resetMemberPasswordButton">Envoyer un lien de mot de passe</button><button type="button" class="secondary" id="openFirebaseUsersButton">Créer le compte dans Firebase</button></div><p id="memberFeedback" role="status"></p></form><h3>Utilisateurs et droits</h3><div id="memberList"></div></dialog><dialog id="adminReservationDialog" class="capacity-dialog" aria-labelledby="adminReservationTitle">
- <div class="dialog-heading"><h2 id="adminReservationTitle">Réservations · Capacité de la salle</h2><button type="button" class="secondary" data-close="adminReservationDialog">Fermer</button></div>
- <p class="muted">Les réservations à valider et acceptées bloquent chacune le nombre de places correspondant à leurs invités. Les réservations annulées libèrent leurs places.</p>
- <div class="capacity-kpis" id="adminReservationKpis"></div>
- <div class="capacity-progress"><div id="adminReservationProgress" class="capacity-progress-fill"></div></div>
- <p id="adminReservationThreshold" class="capacity-threshold" role="status"></p>
- <h3>Capacité par table</h3>
- <div id="adminReservationTables" class="capacity-table-list"></div>
-</dialog>
-<dialog id="adminDashboardDialog" aria-labelledby="adminDashboardTitle"><div class="dialog-heading"><h2 id="adminDashboardTitle">Pilotage des entrées</h2><button type="button" class="secondary" data-close="adminDashboardDialog">Fermer</button></div><p class="muted">Dashboard privé administrateur — suivi en direct.</p><div id="adminKpis"></div><label>Rechercher<input type="search" id="adminGuestSearch"></label><label>Filtrer<select id="adminGuestFilter"><option value="not-arrived">Attendus</option><option value="arrived">Arrivés</option><option value="unplaced">À placer</option><option value="unpaid">Non payés</option><option value="all">Tous</option></select></label><div id="adminGuestResults"></div></dialog><dialog id="reservationDialog"><form id="reservationForm">
+</fieldset><div class="admin-actions"><button class="primary" type="submit" id="saveMemberButton">Enregistrer les droits</button><button type="button" class="secondary" id="resetMemberPasswordButton">Envoyer un lien de mot de passe</button><button type="button" class="secondary" id="openFirebaseUsersButton">Créer le compte dans Firebase</button></div><p id="memberFeedback" role="status"></p></form><h3>Utilisateurs et droits</h3><div id="memberList"></div></dialog><dialog id="adminDashboardDialog" aria-labelledby="adminDashboardTitle"><div class="dialog-heading"><h2 id="adminDashboardTitle">Pilotage des entrées</h2><button type="button" class="secondary" data-close="adminDashboardDialog">Fermer</button></div><p class="muted">Dashboard privé administrateur — suivi en direct.</p><div id="adminKpis"></div><label>Rechercher<input type="search" id="adminGuestSearch"></label><label>Filtrer<select id="adminGuestFilter"><option value="not-arrived">Attendus</option><option value="arrived">Arrivés</option><option value="unplaced">À placer</option><option value="unpaid">Non payés</option><option value="all">Tous</option></select></label><div id="adminGuestResults"></div></dialog><dialog id="reservationDialog"><form id="reservationForm">
 <div class="dialog-heading"><h2 id="reservationTitle">Nouvelle réservation SMS</h2><button type="button" class="secondary" data-close="reservationDialog">Fermer</button></div>
+ <p id="reservationDialogCapacity" class="reservation-form-capacity" role="status" aria-live="polite"></p>
 <div class="form-grid"><label>Personne qui réserve<input id="reservedBy" maxlength="120" required autocomplete="off"></label><label>Téléphone (facultatif)<input id="phone" type="tel" maxlength="30" autocomplete="off"></label></div>
 <label>Organisateur contacté par le réservant
   <input id="contactedOrganizer" list="organizerNameSuggestions" maxlength="120" required autocomplete="off" placeholder="Prénom et nom">
