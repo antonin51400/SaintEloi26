@@ -84,6 +84,27 @@ function allGuests(data = state) {
 function accepted(data = state) { return allGuests(data).filter(p => p.status === 'accepted'); }
 const DEFAULT_TABLE_CAPACITY=6;
 function capacity(tableId,data=state){ return layoutFor(data).tables[tableId] ? Number(data.tables?.[tableId]?.capacity??DEFAULT_TABLE_CAPACITY) : 0; }
+// Une réservation en attente réserve déjà la place pendant la validation.
+// Les annulations sont exclues. Chaque invité compte pour une place.
+function reservationCapacity(data=state){
+ const total=Object.keys(layoutFor(data).tables).reduce((sum,id)=>sum+capacity(id,data),0);
+ let pending=0,acceptedCount=0;
+ for(const reservation of Object.values(data.reservations||{})){
+   const count=Object.keys(reservation.participants||{}).length;
+   if(reservation.status==='pending')pending+=count;
+   else if(reservation.status==='accepted')acceptedCount+=count;
+ }
+ const booked=pending+acceptedCount;
+ return {total,pending,accepted:acceptedCount,booked,remaining:total-booked};
+}
+function assertReservationCapacity(previousData,nextData){
+ const previous=reservationCapacity(previousData),next=reservationCapacity(nextData);
+ if(next.booked>next.total && (next.booked>previous.booked || next.total<previous.total)){
+   const free=Math.max(0,previous.remaining);
+   throw Error('Capacité maximale atteinte : '+free+' place'+(free>1?'s':'')+
+     ' disponible'+(free>1?'s':'')+'. Impossible de dépasser les '+next.total+' places de la salle.');
+ }
+}
 function membersFor(sel, data = state) {
   const r = data.reservations?.[sel.rid];
   if (!r || r.status !== 'accepted') throw Error('Acceptez d’abord cette réservation pour placer ses invités.');
@@ -154,7 +175,7 @@ async function mutate(change) {
   busy=true; document.querySelectorAll('button[type="submit"]').forEach(b=>b.disabled=true);
   try {
     if(demo){
-      const next=clone(state);change(next);validateData(next);state=next;render();
+      const next=clone(state);change(next);validateData(next);assertReservationCapacity(state,next);state=next;render();
     }else if(hasRole('admin')){
       // Opération globale atomique : seuls les administrateurs peuvent écrire à la racine data.
       let conflict='';
@@ -162,14 +183,14 @@ async function mutate(change) {
         try{
           const next=current||{reservations:{},tables:{}};
           next.reservations ||= {};next.tables ||= {};
-          change(next);validateData(next);conflict='';return next;
+          const previous=clone(next);change(next);validateData(next);assertReservationCapacity(previous,next);conflict='';return next;
         }catch(error){conflict=error.message;return;}
       },undefined,false);
       if(!result.committed)throw Error(conflict||'Enregistrement non effectué.');
     }else{
       // Droits limités : transaction sur UNE réservation pour que Firebase
       // vérifie la modification et non l'ensemble de la base.
-      const draft=clone(state);change(draft);validateData(draft);
+      const draft=clone(state);change(draft);validateData(draft);assertReservationCapacity(state,draft);
       if(JSON.stringify(draft.tables||{})!==JSON.stringify(state.tables||{}))
         throw Error('La capacité des tables est réservée aux administrateurs.');
       const ids=new Set([...Object.keys(state.reservations||{}),...Object.keys(draft.reservations||{})]);
@@ -183,7 +204,7 @@ async function mutate(change) {
           live.reservations ||= {};
           if(current)live.reservations[reservationId]=current;
           else delete live.reservations[reservationId];
-          change(live);validateData(live);conflict='';
+          const previous=clone(live);change(live);validateData(live);assertReservationCapacity(previous,live);conflict='';
           return live.reservations[reservationId]||null;
         }catch(error){conflict=error.message;return;}
       },undefined,false);
