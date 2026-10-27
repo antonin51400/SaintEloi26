@@ -641,17 +641,19 @@ $('adminGuestResults').onclick=async e=>{
  }catch(error){notice(error.message);}
 };
 function guestCard(rid,pid,p,r){
-  const active=r.status==='accepted';
-  const place=active&&allowed('place');
-  const check=active&&allowed('arrival');
-  const pay=active&&allowed('payment');
-  return `<div class="guest-card ${p.arrived?'arrived':''}" ${place?'draggable="true"':''} data-rid="${rid}" data-pid="${pid}">
-    <div class="guest-info"><div class="guest-name">${esc(p.name)}</div><div class="guest-meta">${p.tableId?esc(tableNames[p.tableId])+' · Place '+p.seat:'À placer'} · ${p.arrived?'✓ Arrivé':'Non arrivé'} · ${p.paid?'✓ Payé':'Non payé'}</div>${guestTracking(p)}</div>
-    ${place?`<button class="place" data-action="select" data-rid="${rid}" data-pid="${pid}">Placer →</button>`:''}
-    ${check?`<button class="${p.arrived?'on':''}" aria-pressed="${!!p.arrived}" data-action="arrived" data-rid="${rid}" data-pid="${pid}">${p.arrived?'✓ Arrivé':'Arrivée'}</button>`:''}
-    ${pay?`<button class="secondary" data-action="payment-note" data-rid="${rid}" data-pid="${pid}">${p.paidForBy?'Modifier le commentaire':'Payé par un tiers / commentaire'}</button>`:''}
-    ${pay?`<button class="money ${p.paid?'on':''}" aria-pressed="${!!p.paid}" data-action="paid" data-rid="${rid}" data-pid="${pid}" ${p.arrived?'disabled title="Une personne arrivée reste payée"':''}>${p.paid?'✓ Payé':'Paiement'}</button>`:''}
-  </div>`;
+ const view=shownRole(),active=r.status==='accepted';
+ const place=active&&allowed('place'),check=active&&allowed('arrival'),pay=active&&allowed('payment');
+ const table=p.tableId?esc(tableNames[p.tableId])+' · Place '+p.seat:'À placer';
+ const meta=['admin','entry','viewer'].includes(view)
+  ?table+' · '+(p.arrived?'✓ Arrivé':'Non arrivé')+' · '+(p.paid?'✓ Payé':'Non payé')
+  :table;
+ return `<div class="guest-card ${view!=='placement'&&p.arrived?'arrived':''}" ${place?'draggable="true"':''} data-rid="${rid}" data-pid="${pid}">
+  <div class="guest-info"><div class="guest-name">${esc(p.name)}</div><div class="guest-meta">${meta}</div>${guestTracking(p)}</div>
+  ${place?`<button class="place" data-action="select" data-rid="${rid}" data-pid="${pid}">Placer →</button>`:''}
+  ${check?`<button class="${p.arrived?'on':''}" aria-pressed="${!!p.arrived}" data-action="arrived" data-rid="${rid}" data-pid="${pid}">${p.arrived?'✓ Arrivé':'Arrivée'}</button>`:''}
+  ${pay?`<button class="secondary" data-action="payment-note" data-rid="${rid}" data-pid="${pid}">${p.paidForBy?'Modifier le commentaire':'Payé par un tiers / commentaire'}</button>`:''}
+  ${pay?`<button class="money ${p.paid?'on':''}" aria-pressed="${!!p.paid}" data-action="paid" data-rid="${rid}" data-pid="${pid}" ${p.arrived?'disabled title="Une personne arrivée reste payée"':''}>${p.paid?'✓ Payé':'Paiement'}</button>`:''}
+ </div>`;
 }
 $('search').oninput=render;
 document.querySelectorAll('.filter-btn').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;document.querySelectorAll('.filter-btn').forEach(x=>x.classList.toggle('active',x===b));render();});
