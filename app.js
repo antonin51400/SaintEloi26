@@ -737,13 +737,13 @@ function closeTablePopup(e){if(e&&e.target!==$('tablePopupOverlay'))return;popup
 function drawTable(){
  const id=popupTable,m=tableMetrics(id),people=m.people,cap=m.capacity;
  $('popupTitle').textContent=tableNames[id];
- $('popupSubtitle').textContent=m.total+' / '+cap+' places occupées · '+m.free+' libres · '+m.arrived+' arrivés';
+ $('popupSubtitle').textContent=m.total+' / '+cap+' places occupées · '+m.free+' libres'+(shownRole()==='placement'?'':' · '+m.arrived+' arrivés');
  $('popupProgressFill').style.width=(m.total?100*m.arrived/m.total:0)+'%';
- $('popupProgressLabel').textContent=m.arrived+' / '+m.total+' arrivés';
- $('popupGuestList').innerHTML='<p class="fixed-capacity">'+cap+' places à cette table · bleu : attendu · vert : arrivé</p><div class="seat-grid">'+Array.from({length:cap},(_,i)=>{
+ $('popupProgressLabel').textContent=shownRole()==='placement'?'':m.arrived+' / '+m.total+' arrivés';
+ $('popupGuestList').innerHTML='<p class="fixed-capacity">'+cap+' places à cette table'+(shownRole()==='placement'?'':' · bleu : attendu · vert : arrivé')+'</p><div class="seat-grid">'+Array.from({length:cap},(_,i)=>{
   const p=people.find(p=>p.seat===i+1);
-  const status=p?(p.arrived?'seat-arrived':'seat-expected'):'';
-  return '<div class="seat '+status+'"><strong>Place '+(i+1)+'</strong>'+ (p?esc(p.name)+'<small>'+esc(p.reservedBy)+'</small>'+guestTracking(p)+(allowed('place')?'<button class="secondary" data-action="select" data-rid="'+esc(p.rid)+'" data-pid="'+esc(p.pid)+'">Déplacer</button>':''):'Libre')+'</div>';
+  const status=p&&shownRole()!=='placement'?(p.arrived?'seat-arrived':'seat-expected'):'';
+  return '<div class="seat '+status+'"><strong>Place '+(i+1)+'</strong>'+ (p?esc(p.name)+'<small>'+esc(p.reservedBy)+'</small>'+(shownRole()==='placement'?'':guestTracking(p))+(allowed('place')?'<button class="secondary" data-action="select" data-rid="'+esc(p.rid)+'" data-pid="'+esc(p.pid)+'">Déplacer</button>':''):'Libre')+'</div>';
  }).join('')+'</div>';
 }
 function showPlacement(tableId){
