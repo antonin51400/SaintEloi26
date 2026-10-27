@@ -981,15 +981,11 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 .entry-tables-panel:not([hidden]){display:flex}
 #appWrapper[data-role="reservations"] .panel-left{width:100%;max-width:none;border-right:0}
 #appWrapper[data-role="reservations"] .panel-right{display:none}
-#appWrapper[data-role="entry"] .panel-right{display:none}
+/* La vue Entrées garde le même plan de salle et la scène que les autres vues. */
 #appWrapper[data-role="placement"] .t-progress-wrap,
 #appWrapper[data-role="placement"] .t-progress-label{display:none!important}
 .filters .filter-btn[hidden],.table-legend .legend-group[hidden],.header-stats .stat[hidden],#tableLegend[hidden],#reservationSummary[hidden]{display:none!important}
-@media(max-width:780px){
- #appWrapper[data-role="entry"] .main{flex-direction:column}
- #appWrapper[data-role="entry"] .panel-left{width:100%;max-width:none;min-width:0;max-height:53vh}
- #appWrapper[data-role="entry"] .entry-tables-panel{min-height:28vh}
-}
+/* Aucune substitution mobile du plan de salle par des cartes de tables. */
 
 /* Une accréditation ouvre une vue autonome : les fonctionnalités restent séparées. */
 #appWrapper[data-role="placement"] .group-note,
@@ -1002,6 +998,74 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 #appWrapper[data-role="placement"] .guest-card.arrived::before{display:none!important}
 #appWrapper[data-role="reservations"] .payment-alert,
 #appWrapper[data-role="reservations"] .arrival-detail{display:none!important}
+
+/* Vue Entrées : plan identique aux autres vues, scène centrée sur l'ensemble des tables. */
+.room {
+ display:grid;
+ grid-template-columns:max-content;
+ justify-content:center;
+ width:max-content;
+ min-width:100%;
+ box-sizing:border-box;
+}
+.room > .scene {
+ width:70%;
+ justify-self:center;
+ margin:0 0 32px;
+}
+.room > .table-rows {
+ width:max-content;
+ max-width:none;
+}
+.room > .legend {
+ justify-self:center;
+}
+/* Le même axe de centrage doit être conservé dans l'éditeur du plan personnalisé. */
+#planCanvas {
+ display:grid;
+ grid-template-columns:max-content;
+ justify-content:center;
+ width:max-content;
+ min-width:100%;
+ box-sizing:border-box;
+}
+#planCanvas .plan-editor-row {
+ grid-template-columns:max-content 36px max-content;
+ width:max-content;
+ justify-self:center;
+}
+#planCanvas .plan-scene {
+ width:70%;
+ justify-self:center;
+ margin:0 0 16px;
+}
+
+/* Frise de consultation : compteur sur les invités de réservations acceptées. */
+#viewerArrivalProgress[hidden]{display:none!important}
+.viewer-arrival-progress{
+ padding:22px clamp(16px,3vw,34px) 19px;
+ background:linear-gradient(135deg,#fffdf8 0%,#f5ebdd 100%);
+ border-bottom:1px solid #dfcba9;
+}
+.viewer-arrival-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px;margin-bottom:19px}
+.viewer-arrival-eyebrow{color:#a93226;text-transform:uppercase;font-size:11px;letter-spacing:1.6px;font-weight:800}
+.viewer-arrival-header h2{font-family:'Playfair Display',serif;font-size:24px;color:#572b24;margin:2px 0 3px}
+.viewer-arrival-header p{margin:0;color:#685b50;font-size:13px}
+.viewer-arrival-kpi{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.viewer-arrival-kpi strong{font-family:'Playfair Display',serif;font-size:34px;line-height:1.1;color:#a93226}
+.viewer-arrival-kpi span{font-size:13px;font-weight:700;color:#504236}
+.viewer-arrival-track{position:relative;height:28px;width:100%;background:#e9ddd0;border:1px solid #d9c5ad;border-radius:99px;overflow:hidden}
+.viewer-arrival-fill{position:absolute;inset:0 auto 0 0;width:0%;background:linear-gradient(90deg,#b84632 0%,#c9a84c 72%,#348560 100%);border-radius:99px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.viewer-arrival-ticks{position:absolute;inset:0;pointer-events:none;display:flex;justify-content:space-evenly}
+.viewer-arrival-ticks i{height:100%;border-left:1px solid rgba(76,54,41,.35)}
+.viewer-arrival-scale{display:flex;justify-content:space-between;font-size:12px;color:#645b4d;font-weight:700;margin-top:9px}
+@media(max-width:600px){
+ .viewer-arrival-progress{padding:17px 13px}
+ .viewer-arrival-header h2{font-size:20px}
+ .viewer-arrival-kpi strong{font-size:28px}
+ .viewer-arrival-track{height:24px}
+}
+@media(prefers-reduced-motion:reduce){.viewer-arrival-fill{transition:none}}
 </style>
 </head>
 <body>
@@ -1065,6 +1129,21 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{
 <div class="wrapper" id="appWrapper" style="display:none">
 
 <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+<section class="viewer-arrival-progress" id="viewerArrivalProgress" aria-label="Progression des arrivées" hidden>
+ <div class="viewer-arrival-header">
+   <div>
+     <div class="viewer-arrival-eyebrow">Suivi en direct · Saint-Éloi 2026</div>
+     <h2>Progression des arrivées</h2>
+     <p id="viewerArrivalDetail" aria-live="polite">Aucun invité attendu pour le moment.</p>
+   </div>
+   <div class="viewer-arrival-kpi"><strong id="viewerArrivalPercent">0 %</strong><span id="viewerArrivalCount">0 / 0 arrivés</span></div>
+ </div>
+ <div class="viewer-arrival-track" id="viewerArrivalTrack" role="progressbar" aria-label="Invités arrivés sur le total des invités attendus" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Aucun invité attendu">
+   <div class="viewer-arrival-fill" id="viewerArrivalFill" style="width:0%"></div>
+   <div class="viewer-arrival-ticks" aria-hidden="true"><i></i><i></i><i></i></div>
+ </div>
+ <div class="viewer-arrival-scale" aria-hidden="true"><span>0 %</span><span>25 %</span><span>50 %</span><span>75 %</span><span>100 %</span></div>
+</section>
 
 <header>
   <div class="header-title">
