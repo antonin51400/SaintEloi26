@@ -553,9 +553,19 @@ function render(){
  const arrived=guests.filter(p=>p.arrived).length;
  $('statTotal').textContent=guests.length;$('statArrived').textContent=arrived;$('statRemaining').textContent=guests.length-arrived;$('statPaid').textContent=guests.filter(p=>p.paid).length;
  $('progressFill').style.width=(guests.length?100*arrived/guests.length:0)+'%';
- $('reservationSummary').innerHTML=`<span><strong>${rs.filter(([,r])=>r.status==='pending').length}</strong> réservations à valider</span><span><strong>${guests.filter(p=>!p.tableId).length}</strong> invités à placer</span><span><strong>${guests.filter(p=>!p.paid).length}</strong> invités non payés</span>`;
+ const pending=rs.filter(([,r])=>r.status==='pending').length;
+ const view=shownRole(),unplaced=guests.filter(p=>!p.tableId).length,unpaid=guests.filter(p=>!p.paid).length;
+ const summary={
+  reservations:'<span><strong>'+pending+'</strong> réservations à valider</span><span><strong>'+rs.length+'</strong> dossiers</span>',
+  placement:'<span><strong>'+unplaced+'</strong> invités à placer</span><span><strong>'+(guests.length-unplaced)+'</strong> placés</span>',
+  entry:'<span><strong>'+(guests.length-arrived)+'</strong> invités attendus</span><span><strong>'+unpaid+'</strong> non payés</span>',
+  viewer:'<span><strong>'+(guests.length-arrived)+'</strong> attendus</span><span><strong>'+arrived+'</strong> arrivés</span>',
+  admin:'<span><strong>'+pending+'</strong> réservations à valider</span><span><strong>'+unplaced+'</strong> invités à placer</span><span><strong>'+unpaid+'</strong> invités non payés</span>'
+ };
+ $('reservationSummary').innerHTML=summary[view]||'';
  $('connectionStatus').textContent=demo?'DÉMONSTRATION · rien n’est sauvegardé':ready?(online?'Synchronisation active':'Hors connexion · modifications bloquées'):'Connexion en cours…';
  const html=rs.sort((a,b)=>(a[1].createdAt||'').localeCompare(b[1].createdAt||'')).map(([rid,r])=>{
+  if(['placement','entry','viewer'].includes(view)&&r.status!=='accepted')return '';
   const parts=Object.entries(r.participants||{});
   const matching=parts.filter(([pid,p])=>{
    if(filter==='pending'&&r.status!=='pending'||filter==='accepted'&&r.status!=='accepted'||filter==='cancelled'&&r.status!=='cancelled')return false;
@@ -568,13 +578,13 @@ function render(){
    <div class="reservation-actions">${allowed('reserve')?`<button class="secondary" data-action="edit" data-rid="${rid}">Modifier</button>`:''}${allowed('reserve')&&r.status==='pending'?`<button class="primary" data-action="accept" data-rid="${rid}">Accepter</button>`:''}${allowed('place')&&shownRole()!=='placement'&&r.status==='accepted'?`<button class="secondary" draggable="true" data-action="select" data-rid="${rid}">Placer le groupe →</button>`:''}${allowed('reserve')&&r.status!=='cancelled'?`<button class="secondary" data-action="cancel" data-rid="${rid}">Annuler</button>`:''}</div></div>
    ${matching.map(([pid,p])=>guestCard(rid,pid,p,r)).join('')}</section>`;
  }).join('');
- $('guestList').innerHTML=html||'<div class="empty-state">Aucune réservation pour le moment.<br>Utilisez « + Réservation SMS » pour ajouter un réservant et ses invités.</div>';
+ $('guestList').innerHTML=html||'<div class="empty-state">Aucun invité dans cette vue ou ce filtre.</div>';
  tableElements.forEach(el=>{
    const m=tableMetrics(el.id,guests);
    el.querySelector('.t-guests').textContent=m.total+' / '+m.capacity+' places · '+m.free+' libres';
    el.querySelector('.t-name').textContent=m.total
-     ? m.arrived+' / '+m.total+' arrivés · '+m.people.filter(p=>p.paid).length+' payé(s)'
-     : 'Aucun invité placé';
+    ? view==='placement'?m.total+' invité(s) placés':m.arrived+' / '+m.total+' arrivés'+(view==='admin'?' · '+m.people.filter(p=>p.paid).length+' payé(s)':'')
+    : 'Aucun invité placé';
    el.classList.toggle('full',m.occupancy==='full');
    el.classList.toggle('highlighted',!!selection);
    for(const status of ['empty','partial','full','overflow'])
@@ -583,12 +593,12 @@ function render(){
      el.classList.toggle('arrival-'+status,m.arrival===status);
    const fill=el.querySelector('.t-progress-fill'),label=el.querySelector('.t-progress-label');
    if(fill)fill.style.width=(m.total?m.arrived/m.total*100:0)+'%';
-   if(label)label.textContent=m.arrived+'/'+m.total+' arrivés';
-   el.setAttribute('aria-label',m.name+' : '+m.total+' sur '+m.capacity+' places, '+m.arrived+' arrivés');
+   if(label)label.textContent=view==='placement'?'':m.arrived+'/'+m.total+' arrivés';
+   el.setAttribute('aria-label',m.name+' : '+m.total+' sur '+m.capacity+' places'+(view==='placement'?'':', '+m.arrived+' arrivés'));
  });
  renderEntryTables(guests);
  if(selection){try{const people=membersFor(selection);$('mapHint').textContent=`${people.length} personne(s) sélectionnée(s) : cliquez sur une table`;$('bannerName').textContent=selection.pid?people[0].name:state.reservations[selection.rid].reservedBy;$('bannerDetail').textContent='Cliquez sur une table, ou glissez la sélection sur le plan.';$('bannerTable').textContent=people.length+' personne(s)';$('guestBanner').classList.add('visible');}catch(e){selection=null;}}
- if(!selection){$('guestBanner').classList.remove('visible');$('mapHint').textContent='Sélectionnez une personne ou un groupe, puis cliquez sur sa table';}
+ if(!selection){$('guestBanner').classList.remove('visible');$('mapHint').textContent=view==='viewer'?'Plan en consultation':view==='placement'?'Sélectionnez un invité puis une table':'Sélectionnez une personne ou un groupe, puis cliquez sur sa table';}
  if(popupTable)drawTable();
  if($('adminDashboardDialog').open)renderAdminDashboard();
 }
