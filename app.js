@@ -210,7 +210,8 @@ function showApp(){
  $('adminRoleView').value=view;
  $('adminPreviewNotice').hidden=view==='admin'||views.length<2;
  $('adminPreviewNotice').textContent=view==='admin'?'':'Espace '+ROLE_LABELS[view]+' actif : modifications enregistrées et synchronisées.';
- $('entryTablesPanel').hidden=view!=='entry';
+ $('viewerArrivalProgress').hidden=view!=='viewer';
+ $('entryTablesPanel').hidden=true; // Le plan de salle original est affiché aussi aux entrées.
  $('tableLegend').hidden=view==='reservations';
  $('tableLegend').querySelectorAll('.legend-group').forEach((el,i)=>el.hidden=view==='placement'&&i===1);
  $('statPaid').parentElement.hidden=!['admin','entry','viewer'].includes(view);
@@ -553,6 +554,15 @@ function render(){
  const arrived=guests.filter(p=>p.arrived).length;
  $('statTotal').textContent=guests.length;$('statArrived').textContent=arrived;$('statRemaining').textContent=guests.length-arrived;$('statPaid').textContent=guests.filter(p=>p.paid).length;
  $('progressFill').style.width=(guests.length?100*arrived/guests.length:0)+'%';
+ const target=guests.length,progress=target?Math.min(100,Math.round(100*arrived/target)):0;
+ $('viewerArrivalFill').style.width=progress+'%';
+ $('viewerArrivalPercent').textContent=progress+' %';
+ $('viewerArrivalCount').textContent=arrived+' / '+target+' arrivés';
+ $('viewerArrivalDetail').textContent=target
+  ?(target-arrived)+' invité'+(target-arrived>1?'s':'')+' encore attendu'+(target-arrived>1?'s':'')+' sur '+target+' invité'+(target>1?'s':'')+' confirmé'+(target>1?'s':'')
+  :'Aucun invité confirmé pour le moment.';
+ $('viewerArrivalTrack').setAttribute('aria-valuenow',String(progress));
+ $('viewerArrivalTrack').setAttribute('aria-valuetext',target?arrived+' invités arrivés sur '+target+' attendus, '+progress+' pour cent':'Aucun invité attendu');
  const pending=rs.filter(([,r])=>r.status==='pending').length;
  const view=shownRole(),unplaced=guests.filter(p=>!p.tableId).length,unpaid=guests.filter(p=>!p.paid).length;
  const summary={
