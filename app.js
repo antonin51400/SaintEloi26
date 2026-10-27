@@ -569,9 +569,58 @@ $('logoutButton').onclick=async()=>{
   showEmailLogin();
   lock('Déconnecté. Connecte-toi avec ton e-mail pour revenir.');
 };
+function renderReservationFormCapacity(){
+ const label=$('reservationDialogCapacity');
+ if(!$('reservationDialog').open)return;
+ const info=reservationCapacity();
+ const old=state.reservations?.[editing];
+ const oldCount=old&&old.status!=='cancelled'?Object.keys(old.participants||{}).length:0;
+ const count=[...$('participantRows').children].length;
+ const nextCount=$('reservationStatus').value==='cancelled'?0:count;
+ const remaining=info.remaining+oldCount-nextCount;
+ const outcome=remaining<0?'Dépassement de '+(-remaining)+' place(s) : enregistrement interdit.':
+  remaining===0?'Avec cette réservation, toutes les places seront occupées.':
+  remaining+' places resteraient après cet enregistrement.';
+ label.textContent='Capacité de la salle : '+info.booked+' / '+info.total+' places réservées. '+outcome;
+ label.classList.toggle('is-critical',remaining<=15);
+}
+function renderReservationCapacity(info=reservationCapacity()){
+ const overview=$('reservationCapacityOverview');
+ const visible=ready&&shownRole()==='reservations';
+ overview.hidden=!visible;
+ if(!visible)return;
+ const free=Math.max(0,info.remaining),level=info.remaining<=15?'critical':info.remaining<=25?'warning':'normal';
+ overview.classList.toggle('is-critical',level==='critical');
+ overview.classList.toggle('is-warning',level==='warning');
+ $('capacityRemaining').textContent=free;
+ $('capacityBooked').textContent=info.booked;
+ $('capacityPending').textContent=info.pending;
+ $('capacityAccepted').textContent=info.accepted;
+ $('capacityTotal').textContent=info.total;
+ const percentage=info.total?Math.min(100,Math.max(0,info.booked/info.total*100)):0;
+ $('reservationCapacityProgressFill').style.width=percentage+'%';
+ $('reservationCapacityProgressFill').classList.toggle('is-critical',level==='critical');
+ $('reservationCapacityProgress').setAttribute('aria-valuenow',String(Math.round(percentage)));
+ $('reservationCapacityProgress').setAttribute('aria-valuetext',info.booked+' places réservées sur '+info.total);
+ const alert=$('reservationCapacityNotice');
+ alert.hidden=level==='normal';
+ alert.classList.toggle('is-critical',level==='critical');
+ if(level!=='normal'){
+  $('reservationCapacityNoticeTitle').textContent=info.remaining<=0?'Réservations complètes':
+   level==='critical'?'Dernières places : alerte rouge':'Attention : réservations bientôt complètes';
+  $('reservationCapacityNoticeText').textContent=info.remaining<0?'Capacité dépassée de '+(-info.remaining)+' place(s). Vérifiez les dossiers.':
+   info.remaining===0?'Les '+info.total+' places de la salle sont réservées. Aucune nouvelle inscription possible.':
+    'Attention, il ne reste que '+free+' place'+(free>1?'s':'')+' !';
+ }
+}
 function render(){
  syncPlanFromState();
  const guests=accepted(), rs=Object.entries(state.reservations||{}), query=normal($('search').value);
+ const capacityInfo=reservationCapacity();
+ renderReservationCapacity(capacityInfo);
+ $('newReservation').disabled=allowed('reserve')&&capacityInfo.remaining<=0;
+ $('newReservation').title=capacityInfo.remaining<=0?'Salle complète : aucune nouvelle réservation possible':'Enregistrer une réservation';
+ renderReservationFormCapacity();
  const arrived=guests.filter(p=>p.arrived).length;
  $('statTotal').textContent=guests.length;$('statArrived').textContent=arrived;$('statRemaining').textContent=guests.length-arrived;$('statPaid').textContent=guests.filter(p=>p.paid).length;
  $('progressFill').style.width=(guests.length?100*arrived/guests.length:0)+'%';
@@ -689,9 +738,16 @@ function guestCard(rid,pid,p,r){
 $('search').oninput=render;
 document.querySelectorAll('.filter-btn').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;document.querySelectorAll('.filter-btn').forEach(x=>x.classList.toggle('active',x===b));render();});
 function addParticipant(p={}){const row=document.createElement('div');row.className='participant-row';row.dataset.pid=p.pid||uid();const input=document.createElement('input');input.required=true;input.maxLength=120;input.placeholder='Nom et prénom de l’invité';input.setAttribute('aria-label','Nom du participant');input.value=p.name||'';const remove=document.createElement('button');remove.type='button';remove.className='secondary';remove.textContent='Retirer';remove.onclick=()=>row.remove();row.append(input,remove);$('participantRows').append(row);return input;}
-function editReservation(rid=null){requireAccess('reserve');editing=rid;const r=state.reservations?.[rid];editVersion=r?.version||0;$('reservationForm').reset();$('participantRows').replaceChildren();$('formError').textContent='';$('reservationTitle').textContent=rid?'Modifier la réservation':'Nouvelle réservation SMS';$('reservedBy').value=r?.reservedBy||'';$('phone').value=r?.phone||'';$('contactedOrganizer').value=r?.contactedOrganizer||(allowed('reserve')?operator:'');$('reservationNotes').value=r?.notes||'';$('reservationStatus').value=r?.status||'pending';if(r)Object.entries(r.participants||{}).forEach(([pid,p])=>addParticipant({...p,pid}));else addParticipant();$('reservationDialog').showModal();$('reservedBy').focus();}
-$('newReservation').onclick=()=>{requireAccess('reserve');editReservation();};$('addParticipant').onclick=()=>addParticipant().focus();
-$('reservedBy').addEventListener('change',()=>{const rows=$('participantRows').children;if(!editing&&rows.length===1&&!rows[0].querySelector('input').value)rows[0].querySelector('input').value=$('reservedBy').value.trim();});
+function editReservation(rid=null){requireAccess('reserve');editing=rid;const r=state.reservations?.[rid];editVersion=r?.version||0;$('reservationForm').reset();$('participantRows').replaceChildren();$('formError').textContent='';$('reservationTitle').textContent=rid?'Modifier la réservation':'Nouvelle réservation SMS';$('reservedBy').value=r?.reservedBy||'';$('phone').value=r?.phone||'';$('contactedOrganizer').value=r?.contactedOrganizer||(allowed('reserve')?operator:'');$('reservationNotes').value=r?.notes||'';$('reservationStatus').value=r?.status||'pending';if(r)Object.entries(r.participants||{}).forEach(([pid,p])=>addParticipant({...p,pid}));else addParticipant();$('reservationDialog').showModal();renderReservationFormCapacity();$('reservedBy').focus();}
+$('newReservation').onclick=()=>{
+ requireAccess('reserve');
+ if(reservationCapacity().remaining<=0){notice('La salle est complète : aucune nouvelle réservation possible.');return;}
+ editReservation();
+};$('addParticipant').onclick=()=>addParticipant().focus();
+$('reservationForm').addEventListener('input',renderReservationFormCapacity);
+$('reservationForm').addEventListener('change',renderReservationFormCapacity);
+$('participantRows').addEventListener('click',()=>queueMicrotask(renderReservationFormCapacity));
+$('reservedBy').addEventListener('change',()=>{const rows=$('participantRows').children;if(!editing&&rows.length===1&&!rows[0].querySelector('input').value)rows[0].querySelector('input').value=$('reservedBy').value.trim();renderReservationFormCapacity();});
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{if(!busy)$(b.dataset.close).close();});
 $('reservationForm').onsubmit=async e=>{
  e.preventDefault();requireAccess('reserve');const rid=editing||uid(), rows=[...$('participantRows').children].map(row=>({pid:row.dataset.pid,name:row.querySelector('input').value.trim()}));
