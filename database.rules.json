@@ -5,8 +5,8 @@
     "events": {
       "saint-eloi-2026": {
         "data": {
-          ".read": "(auth != null && auth.uid != null && auth.provider === 'password') && (((auth.uid === 'nCNc0JdWznOZ6j4B4GjfvQqWX4K2' || auth.uid === 'KpFkapZExKcToBcy52YCo6rdwuh2') || (root.child('events/saint-eloi-2026/members/' + auth.uid + '/roles/admin').val() === true || root.child('events/saint-eloi-2026/members/' + auth.uid + '/role').val() === 'admin')) || (root.child('events/saint-eloi-2026/members/' + auth.uid + '/roles/reservations').val() === true || root.child('events/saint-eloi-2026/members/' + auth.uid + '/role').val() === 'reservations') || (root.child('events/saint-eloi-2026/members/' + auth.uid + '/roles/placement').val() === true || root.child('events/saint-eloi-2026/members/' + auth.uid + '/role').val() === 'placement') || (root.child('events/saint-eloi-2026/members/' + auth.uid + '/roles/entry').val() === true || root.child('events/saint-eloi-2026/members/' + auth.uid + '/role').val() === 'entry') || (root.child('events/saint-eloi-2026/members/' + auth.uid + '/roles/viewer').val() === true || root.child('events/saint-eloi-2026/members/' + auth.uid + '/role').val() === 'viewer'))",
-          ".write": "(auth != null && auth.uid != null && auth.provider === 'password') && ((auth.uid === 'nCNc0JdWznOZ6j4B4GjfvQqWX4K2' || auth.uid === 'KpFkapZExKcToBcy52YCo6rdwuh2') || (root.child('events/saint-eloi-2026/members/' + auth.uid + '/roles/admin').val() === true || root.child('events/saint-eloi-2026/members/' + auth.uid + '/role').val() === 'admin'))",
+          ".read": "auth != null && auth.provider === 'password' && ((auth.uid === 'nCNc0JdWznOZ6j4B4GjfvQqWX4K2' && auth.token.email === 'access2002@sainteloi26-371e3.firebaseapp.com') || (auth.uid === 'oJnhcgxm4KhnKHN3kFa2u6kYoTf2' && auth.token.email === 'access9425@sainteloi26-371e3.firebaseapp.com') || (auth.uid === 'AmCQErej08OtCuGkwvZyC8etGdl1' && auth.token.email === 'access3186@sainteloi26-371e3.firebaseapp.com') || (auth.uid === 'A5x97smh01XmZEoOZmLg63Nr2Ig1' && auth.token.email === 'access4279@sainteloi26-371e3.firebaseapp.com'))",
+          ".write": "auth != null && auth.provider === 'password' && ((auth.uid === 'nCNc0JdWznOZ6j4B4GjfvQqWX4K2' && auth.token.email === 'access2002@sainteloi26-371e3.firebaseapp.com') || (auth.uid === 'oJnhcgxm4KhnKHN3kFa2u6kYoTf2' && auth.token.email === 'access9425@sainteloi26-371e3.firebaseapp.com') || (auth.uid === 'AmCQErej08OtCuGkwvZyC8etGdl1' && auth.token.email === 'access3186@sainteloi26-371e3.firebaseapp.com') || (auth.uid === 'A5x97smh01XmZEoOZmLg63Nr2Ig1' && auth.token.email === 'access4279@sainteloi26-371e3.firebaseapp.com'))",
           "tables": {
             "$id": {
               ".validate": "newData.hasChildren(['capacity'])",
@@ -28,7 +28,7 @@
                 ".validate": "newData.isString() && newData.val().length <= 30"
               },
               "contactedOrganizer": {
-                ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
+                ".validate": "newData.val() === 'Antonin Blanckaert' || newData.val() === 'Antonin Bassut' || newData.val() === 'Théotime Laloua' || newData.val() === 'Robin Maret'"
               },
               "notes": {
                 ".validate": "newData.isString() && newData.val().length <= 2000"
@@ -58,7 +58,7 @@
                     ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
                   },
                   "tableId": {
-                    ".validate": "newData.isString() && (newData.val() === '' || newData.val().matches(/^t[a-zA-Z0-9-]{1,40}$/))"
+                    ".validate": "newData.isString() && (newData.val() === '' || newData.val().matches(/^t[0-9]+-[123]$/))"
                   },
                   "seat": {
                     ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100 && newData.val() % 1 === 0"
@@ -84,113 +84,27 @@
                   "$other": {
                     ".validate": false
                   },
-                  ".write": "(auth != null && auth.uid != null && auth.provider === 'password') && data.exists() && newData.exists() && data.parent().parent().child('status').val() === 'accepted' && (((root.child('events/saint-eloi-2026/members/' + auth.uid + '/roles/placement').val() === true || root.child('events/saint-eloi-2026/members/' + auth.uid + '/role').val() === 'placement') && newData.child('name').val() === data.child('name').val() && newData.child('arrived').val() === data.child('arrived').val() && newData.child('paid').val() === data.child('paid').val() && newData.child('arrivedAt').val() === data.child('arrivedAt').val() && newData.child('arrivalLane').val() === data.child('arrivalLane').val() && newData.child('arrivedBy').val() === data.child('arrivedBy').val() && newData.child('paidAt').val() === data.child('paidAt').val() && newData.child('paidBy').val() === data.child('paidBy').val() && newData.child('paidForBy').val() === data.child('paidForBy').val() && newData.child('paymentComment').val() === data.child('paymentComment').val() && newData.child('paymentRecordedAt').val() === data.child('paymentRecordedAt').val() && newData.child('paymentRecordedBy').val() === data.child('paymentRecordedBy').val()) || ((root.child('events/saint-eloi-2026/members/' + auth.uid + '/roles/entry').val() === true || root.child('events/saint-eloi-2026/members/' + auth.uid + '/role').val() === 'entry') && newData.child('name').val() === data.child('name').val() && newData.child('tableId').val() === data.child('tableId').val() && newData.child('seat').val() === data.child('seat').val()))",
-                  "arrivalLane": {
-                    ".validate": "newData.isString() && (newData.val() === '' || newData.val() === 'left' || newData.val() === 'right')"
-                  },
-                  "paidForBy": {
-                    ".validate": "newData.isString() && newData.val().length <= 120"
-                  },
-                  "paymentComment": {
-                    ".validate": "newData.isString() && newData.val().length <= 1000"
-                  },
-                  "paymentRecordedAt": {
-                    ".validate": "newData.isString()"
-                  },
-                  "paymentRecordedBy": {
-                    ".validate": "newData.isString()"
-                  }
+                  ".write": "false"
                 }
               },
               "$other": {
                 ".validate": false
-              },
-              ".write": "(auth != null && auth.uid != null && auth.provider === 'password') && (root.child('events/saint-eloi-2026/members/' + auth.uid + '/roles/reservations').val() === true || root.child('events/saint-eloi-2026/members/' + auth.uid + '/role').val() === 'reservations')"
+              }
             }
           },
           "$other": {
             ".validate": false
-          },
-          "layout": {
-            ".validate": "newData.hasChildren(['revision','rows','leftColumns','rightColumns','tables'])",
-            "revision": {
-              ".validate": "newData.isNumber() && newData.val() >= 0"
-            },
-            "rows": {
-              ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 30"
-            },
-            "leftColumns": {
-              ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 12"
-            },
-            "rightColumns": {
-              ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 12"
-            },
-            "tables": {
-              "$table": {
-                ".validate": "newData.hasChildren(['name','row','side','column'])",
-                "name": {
-                  ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
-                },
-                "row": {
-                  ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 30"
-                },
-                "side": {
-                  ".validate": "newData.val() === 'left' || newData.val() === 'right'"
-                },
-                "column": {
-                  ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 12"
-                },
-                "$other": {
-                  ".validate": false
-                }
-              }
-            },
-            "$other": {
-              ".validate": false
-            }
           }
         },
         "members": {
-          ".read": "(auth != null && auth.uid != null && auth.provider === 'password') && ((auth.uid === 'nCNc0JdWznOZ6j4B4GjfvQqWX4K2' || auth.uid === 'KpFkapZExKcToBcy52YCo6rdwuh2') || (root.child('events/saint-eloi-2026/members/' + auth.uid + '/roles/admin').val() === true || root.child('events/saint-eloi-2026/members/' + auth.uid + '/role').val() === 'admin'))",
-          ".write": "(auth != null && auth.uid != null && auth.provider === 'password') && ((auth.uid === 'nCNc0JdWznOZ6j4B4GjfvQqWX4K2' || auth.uid === 'KpFkapZExKcToBcy52YCo6rdwuh2') || (root.child('events/saint-eloi-2026/members/' + auth.uid + '/roles/admin').val() === true || root.child('events/saint-eloi-2026/members/' + auth.uid + '/role').val() === 'admin'))",
           "$uid": {
-            ".read": "(auth != null && auth.uid != null && auth.provider === 'password') && (auth.uid === $uid || ((auth.uid === 'nCNc0JdWznOZ6j4B4GjfvQqWX4K2' || auth.uid === 'KpFkapZExKcToBcy52YCo6rdwuh2') || (root.child('events/saint-eloi-2026/members/' + auth.uid + '/roles/admin').val() === true || root.child('events/saint-eloi-2026/members/' + auth.uid + '/role').val() === 'admin')))",
-            ".validate": "newData.hasChildren(['email','role'])",
-            "email": {
-              ".validate": "newData.isString() && newData.val().length > 3 && newData.val().length <= 254"
-            },
-            "role": {
-              ".validate": "newData.val() === 'admin' || newData.val() === 'reservations' || newData.val() === 'placement' || newData.val() === 'entry' || newData.val() === 'viewer' || newData.val() === 'disabled'"
-            },
-            "roles": {
-              "$role": {
-                ".validate": "($role === 'admin' || $role === 'reservations' || $role === 'placement' || $role === 'entry' || $role === 'viewer') && newData.val() === true"
-              }
-            },
-            "updatedBy": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": false,
+            "name": {
               ".validate": "newData.isString()"
             },
-            "updatedAt": {
-              ".validate": "newData.isNumber()"
-            },
-            "$other": {
-              ".validate": false
-            }
-          }
-        },
-        "profiles": {
-          "$uid": {
-            ".read": "(auth != null && auth.uid != null && auth.provider === 'password') && (auth.uid === $uid || ((auth.uid === 'nCNc0JdWznOZ6j4B4GjfvQqWX4K2' || auth.uid === 'KpFkapZExKcToBcy52YCo6rdwuh2') || (root.child('events/saint-eloi-2026/members/' + auth.uid + '/roles/admin').val() === true || root.child('events/saint-eloi-2026/members/' + auth.uid + '/role').val() === 'admin')))",
-            ".write": "(auth != null && auth.uid != null && auth.provider === 'password') && ((((auth.uid === 'nCNc0JdWznOZ6j4B4GjfvQqWX4K2' || auth.uid === 'KpFkapZExKcToBcy52YCo6rdwuh2') || (root.child('events/saint-eloi-2026/members/' + auth.uid + '/roles/admin').val() === true || root.child('events/saint-eloi-2026/members/' + auth.uid + '/role').val() === 'admin'))) || (auth.uid === $uid && !data.exists()))",
-            ".validate": "newData.hasChildren(['firstName','lastName','createdAt'])",
-            "firstName": {
-              ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 80"
-            },
-            "lastName": {
-              ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 80"
-            },
-            "createdAt": {
-              ".validate": "newData.isNumber()"
+            "role": {
+              ".validate": "newData.isString()"
             },
             "$other": {
               ".validate": false
