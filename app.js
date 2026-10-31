@@ -655,7 +655,7 @@ function render(){
   });if(!matching.length)return '';
   return `<section><div class="group-header"><strong>${esc(r.reservedBy)}</strong> · ${parts.length} personne${parts.length>1?'s':''} · ${statuses[r.status]||'À vérifier'}
    <div class="group-note">${esc(r.phone||'')} ${r.phone?' · ':''}Contacté : ${esc(r.contactedOrganizer||'Non renseigné')} · Saisie : ${esc(r.createdBy||'')}${r.notes?'\n'+esc(r.notes):''}</div>
-   <div class="reservation-actions">${allowed('reserve')?`<button class="secondary" data-action="edit" data-rid="${rid}">Modifier</button>`:''}${allowed('reserve')&&r.status==='pending'?`<button class="primary" data-action="accept" data-rid="${rid}">Accepter</button>`:''}${allowed('place')&&shownRole()!=='placement'&&r.status==='accepted'?`<button class="secondary" draggable="true" data-action="select" data-rid="${rid}">Placer le groupe →</button>`:''}${allowed('reserve')&&r.status!=='cancelled'?`<button class="secondary" data-action="cancel" data-rid="${rid}">Annuler</button>`:''}</div></div>
+   <div class="reservation-actions">${allowed('reserve')?`<button class="secondary" data-action="edit" data-rid="${rid}">Modifier</button>`:''}${allowed('reserve')&&r.status==='pending'?`<button class="primary" data-action="accept" data-rid="${rid}">Accepter</button>`:''}${allowed('place')&&r.status==='accepted'?`<button class="secondary" draggable="true" data-action="select" data-rid="${rid}">Placer le groupe →</button>`:''}${allowed('reserve')&&r.status!=='cancelled'?`<button class="secondary" data-action="cancel" data-rid="${rid}">Annuler</button>`:''}</div></div>
    ${matching.map(([pid,p])=>guestCard(rid,pid,p,r)).join('')}</section>`;
  }).join('');
  $('guestList').innerHTML=html||'<div class="empty-state">Aucun invité dans cette vue ou ce filtre.</div>';
@@ -678,7 +678,7 @@ function render(){
  });
  renderEntryTables(guests);
  if(selection){try{const people=membersFor(selection);$('mapHint').textContent=`${people.length} personne(s) sélectionnée(s) : cliquez sur une table`;$('bannerName').textContent=selection.pid?people[0].name:state.reservations[selection.rid].reservedBy;$('bannerDetail').textContent='Cliquez sur une table, ou glissez la sélection sur le plan.';$('bannerTable').textContent=people.length+' personne(s)';$('guestBanner').classList.add('visible');}catch(e){selection=null;}}
- if(!selection){$('guestBanner').classList.remove('visible');$('mapHint').textContent=view==='viewer'?'Plan en consultation':view==='placement'?'Sélectionnez un invité puis une table':'Sélectionnez une personne ou un groupe, puis cliquez sur sa table';}
+ if(!selection){$('guestBanner').classList.remove('visible');$('mapHint').textContent=view==='viewer'?'Plan en consultation':view==='placement'?'Sélectionnez une personne ou un groupe, puis cliquez sur sa table':'Sélectionnez une personne ou un groupe, puis cliquez sur sa table';}
  if(popupTable)drawTable();
  if($('adminDashboardDialog').open)renderAdminDashboard();
 }
@@ -836,7 +836,6 @@ function drawTable(){
 function showPlacement(tableId){
  try{
   requireAccess('place');
-  if(shownRole()==='placement'&&!selection?.pid)throw Error('Pour cette accréditation, sélectionnez un invité à la fois.');
   const people=membersFor(selection);
   closeTablePopup();
   $('placementNames').textContent=people.map(p=>p.name).join(', ');
@@ -878,10 +877,33 @@ async function placeSingleRestricted(sel,tableId,seat){
   notice('Placement enregistré pour cet invité.');
  }finally{busy=false;}
 }
+async function placeGroupRestricted(sel,tableId){
+ requireAccess('place');
+ if(!ready||!user||!online)throw Error('Connexion indisponible.');
+ if(busy)throw Error('Une modification est déjà en cours.');
+ busy=true;
+ try{
+  // Relire le plan avant de préparer une écriture atomique limitée aux placements.
+  const live=(await dataRef.once('value')).val();
+  const people=membersFor(sel,live),free=tableId?freeSeats(tableId,sel,live):[];
+  if(tableId&&free.length<people.length)throw Error('La table ne dispose plus d’assez de places.');
+  const changes={},draft=clone(live);
+  people.forEach((p,i)=>{
+   const base='reservations/'+sel.rid+'/participants/'+p.pid;
+   const target=draft.reservations[sel.rid].participants[p.pid];
+   target.tableId=tableId||'';target.seat=tableId?free[i]:0;
+   changes[base+'/tableId']=target.tableId;
+   changes[base+'/seat']=target.seat;
+  });
+  validateData(draft);
+  await dataRef.update(changes);
+  notice('Placement enregistré pour toute la réservation.');
+ }finally{busy=false;}
+}
 $('placementForm').onsubmit=async e=>{e.preventDefault();requireAccess('place');const sel={...selection},tableId=$('placementTable').value,seat=Number($('placementSeat').value);try{
  if(!demo&&!hasRole('admin')){
-  if(!sel.pid)throw Error('Sélectionne un invité.');
-  await placeSingleRestricted(sel,tableId,seat);
+  if(sel.pid)await placeSingleRestricted(sel,tableId,seat);
+  else await placeGroupRestricted(sel,tableId);
   selection=null;$('placementDialog').close();render();
   if(tableId)openTablePopup(tableId);
   return;
@@ -944,3 +966,4 @@ if(config.enabled){
   },()=>{if(!demo)lock('Impossible de restaurer la session. Reconnecte-toi.');});
  }catch(error){$('loginMessage').textContent='Connexion Firebase indisponible : '+error.message;}
 }
+
